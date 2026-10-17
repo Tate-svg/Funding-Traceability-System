@@ -2,7 +2,7 @@ import store from '@/store'
 
 /**
  * v-permission 自定义指令
- * 用法：v-permission="['ADMIN']"
+ * 用法：v-permission="['AUDIT_ADMIN']"
  * 当 store 中当前用户角色不在数组内时，移除该 DOM 元素
  */
 export default {

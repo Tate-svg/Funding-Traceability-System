@@ -20,6 +20,11 @@ jwt:
   secret: funding-traceability-secret-key-2024-very-long
   expire: 86400000
 
+funding:
+  review:
+    # 大额复核阈值（元），审核通过后达到该金额自动进入复核候选池
+    threshold: 5000
+
 logging:
   level:
     com.funding: debug

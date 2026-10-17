@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * 系统用户服务实现
- * 用户管理仅 ADMIN 可调用（Controller 已 @AdminOnly）
+ * 用户管理仅 AUDIT_ADMIN 可调用（Controller 已 @RequirePermission("user:manage")）
  */
 @Service
 public class SysUserServiceImpl implements SysUserService {

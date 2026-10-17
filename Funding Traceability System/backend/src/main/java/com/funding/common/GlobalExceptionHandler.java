@@ -17,6 +17,12 @@ public class GlobalExceptionHandler {
         return Result.error(e.getCode(), e.getMessage());
     }
 
+    @ExceptionHandler(org.springframework.dao.DuplicateKeyException.class)
+    public Result<Void> handleDuplicateKey(org.springframework.dao.DuplicateKeyException e) {
+        log.warn("唯一键冲突: {}", e.getMessage());
+        return Result.error(400, "数据冲突，请重试");
+    }
+
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
         log.error("服务器错误", e);

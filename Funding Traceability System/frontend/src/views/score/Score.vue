@@ -7,8 +7,8 @@
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <div class="filter-actions">
-        <el-button v-permission="['ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增评分</el-button>
-        <el-button v-permission="['ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增评分</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
       </div>
     </div>
 
@@ -160,7 +160,7 @@ export default {
     }
   },
   computed: {
-    isAdmin() { return this.$store.getters.role === 'ADMIN' },
+    isAdmin() { return this.$store.getters.role === 'AUDIT_ADMIN' },
     dialogTitle() { return this.dialogType === 'create' ? '新增评分' : '编辑评分' },
     liveTotal() {
       const sum = (this.form.details || []).reduce((s, d) => {

@@ -80,7 +80,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public void export(HttpServletResponse response) throws Exception {
-        // export 仅 ADMIN 可调用（Controller 已 @AdminOnly），导出全部
+        // export 仅 AUDIT_ADMIN 可调用（Controller 已 @RequirePermission("student:manage")），导出全部
         List<StudentVO> list = studentMapper.selectAllWithSponsor();
         List<String> headers = Arrays.asList(
                 "ID", "姓名", "性别", "身份证号", "学校", "年级",

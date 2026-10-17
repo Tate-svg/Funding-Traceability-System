@@ -1,7 +1,8 @@
 package com.funding.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.funding.common.AdminOnly;
+import com.funding.common.OperationLog;
+import com.funding.common.RequirePermission;
 import com.funding.common.Result;
 import com.funding.entity.Student;
 import com.funding.service.StudentService;
@@ -36,7 +37,8 @@ public class StudentController {
     }
 
     @GetMapping("/export")
-    @AdminOnly
+    @RequirePermission("student:manage")
+    @OperationLog(value = "导出学生档案", type = "student")
     public void export(HttpServletResponse response) throws Exception {
         studentService.export(response);
     }
@@ -47,14 +49,16 @@ public class StudentController {
     }
 
     @PostMapping
-    @AdminOnly
+    @RequirePermission("student:manage")
+    @OperationLog(value = "新增学生", type = "student")
     public Result<Void> save(@RequestBody Student student) {
         studentService.saveStudent(student);
         return Result.success();
     }
 
     @PutMapping("/{id}")
-    @AdminOnly
+    @RequirePermission("student:manage")
+    @OperationLog(value = "修改学生", type = "student")
     public Result<Void> update(@PathVariable Long id, @RequestBody Student student) {
         student.setId(id);
         studentService.updateStudent(student);
@@ -62,7 +66,8 @@ public class StudentController {
     }
 
     @DeleteMapping("/{id}")
-    @AdminOnly
+    @RequirePermission("student:manage")
+    @OperationLog(value = "删除学生", type = "student")
     public Result<Void> delete(@PathVariable Long id) {
         studentService.deleteStudent(id);
         return Result.success();
