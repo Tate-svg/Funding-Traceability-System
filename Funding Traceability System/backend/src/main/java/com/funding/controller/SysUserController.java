@@ -1,7 +1,8 @@
 package com.funding.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.funding.common.AdminOnly;
+import com.funding.common.OperationLog;
+import com.funding.common.RequirePermission;
 import com.funding.common.Result;
 import com.funding.entity.SysUser;
 import com.funding.service.SysUserService;
@@ -22,7 +23,7 @@ public class SysUserController {
     private SysUserService sysUserService;
 
     @GetMapping
-    @AdminOnly
+    @RequirePermission("user:manage")
     public Result<IPage<SysUser>> page(@RequestParam(defaultValue = "1") Integer page,
                                        @RequestParam(defaultValue = "10") Integer size,
                                        @RequestParam(required = false) String keyword) {
@@ -35,14 +36,16 @@ public class SysUserController {
     }
 
     @PostMapping
-    @AdminOnly
+    @RequirePermission("user:manage")
+    @OperationLog(value = "新增用户", type = "sys_user")
     public Result<Void> save(@RequestBody SysUser user) {
         sysUserService.save(user);
         return Result.success();
     }
 
     @PutMapping("/{id}")
-    @AdminOnly
+    @RequirePermission("user:manage")
+    @OperationLog(value = "修改用户", type = "sys_user")
     public Result<Void> update(@PathVariable Long id, @RequestBody SysUser user) {
         user.setId(id);
         sysUserService.update(user);
@@ -50,7 +53,8 @@ public class SysUserController {
     }
 
     @DeleteMapping("/{id}")
-    @AdminOnly
+    @RequirePermission("user:manage")
+    @OperationLog(value = "删除用户", type = "sys_user")
     public Result<Void> delete(@PathVariable Long id) {
         sysUserService.delete(id);
         return Result.success();

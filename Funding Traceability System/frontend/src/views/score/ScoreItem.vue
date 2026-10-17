@@ -3,7 +3,7 @@
     <div class="filter-bar">
       <el-button icon="el-icon-refresh" @click="getList">刷新</el-button>
       <div class="filter-actions">
-        <el-button v-permission="['ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增指标</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增指标</el-button>
       </div>
     </div>
 
@@ -64,7 +64,7 @@ export default {
     }
   },
   computed: {
-    isAdmin() { return this.$store.getters.role === 'ADMIN' },
+    isAdmin() { return this.$store.getters.role === 'AUDIT_ADMIN' },
     dialogTitle() { return this.dialogType === 'create' ? '新增评分指标' : '编辑评分指标' },
     totalWeight() {
       return this.list.reduce((s, d) => s + Number(d.weight || 0), 0).toFixed(1)

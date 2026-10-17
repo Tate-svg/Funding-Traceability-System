@@ -1,7 +1,8 @@
 package com.funding.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.funding.common.AdminOnly;
+import com.funding.common.OperationLog;
+import com.funding.common.RequirePermission;
 import com.funding.common.Result;
 import com.funding.service.ScoreService;
 import com.funding.vo.ScoreVO;
@@ -28,7 +29,8 @@ public class ScoreController {
     }
 
     @GetMapping("/export")
-    @AdminOnly
+    @RequirePermission("score:manage")
+    @OperationLog(value = "导出评分记录", type = "score")
     public void export(HttpServletResponse response) throws Exception {
         scoreService.export(response);
     }
@@ -39,14 +41,16 @@ public class ScoreController {
     }
 
     @PostMapping
-    @AdminOnly
+    @RequirePermission("score:manage")
+    @OperationLog(value = "新增评分", type = "score")
     public Result<Void> save(@RequestBody ScoreVO scoreVO) {
         scoreService.saveScore(scoreVO);
         return Result.success();
     }
 
     @PutMapping("/{id}")
-    @AdminOnly
+    @RequirePermission("score:manage")
+    @OperationLog(value = "修改评分", type = "score")
     public Result<Void> update(@PathVariable Long id, @RequestBody ScoreVO scoreVO) {
         scoreVO.setId(id);
         scoreService.updateScore(scoreVO);
@@ -54,7 +58,8 @@ public class ScoreController {
     }
 
     @DeleteMapping("/{id}")
-    @AdminOnly
+    @RequirePermission("score:manage")
+    @OperationLog(value = "删除评分", type = "score")
     public Result<Void> delete(@PathVariable Long id) {
         scoreService.deleteScore(id);
         return Result.success();

@@ -22,54 +22,95 @@ export const constantRoutes = [
   }
 ]
 
+// 角色首页映射：登录后 / 访问根路径时按角色跳转
+export const roleHomeMap = {
+  AUDIT_ADMIN: '/audit',
+  DISBURSE_ADMIN: '/disburse',
+  SUPERVISOR: '/review',
+  SPONSOR: '/dashboard'
+}
+
+const ALL_ROLES = ['AUDIT_ADMIN', 'DISBURSE_ADMIN', 'SUPERVISOR', 'SPONSOR']
+
 // 动态路由：根据角色过滤后动态挂载
 export const asyncRoutes = [
   {
     path: '/',
     component: Layout,
-    redirect: '/dashboard',
+    redirect: () => roleHomeMap[store.getters.role] || '/login',
     children: [
       {
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/Dashboard.vue'),
-        meta: { title: '首页', icon: 'el-icon-s-home', roles: ['ADMIN', 'SPONSOR'] }
+        meta: { title: '首页', icon: 'el-icon-s-home', roles: ['SPONSOR'] }
+      },
+      {
+        path: 'audit',
+        name: 'AuditWorkbench',
+        component: () => import('@/views/audit/AuditWorkbench.vue'),
+        meta: { title: '审核工作台', icon: 'el-icon-s-check', roles: ['AUDIT_ADMIN'] }
+      },
+      {
+        path: 'disburse',
+        name: 'DisburseWorkbench',
+        component: () => import('@/views/disburse/DisburseWorkbench.vue'),
+        meta: { title: '拨付工作台', icon: 'el-icon-bank-card', roles: ['DISBURSE_ADMIN'] }
+      },
+      {
+        path: 'review',
+        name: 'ReviewPool',
+        component: () => import('@/views/review/ReviewPool.vue'),
+        meta: { title: '复核抽检池', icon: 'el-icon-view', roles: ['SUPERVISOR'] }
+      },
+      {
+        path: 'operation-log',
+        name: 'OperationLog',
+        component: () => import('@/views/log/OperationLog.vue'),
+        meta: { title: '操作日志', icon: 'el-icon-time', roles: ['SUPERVISOR'] }
       },
       {
         path: 'student',
         name: 'Student',
         component: () => import('@/views/student/Student.vue'),
-        meta: { title: '学生管理', icon: 'el-icon-user', roles: ['ADMIN', 'SPONSOR'] }
+        meta: { title: '学生管理', icon: 'el-icon-user', roles: ['AUDIT_ADMIN', 'SPONSOR'] }
       },
       {
         path: 'fund',
         name: 'Fund',
         component: () => import('@/views/fund/Fund.vue'),
-        meta: { title: '资金管理', icon: 'el-icon-money', roles: ['ADMIN', 'SPONSOR'] }
+        meta: { title: '资金管理', icon: 'el-icon-money', roles: ALL_ROLES }
+      },
+      {
+        path: 'fund/detail/:id',
+        name: 'FundDetail',
+        component: () => import('@/views/fund/FundDetail.vue'),
+        meta: { title: '资助单详情', roles: ALL_ROLES, activeMenu: '/fund' },
+        hidden: true
       },
       {
         path: 'visit',
         name: 'Visit',
         component: () => import('@/views/visit/Visit.vue'),
-        meta: { title: '回访管理', icon: 'el-icon-chat-line-round', roles: ['ADMIN', 'SPONSOR'] }
+        meta: { title: '回访管理', icon: 'el-icon-chat-line-round', roles: ['AUDIT_ADMIN', 'SPONSOR'] }
       },
       {
         path: 'score',
         name: 'Score',
         component: () => import('@/views/score/Score.vue'),
-        meta: { title: '评分管理', icon: 'el-icon-document-checked', roles: ['ADMIN', 'SPONSOR'] }
+        meta: { title: '评分管理', icon: 'el-icon-document-checked', roles: ['AUDIT_ADMIN', 'SPONSOR'] }
       },
       {
         path: 'score-item',
         name: 'ScoreItem',
         component: () => import('@/views/score/ScoreItem.vue'),
-        meta: { title: '评分指标', icon: 'el-icon-set-up', roles: ['ADMIN'] }
+        meta: { title: '评分指标', icon: 'el-icon-set-up', roles: ['AUDIT_ADMIN'] }
       },
       {
         path: 'user',
         name: 'User',
         component: () => import('@/views/user/User.vue'),
-        meta: { title: '用户管理', icon: 'el-icon-s-custom', roles: ['ADMIN'] }
+        meta: { title: '用户管理', icon: 'el-icon-s-custom', roles: ['AUDIT_ADMIN'] }
       }
     ]
   },

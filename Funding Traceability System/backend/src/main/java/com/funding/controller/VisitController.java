@@ -1,7 +1,8 @@
 package com.funding.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.funding.common.AdminOnly;
+import com.funding.common.OperationLog;
+import com.funding.common.RequirePermission;
 import com.funding.common.Result;
 import com.funding.entity.Visit;
 import com.funding.service.VisitService;
@@ -30,7 +31,8 @@ public class VisitController {
     }
 
     @GetMapping("/export")
-    @AdminOnly
+    @RequirePermission("visit:manage")
+    @OperationLog(value = "导出回访记录", type = "visit")
     public void export(HttpServletResponse response) throws Exception {
         visitService.export(response);
     }
@@ -41,14 +43,16 @@ public class VisitController {
     }
 
     @PostMapping
-    @AdminOnly
+    @RequirePermission("visit:manage")
+    @OperationLog(value = "新增回访", type = "visit")
     public Result<Void> save(@RequestBody Visit visit) {
         visitService.saveVisit(visit);
         return Result.success();
     }
 
     @PutMapping("/{id}")
-    @AdminOnly
+    @RequirePermission("visit:manage")
+    @OperationLog(value = "修改回访", type = "visit")
     public Result<Void> update(@PathVariable Long id, @RequestBody Visit visit) {
         visit.setId(id);
         visitService.updateVisit(visit);
@@ -56,7 +60,8 @@ public class VisitController {
     }
 
     @DeleteMapping("/{id}")
-    @AdminOnly
+    @RequirePermission("visit:manage")
+    @OperationLog(value = "删除回访", type = "visit")
     public Result<Void> delete(@PathVariable Long id) {
         visitService.deleteVisit(id);
         return Result.success();

@@ -5,7 +5,7 @@
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <div class="filter-actions">
-        <el-button v-permission="['ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增用户</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增用户</el-button>
       </div>
     </div>
 
@@ -13,16 +13,16 @@
       <el-table-column type="index" label="序号" width="55" align="center" />
       <el-table-column prop="username" label="用户名" min-width="120" />
       <el-table-column prop="realName" label="姓名" min-width="100" />
-      <el-table-column label="角色" min-width="100" align="center">
+      <el-table-column label="角色" min-width="110" align="center">
         <template slot-scope="{ row }">
-          <el-tag :type="row.role === 'ADMIN' ? 'danger' : 'success'" size="small">
+          <el-tag :type="roleTagType(row.role)" size="small">
             {{ roleText(row.role) }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="phone" label="联系电话" min-width="120" />
       <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column v-if="isAdmin" label="操作" width="150" align="center">
+      <el-table-column v-if="isAuditAdmin" label="操作" width="150" align="center">
         <template slot-scope="{ row }">
           <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
           <el-button type="text" class="danger-text" icon="el-icon-delete" :disabled="row.id === currentUserId" @click="handleDelete(row)">删除</el-button>
@@ -56,7 +56,9 @@
         </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-select v-model="form.role" placeholder="请选择角色" style="width:100%">
-            <el-option label="管理员" value="ADMIN" />
+            <el-option label="审核管理员" value="AUDIT_ADMIN" />
+            <el-option label="拨付管理员" value="DISBURSE_ADMIN" />
+            <el-option label="监事/审计" value="SUPERVISOR" />
             <el-option label="资助人" value="SPONSOR" />
           </el-select>
         </el-form-item>
@@ -103,7 +105,7 @@ export default {
     }
   },
   computed: {
-    isAdmin() { return this.$store.getters.role === 'ADMIN' },
+    isAuditAdmin() { return this.$store.getters.role === 'AUDIT_ADMIN' },
     currentUserId() { return this.$store.getters.userId },
     dialogTitle() { return this.dialogType === 'create' ? '新增用户' : '编辑用户' }
   },
@@ -115,9 +117,22 @@ export default {
       return { id: null, username: '', password: '', realName: '', role: '', phone: '' }
     },
     roleText(role) {
-      if (role === 'ADMIN') return '管理员'
-      if (role === 'SPONSOR') return '资助人'
-      return role || '-'
+      const map = {
+        AUDIT_ADMIN: '审核管理员',
+        DISBURSE_ADMIN: '拨付管理员',
+        SUPERVISOR: '监事/审计',
+        SPONSOR: '资助人'
+      }
+      return map[role] || role || '-'
+    },
+    roleTagType(role) {
+      const map = {
+        AUDIT_ADMIN: 'danger',
+        DISBURSE_ADMIN: 'warning',
+        SUPERVISOR: 'primary',
+        SPONSOR: 'success'
+      }
+      return map[role] || 'info'
     },
     getList() {
       this.listLoading = true

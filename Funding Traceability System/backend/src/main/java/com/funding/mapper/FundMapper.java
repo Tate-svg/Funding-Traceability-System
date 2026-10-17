@@ -17,10 +17,18 @@ import java.util.List;
  */
 public interface FundMapper extends BaseMapper<Fund> {
 
-    @Select("<script>" +
-            "SELECT f.*, s.name AS student_name, u.real_name AS sponsor_name FROM fund f " +
+    String NAME_JOIN =
             "LEFT JOIN student s ON f.student_id = s.id " +
             "LEFT JOIN sys_user u ON f.sponsor_id = u.id " +
+            "LEFT JOIN sys_user au ON f.audit_by = au.id " +
+            "LEFT JOIN sys_user du ON f.disburse_by = du.id ";
+
+    String NAME_COLUMNS =
+            "f.*, s.name AS student_name, u.real_name AS sponsor_name, " +
+            "au.real_name AS auditor_name, du.real_name AS disburser_name ";
+
+    @Select("<script>" +
+            "SELECT " + NAME_COLUMNS + "FROM fund f " + NAME_JOIN +
             "<where>" +
             "<if test='keyword != null and keyword != \"\"'>" +
             "AND (s.name LIKE CONCAT('%',#{keyword},'%') OR f.purpose LIKE CONCAT('%',#{keyword},'%') OR f.remark LIKE CONCAT('%',#{keyword},'%'))" +
@@ -31,23 +39,68 @@ public interface FundMapper extends BaseMapper<Fund> {
             "<if test='sponsorId != null'>" +
             "AND f.sponsor_id = #{sponsorId}" +
             "</if>" +
+            "<if test='status != null and status != \"\"'>" +
+            "AND f.status = #{status}" +
+            "</if>" +
             "</where>" +
             "ORDER BY f.id DESC" +
             "</script>")
     IPage<FundVO> selectPageWithNames(Page<FundVO> page,
                                       @Param("keyword") String keyword,
                                       @Param("studentId") Long studentId,
-                                      @Param("sponsorId") Long sponsorId);
+                                      @Param("sponsorId") Long sponsorId,
+                                      @Param("status") String status);
 
-    @Select("SELECT f.*, s.name AS student_name, u.real_name AS sponsor_name FROM fund f " +
-            "LEFT JOIN student s ON f.student_id = s.id " +
-            "LEFT JOIN sys_user u ON f.sponsor_id = u.id WHERE f.id = #{id}")
+    @Select("SELECT " + NAME_COLUMNS + "FROM fund f " + NAME_JOIN + "WHERE f.id = #{id}")
     FundVO selectByIdWithNames(@Param("id") Long id);
 
-    @Select("SELECT f.*, s.name AS student_name, u.real_name AS sponsor_name FROM fund f " +
-            "LEFT JOIN student s ON f.student_id = s.id " +
-            "LEFT JOIN sys_user u ON f.sponsor_id = u.id ORDER BY f.id DESC")
+    @Select("SELECT " + NAME_COLUMNS + "FROM fund f " + NAME_JOIN + "ORDER BY f.id DESC")
     List<FundVO> selectAllWithNames();
+
+    /**
+     * 待拨付列表：已审核小额（&lt;阈值）或 已复核
+     */
+    @Select("<script>" +
+            "SELECT " + NAME_COLUMNS + "FROM fund f " + NAME_JOIN +
+            "WHERE (f.status = 'AUDITED' AND f.amount &lt; #{threshold}) OR f.status = 'REVIEWED' " +
+            "ORDER BY f.id DESC" +
+            "</script>")
+    IPage<FundVO> selectPendingDisburse(Page<FundVO> page, @Param("threshold") BigDecimal threshold);
+
+    @Select("SELECT COUNT(*) FROM fund WHERE status = 'SUBMITTED'")
+    long countPendingAudit();
+
+    @Select("SELECT COUNT(*) FROM fund WHERE voucher_no LIKE CONCAT('Voucher-', #{day}, '-%')")
+    long countVoucherOfDay(@Param("day") String day);
+
+    /**
+     * 复核候选池：已审核大额 且 未被抽检过
+     */
+    @Select("<script>" +
+            "SELECT * FROM fund WHERE status = 'AUDITED' AND amount &gt;= #{threshold} " +
+            "AND id NOT IN (SELECT fund_id FROM review_task) " +
+            "<if test='minAmount != null'>AND amount &gt;= #{minAmount}</if>" +
+            "<if test='maxAmount != null'>AND amount &lt;= #{maxAmount}</if>" +
+            "ORDER BY id" +
+            "</script>")
+    List<Fund> selectReviewCandidates(@Param("threshold") BigDecimal threshold,
+                                      @Param("minAmount") BigDecimal minAmount,
+                                      @Param("maxAmount") BigDecimal maxAmount);
+
+    /**
+     * 候选池中随机抽取 n 条
+     */
+    @Select("<script>" +
+            "SELECT * FROM fund WHERE status = 'AUDITED' AND amount &gt;= #{threshold} " +
+            "AND id NOT IN (SELECT fund_id FROM review_task) " +
+            "<if test='minAmount != null'>AND amount &gt;= #{minAmount}</if>" +
+            "<if test='maxAmount != null'>AND amount &lt;= #{maxAmount}</if>" +
+            "ORDER BY RAND() LIMIT #{n}" +
+            "</script>")
+    List<Fund> selectRandomCandidates(@Param("threshold") BigDecimal threshold,
+                                      @Param("minAmount") BigDecimal minAmount,
+                                      @Param("maxAmount") BigDecimal maxAmount,
+                                      @Param("n") int n);
 
     // ===== 统计相关 =====
 

@@ -78,12 +78,22 @@ export default {
       return []
     },
     roleText() {
-      if (this.role === 'ADMIN') return '管理员'
-      if (this.role === 'SPONSOR') return '资助人'
-      return this.role || '未知'
+      const map = {
+        AUDIT_ADMIN: '审核管理员',
+        DISBURSE_ADMIN: '拨付管理员',
+        SUPERVISOR: '监事/审计',
+        SPONSOR: '资助人'
+      }
+      return map[this.role] || this.role || '未知'
     },
     roleTagType() {
-      return this.role === 'ADMIN' ? 'danger' : 'success'
+      const map = {
+        AUDIT_ADMIN: 'danger',
+        DISBURSE_ADMIN: 'warning',
+        SUPERVISOR: 'primary',
+        SPONSOR: 'success'
+      }
+      return map[this.role] || 'info'
     }
   },
   methods: {

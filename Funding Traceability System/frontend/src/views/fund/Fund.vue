@@ -4,12 +4,19 @@
       <el-select v-model="listQuery.studentId" placeholder="选择学生筛选" clearable filterable style="width:180px" @change="handleFilter">
         <el-option v-for="item in studentOptions" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
+      <el-select v-model="listQuery.status" placeholder="状态筛选" clearable style="width:150px" @change="handleFilter">
+        <el-option label="待审核" value="SUBMITTED" />
+        <el-option label="审核通过" value="AUDITED" />
+        <el-option label="已驳回" value="REJECTED" />
+        <el-option label="复核通过" value="REVIEWED" />
+        <el-option label="已拨付" value="DISBURSED" />
+      </el-select>
       <el-input v-model="listQuery.keyword" placeholder="用途 / 备注" clearable style="width:220px" @keyup.enter.native="handleFilter" />
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <div class="filter-actions">
-        <el-button v-permission="['ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增资金</el-button>
-        <el-button v-permission="['ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增资金</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
       </div>
     </div>
 
@@ -21,13 +28,31 @@
         <template slot-scope="{ row }">{{ formatAmount(row.amount) }}</template>
       </el-table-column>
       <el-table-column prop="fundDate" label="资助日期" min-width="110" />
-      <el-table-column prop="purpose" label="用途" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="remark" label="备注" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column v-if="isAdmin" label="操作" width="150" align="center" fixed="right">
+      <el-table-column label="状态" width="100" align="center">
         <template slot-scope="{ row }">
-          <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
-          <el-button type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
+          <el-tag :type="statusTagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="凭证号" min-width="170">
+        <template slot-scope="{ row }">
+          <span v-if="row.voucherNo" class="voucher-text"><i class="el-icon-lock"></i> {{ row.voucherNo }}</span>
+          <span v-else class="empty-text">—</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="purpose" label="用途" min-width="140" show-overflow-tooltip>
+        <template slot-scope="{ row }">
+          <span v-if="row.purpose">{{ row.purpose }}</span>
+          <span v-else class="locked-text">已锁定</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="createTime" label="创建时间" min-width="150" />
+      <el-table-column label="操作" width="200" align="center" fixed="right">
+        <template slot-scope="{ row }">
+          <el-button type="text" icon="el-icon-view" @click="handleDetail(row)">详情</el-button>
+          <template v-if="isAuditAdmin">
+            <el-button v-if="row.status === 'SUBMITTED' || row.status === 'REJECTED'" type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
+            <el-button v-if="row.status === 'SUBMITTED'" type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -91,7 +116,7 @@ export default {
       list: [],
       total: 0,
       listLoading: false,
-      listQuery: { page: 1, size: 10, studentId: undefined, keyword: '' },
+      listQuery: { page: 1, size: 10, studentId: undefined, status: undefined, keyword: '' },
       dialogVisible: false,
       submitLoading: false,
       exportLoading: false,
@@ -109,7 +134,7 @@ export default {
     }
   },
   computed: {
-    isAdmin() { return this.$store.getters.role === 'ADMIN' },
+    isAuditAdmin() { return this.$store.getters.role === 'AUDIT_ADMIN' },
     dialogTitle() { return this.dialogType === 'create' ? '新增资金' : '编辑资金' }
   },
   created() {
@@ -132,7 +157,18 @@ export default {
       userOptions('SPONSOR').then(data => { this.sponsorOptions = data || [] }).catch(() => {})
     },
     handleFilter() { this.listQuery.page = 1; this.getList() },
-    handleReset() { this.listQuery.studentId = undefined; this.listQuery.keyword = ''; this.listQuery.page = 1; this.getList() },
+    handleReset() { this.listQuery.studentId = undefined; this.listQuery.status = undefined; this.listQuery.keyword = ''; this.listQuery.page = 1; this.getList() },
+    statusText(status) {
+      const map = { SUBMITTED: '待审核', AUDITED: '审核通过', REJECTED: '已驳回', REVIEWED: '复核通过', DISBURSED: '已拨付' }
+      return map[status] || status || '-'
+    },
+    statusTagType(status) {
+      const map = { SUBMITTED: 'info', AUDITED: 'primary', REJECTED: 'danger', REVIEWED: 'warning', DISBURSED: 'success' }
+      return map[status] || 'info'
+    },
+    handleDetail(row) {
+      this.$router.push('/fund/detail/' + row.id)
+    },
     handleSizeChange(size) { this.listQuery.size = size; this.listQuery.page = 1; this.getList() },
     handleCurrentChange(page) { this.listQuery.page = page; this.getList() },
     onStudentChange(val) {
@@ -197,8 +233,11 @@ export default {
 
 <style scoped>
 .page-container { background:#fff; padding:16px; border-radius:4px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
 .filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .danger-text { color:#F56C6C; }
+.voucher-text { font-size:12px; color:#606266; }
+.empty-text { color:#C0C4CC; }
+.locked-text { color:#C0C4CC; font-style:italic; }
 </style>
