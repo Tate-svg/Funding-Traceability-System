@@ -1,10 +1,12 @@
 <template>
   <div class="page-container">
+    <PrivacyTipBar />
+
     <!-- 查询区 -->
     <div class="filter-bar">
       <el-input
         v-model="listQuery.keyword"
-        placeholder="姓名 / 身份证 / 学校"
+        placeholder="虚拟ID / 学校"
         clearable
         style="width: 240px"
         @keyup.enter.native="handleFilter"
@@ -26,18 +28,21 @@
       style="width: 100%"
     >
       <el-table-column type="index" label="序号" width="55" align="center" />
-      <el-table-column prop="name" label="姓名" min-width="90" />
+      <el-table-column prop="virtualId" label="虚拟ID" min-width="110" />
+      <el-table-column prop="maskName" label="姓名(脱敏)" min-width="100" />
       <el-table-column prop="gender" label="性别" width="60" align="center" />
-      <el-table-column prop="idCard" label="身份证号" min-width="160" />
       <el-table-column prop="school" label="学校" min-width="120" show-overflow-tooltip />
       <el-table-column prop="grade" label="年级" min-width="100" show-overflow-tooltip />
-      <el-table-column prop="phone" label="联系电话" min-width="110" />
       <el-table-column prop="sponsorName" label="资助人" min-width="90" />
       <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column v-if="isAdmin" label="操作" width="150" align="center" fixed="right">
+      <el-table-column label="操作" width="230" align="center" fixed="right">
         <template slot-scope="{ row }">
-          <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
-          <el-button type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
+          <el-button type="text" icon="el-icon-key" @click="openPrivacy(row)">隐私调取</el-button>
+          <template v-if="isAdmin">
+            <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
+            <el-button type="text" icon="el-icon-folder" @click="openAttachments(row)">材料</el-button>
+            <el-button type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -62,7 +67,7 @@
         <el-row :gutter="10">
           <el-col :span="12">
             <el-form-item label="姓名" prop="name">
-              <el-input v-model="form.name" placeholder="请输入姓名" />
+              <el-input v-model="form.name" :placeholder="isEdit ? '已加密存储，留空表示不修改' : '请输入姓名'" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -77,12 +82,12 @@
         <el-row :gutter="10">
           <el-col :span="12">
             <el-form-item label="身份证号" prop="idCard">
-              <el-input v-model="form.idCard" placeholder="请输入身份证号" />
+              <el-input v-model="form.idCard" :placeholder="isEdit ? '已加密存储，留空表示不修改' : '请输入身份证号'" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="联系电话" prop="phone">
-              <el-input v-model="form.phone" placeholder="请输入联系电话" />
+              <el-input v-model="form.phone" :placeholder="isEdit ? '已加密存储，留空表示不修改' : '请输入联系电话'" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -104,27 +109,136 @@
           </el-select>
         </el-form-item>
         <el-form-item label="家庭住址" prop="familyAddress">
-          <el-input v-model="form.familyAddress" placeholder="请输入家庭住址" />
+          <el-input v-model="form.familyAddress" :placeholder="isEdit ? '已加密存储，留空表示不修改' : '请输入家庭住址'" />
         </el-form-item>
         <el-form-item label="家庭情况" prop="familySituation">
-          <el-input v-model="form.familySituation" type="textarea" :rows="3" placeholder="请描述家庭情况" />
+          <SensitiveTextarea
+            v-model="form.familySituation"
+            field-name="家庭情况"
+            :rows="3"
+            :placeholder="isEdit ? '已加密存储，留空表示不修改' : '请描述家庭情况，请勿填写未打码的身份证号、手机号等敏感信息'"
+            @block="familyBlock = $event"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="submitForm">确 定</el-button>
+        <el-button type="primary" :loading="submitLoading" :disabled="familyBlock" @click="submitForm">确 定</el-button>
       </div>
     </el-dialog>
+
+    <!-- 隐私调取弹窗 -->
+    <el-dialog title="隐私明文调取" :visible.sync="privacyVisible" width="600px" :close-on-click-modal="false">
+      <el-descriptions :column="2" border size="small" class="privacy-desc">
+        <el-descriptions-item label="虚拟ID">{{ privacyRow.virtualId }}</el-descriptions-item>
+        <el-descriptions-item label="姓名(脱敏)">{{ privacyRow.maskName }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-form label-width="90px" class="privacy-form">
+        <el-form-item label="字段范围" required>
+          <el-checkbox-group v-model="privacyFields">
+            <el-checkbox label="name">姓名</el-checkbox>
+            <el-checkbox label="idCard">身份证号</el-checkbox>
+            <el-checkbox label="phone">电话</el-checkbox>
+            <el-checkbox label="familyAddress">家庭住址</el-checkbox>
+            <el-checkbox label="familySituation">家庭情况</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="调取理由" required>
+          <el-input v-model="privacyReason" type="textarea" :rows="3" placeholder="请填写调取理由（必填）" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="applyLoading" @click="submitApply">提交申请</el-button>
+          <span class="apply-tip">提交后须经初审、终审两级审批</span>
+        </el-form-item>
+      </el-form>
+
+      <el-divider />
+
+      <div class="profile-section">
+        <el-button type="warning" icon="el-icon-view" :loading="profileLoading" @click="viewProfile">查看明文</el-button>
+        <div v-if="profile" class="profile-result">
+          <el-alert
+            v-if="profile.masked"
+            type="info"
+            :closable="false"
+            title="暂无有效审批单，请提交申请并等待两级审批"
+            show-icon
+          />
+          <template v-else>
+            <el-alert
+              type="success"
+              :closable="false"
+              :title="'审批单 #' + profile.applyId + '，明文可见至 ' + profile.expireTime"
+              show-icon
+              class="profile-alert"
+            />
+            <el-descriptions :column="1" border size="small">
+              <el-descriptions-item v-if="profile.name" label="姓名">{{ profile.name }}</el-descriptions-item>
+              <el-descriptions-item v-if="profile.idCard" label="身份证号">{{ profile.idCard }}</el-descriptions-item>
+              <el-descriptions-item v-if="profile.phone" label="电话">{{ profile.phone }}</el-descriptions-item>
+              <el-descriptions-item v-if="profile.familyAddress" label="家庭住址">{{ profile.familyAddress }}</el-descriptions-item>
+              <el-descriptions-item v-if="profile.familySituation" label="家庭情况">{{ profile.familySituation }}</el-descriptions-item>
+            </el-descriptions>
+          </template>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 材料弹窗 -->
+    <el-dialog title="佐证材料" :visible.sync="attVisible" width="640px" :close-on-click-modal="false">
+      <el-table v-loading="attLoading" :data="attList" border size="mini" style="width:100%">
+        <el-table-column prop="fileName" label="文件名" min-width="180" show-overflow-tooltip />
+        <el-table-column label="状态" width="100" align="center">
+          <template slot-scope="{ row }">
+            <el-tag :type="row.maskStatus === 'CONFIRMED' ? 'success' : 'warning'" size="small">
+              {{ row.maskStatus === 'CONFIRMED' ? '已确认' : '待脱敏' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="上传时间" min-width="150" />
+      </el-table>
+      <div class="upload-bar">
+        <el-upload
+          action=""
+          accept=".txt"
+          :show-file-list="false"
+          :http-request="customUpload"
+        >
+          <el-button type="primary" size="small" icon="el-icon-upload2" :loading="uploadLoading">上传材料(.txt)</el-button>
+        </el-upload>
+        <span class="upload-tip">上传后系统将自动识别敏感内容，需确认打码后方可入库</span>
+      </div>
+    </el-dialog>
+
+    <!-- 脱敏预览弹窗 -->
+    <AttachmentMaskPreview
+      :visible.sync="previewVisible"
+      :student-id="currentStudentId"
+      :attachment-id="previewData.attachmentId"
+      :original-text="previewData.originalText"
+      :hits="previewData.hits"
+      @confirmed="onAttachmentConfirmed"
+    />
+
+    <ComplianceFooter />
   </div>
 </template>
 
 <script>
 import { listStudents, getStudent, addStudent, updateStudent, deleteStudent, exportStudents } from '@/api/student'
 import { userOptions } from '@/api/user'
+import { applyPrivacyAccess, getPrivacyProfile } from '@/api/privacy'
+import { uploadAttachment, listAttachments } from '@/api/attachment'
 import { downloadFile } from '@/utils/download'
+import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
+import ComplianceFooter from '@/components/ComplianceFooter.vue'
+import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
+import AttachmentMaskPreview from '@/components/AttachmentMaskPreview.vue'
 
 export default {
   name: 'Student',
+  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea, AttachmentMaskPreview },
   data() {
     return {
       list: [],
@@ -136,23 +250,45 @@ export default {
       exportLoading: false,
       dialogType: 'create',
       sponsorOptions: [],
+      familyBlock: false,
       form: this.getEmptyForm(),
-      rules: {
-        name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-        gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
-        idCard: [{ required: true, message: '请输入身份证号', trigger: 'blur' }],
-        school: [{ required: true, message: '请输入学校', trigger: 'blur' }],
-        grade: [{ required: true, message: '请输入年级', trigger: 'blur' }],
-        sponsorId: [{ required: true, message: '请选择资助人', trigger: 'change' }]
-      }
+      // 隐私调取
+      privacyVisible: false,
+      privacyRow: {},
+      privacyFields: ['name', 'idCard', 'phone', 'familyAddress', 'familySituation'],
+      privacyReason: '',
+      applyLoading: false,
+      profile: null,
+      profileLoading: false,
+      // 材料
+      attVisible: false,
+      attList: [],
+      attLoading: false,
+      uploadLoading: false,
+      currentStudentId: null,
+      previewVisible: false,
+      previewData: { attachmentId: null, originalText: '', hits: [] }
     }
   },
   computed: {
     isAdmin() {
       return this.$store.getters.role === 'AUDIT_ADMIN'
     },
+    isEdit() {
+      return this.dialogType === 'update'
+    },
     dialogTitle() {
-      return this.dialogType === 'create' ? '新增学生' : '编辑学生'
+      return this.isEdit ? '编辑学生' : '新增学生'
+    },
+    rules() {
+      return {
+        name: [{ required: !this.isEdit, message: '请输入姓名', trigger: 'blur' }],
+        gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
+        idCard: [{ required: !this.isEdit, message: '请输入身份证号', trigger: 'blur' }],
+        school: [{ required: true, message: '请输入学校', trigger: 'blur' }],
+        grade: [{ required: true, message: '请输入年级', trigger: 'blur' }],
+        sponsorId: [{ required: true, message: '请选择资助人', trigger: 'change' }]
+      }
     }
   },
   created() {
@@ -210,6 +346,7 @@ export default {
     handleCreate() {
       this.dialogType = 'create'
       this.form = this.getEmptyForm()
+      this.familyBlock = false
       this.dialogVisible = true
       this.$nextTick(() => {
         this.$refs.dataForm && this.$refs.dataForm.clearValidate()
@@ -218,7 +355,15 @@ export default {
     handleUpdate(row) {
       this.dialogType = 'update'
       getStudent(row.id).then(data => {
-        this.form = Object.assign(this.getEmptyForm(), data || {})
+        const form = Object.assign(this.getEmptyForm(), data || {})
+        // 编辑态隐私字段留空，留空表示不修改
+        form.name = ''
+        form.idCard = ''
+        form.phone = ''
+        form.familyAddress = ''
+        form.familySituation = ''
+        this.form = form
+        this.familyBlock = false
         this.dialogVisible = true
         this.$nextTick(() => {
           this.$refs.dataForm && this.$refs.dataForm.clearValidate()
@@ -247,7 +392,7 @@ export default {
       })
     },
     handleDelete(row) {
-      this.$confirm(`确认删除学生「${row.name}」吗？`, '提示', {
+      this.$confirm(`确认删除学生「${row.maskName}」吗？`, '提示', {
         type: 'warning'
       }).then(() => {
         deleteStudent(row.id).then(() => {
@@ -270,6 +415,74 @@ export default {
       }).finally(() => {
         this.exportLoading = false
       })
+    },
+    // 隐私调取
+    openPrivacy(row) {
+      this.privacyRow = row
+      this.privacyFields = ['name', 'idCard', 'phone', 'familyAddress', 'familySituation']
+      this.privacyReason = ''
+      this.profile = null
+      this.privacyVisible = true
+    },
+    submitApply() {
+      if (!this.privacyFields.length) {
+        this.$message.warning('请选择字段范围')
+        return
+      }
+      if (!this.privacyReason.trim()) {
+        this.$message.warning('请填写调取理由')
+        return
+      }
+      this.applyLoading = true
+      applyPrivacyAccess({
+        virtualId: this.privacyRow.virtualId,
+        fieldScope: this.privacyFields.join(','),
+        reason: this.privacyReason.trim()
+      }).then(() => {
+        this.$message.success('申请已提交，请等待两级审批')
+        this.privacyReason = ''
+      }).finally(() => {
+        this.applyLoading = false
+      })
+    },
+    viewProfile() {
+      this.profileLoading = true
+      getPrivacyProfile(this.privacyRow.virtualId).then(data => {
+        this.profile = data || { masked: true }
+      }).finally(() => {
+        this.profileLoading = false
+      })
+    },
+    // 材料
+    openAttachments(row) {
+      this.currentStudentId = row.id
+      this.attVisible = true
+      this.loadAttachments()
+    },
+    loadAttachments() {
+      this.attLoading = true
+      listAttachments(this.currentStudentId).then(data => {
+        this.attList = data || []
+      }).finally(() => {
+        this.attLoading = false
+      })
+    },
+    customUpload({ file }) {
+      this.uploadLoading = true
+      uploadAttachment(this.currentStudentId, file).then(data => {
+        this.previewData = {
+          attachmentId: data.attachmentId,
+          originalText: data.originalText || '',
+          hits: data.hits || []
+        }
+        this.previewVisible = true
+        this.loadAttachments()
+      }).finally(() => {
+        this.uploadLoading = false
+      })
+    },
+    onAttachmentConfirmed() {
+      this.loadAttachments()
     }
   }
 }
@@ -298,5 +511,35 @@ export default {
 }
 .danger-text {
   color: #F56C6C;
+}
+.privacy-desc {
+  margin-bottom: 12px;
+}
+.privacy-form {
+  margin-top: 4px;
+}
+.apply-tip {
+  margin-left: 10px;
+  font-size: 12px;
+  color: #909399;
+}
+.profile-section {
+  margin-top: 4px;
+}
+.profile-result {
+  margin-top: 10px;
+}
+.profile-alert {
+  margin-bottom: 10px;
+}
+.upload-bar {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
 }
 </style>

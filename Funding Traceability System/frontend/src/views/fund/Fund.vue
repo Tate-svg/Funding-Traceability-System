@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    <PrivacyTipBar />
     <div class="filter-bar">
       <el-select v-model="listQuery.studentId" placeholder="选择学生筛选" clearable filterable style="width:180px" @change="handleFilter">
         <el-option v-for="item in studentOptions" :key="item.id" :label="item.name" :value="item.id" />
@@ -89,17 +90,19 @@
           <el-date-picker v-model="form.fundDate" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="width:100%" />
         </el-form-item>
         <el-form-item label="用途" prop="purpose">
-          <el-input v-model="form.purpose" placeholder="请输入用途" />
+          <SensitiveTextarea v-model="form.purpose" field-name="用途" :rows="2" placeholder="请输入用途，请勿填写未打码的敏感信息" @block="purposeBlock = $event" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="备注" />
+          <SensitiveTextarea v-model="form.remark" field-name="备注" :rows="3" placeholder="备注，请勿填写未打码的敏感信息" @block="remarkBlock = $event" />
         </el-form-item>
       </el-form>
       <div slot="footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="submitForm">确 定</el-button>
+        <el-button type="primary" :loading="submitLoading" :disabled="purposeBlock || remarkBlock" @click="submitForm">确 定</el-button>
       </div>
     </el-dialog>
+
+    <ComplianceFooter />
   </div>
 </template>
 
@@ -108,9 +111,13 @@ import { listFunds, getFund, addFund, updateFund, deleteFund, exportFunds } from
 import { studentOptions } from '@/api/student'
 import { userOptions } from '@/api/user'
 import { downloadFile } from '@/utils/download'
+import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
+import ComplianceFooter from '@/components/ComplianceFooter.vue'
+import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
 
 export default {
   name: 'Fund',
+  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea },
   data() {
     return {
       list: [],
@@ -123,6 +130,8 @@ export default {
       dialogType: 'create',
       studentOptions: [],
       sponsorOptions: [],
+      purposeBlock: false,
+      remarkBlock: false,
       form: this.getEmptyForm(),
       rules: {
         studentId: [{ required: true, message: '请选择学生', trigger: 'change' }],
@@ -182,6 +191,8 @@ export default {
     handleCreate() {
       this.dialogType = 'create'
       this.form = this.getEmptyForm()
+      this.purposeBlock = false
+      this.remarkBlock = false
       this.dialogVisible = true
       this.$nextTick(() => { this.$refs.dataForm && this.$refs.dataForm.clearValidate() })
     },
@@ -189,6 +200,8 @@ export default {
       this.dialogType = 'update'
       getFund(row.id).then(data => {
         this.form = Object.assign(this.getEmptyForm(), data || {})
+        this.purposeBlock = false
+        this.remarkBlock = false
         this.dialogVisible = true
         this.$nextTick(() => { this.$refs.dataForm && this.$refs.dataForm.clearValidate() })
       })

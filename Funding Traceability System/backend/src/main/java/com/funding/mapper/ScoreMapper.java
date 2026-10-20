@@ -16,7 +16,7 @@ import java.util.List;
 public interface ScoreMapper extends BaseMapper<Score> {
 
     @Select("<script>" +
-            "SELECT sc.*, s.name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+            "SELECT sc.*, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
             "LEFT JOIN student s ON sc.student_id = s.id " +
             "LEFT JOIN sys_user u ON sc.sponsor_id = u.id " +
             "<where>" +
@@ -33,12 +33,12 @@ public interface ScoreMapper extends BaseMapper<Score> {
                                        @Param("studentId") Long studentId,
                                        @Param("sponsorId") Long sponsorId);
 
-    @Select("SELECT sc.*, s.name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+    @Select("SELECT sc.*, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
             "LEFT JOIN student s ON sc.student_id = s.id " +
             "LEFT JOIN sys_user u ON sc.sponsor_id = u.id WHERE sc.id = #{id}")
     ScoreVO selectByIdWithNames(@Param("id") Long id);
 
-    @Select("SELECT sc.*, s.name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+    @Select("SELECT sc.*, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
             "LEFT JOIN student s ON sc.student_id = s.id " +
             "LEFT JOIN sys_user u ON sc.sponsor_id = u.id ORDER BY sc.id DESC")
     List<ScoreVO> selectAllWithNames();

@@ -64,6 +64,18 @@ export const asyncRoutes = [
         meta: { title: '复核抽检池', icon: 'el-icon-view', roles: ['SUPERVISOR'] }
       },
       {
+        path: 'trace',
+        name: 'TraceLedger',
+        component: () => import('@/views/trace/TraceLedger.vue'),
+        meta: { title: '溯源台账', icon: 'el-icon-stamp', roles: ['AUDIT_ADMIN', 'SUPERVISOR'] }
+      },
+      {
+        path: 'privacy',
+        name: 'PrivacyApprove',
+        component: () => import('@/views/privacy/PrivacyApprove.vue'),
+        meta: { title: '隐私审批', icon: 'el-icon-lock', roles: ['AUDIT_ADMIN', 'DISBURSE_ADMIN', 'SUPERVISOR', 'SPONSOR'] }
+      },
+      {
         path: 'operation-log',
         name: 'OperationLog',
         component: () => import('@/views/log/OperationLog.vue'),

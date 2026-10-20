@@ -1,8 +1,8 @@
 package com.funding.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.funding.entity.Student;
 import com.funding.vo.OptionVO;
+import com.funding.vo.StudentSaveRequest;
 import com.funding.vo.StudentVO;
 
 import javax.servlet.http.HttpServletResponse;
@@ -17,9 +17,9 @@ public interface StudentService {
 
     StudentVO getById(Long id);
 
-    void saveStudent(Student student);
+    void saveStudent(StudentSaveRequest request);
 
-    void updateStudent(Student student);
+    void updateStudent(Long id, StudentSaveRequest request);
 
     void deleteStudent(Long id);
 

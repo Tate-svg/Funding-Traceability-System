@@ -1,1 +1,2 @@
 com\funding\controller\OperationLogController.class
+com\funding\config\PrivacyDataSourceConfig.class

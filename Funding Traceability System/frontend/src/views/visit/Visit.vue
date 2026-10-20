@@ -1,5 +1,6 @@
 <template>
   <div class="page-container">
+    <PrivacyTipBar />
     <div class="filter-bar">
       <el-select v-model="listQuery.studentId" placeholder="选择学生筛选" clearable filterable style="width:180px" @change="handleFilter">
         <el-option v-for="item in studentOptions" :key="item.id" :label="item.name" :value="item.id" />
@@ -75,20 +76,22 @@
           </el-col>
         </el-row>
         <el-form-item label="回访内容" prop="content">
-          <el-input v-model="form.content" type="textarea" :rows="2" placeholder="请输入回访内容" />
+          <SensitiveTextarea v-model="form.content" field-name="回访内容" :rows="2" placeholder="请输入回访内容，请勿填写未打码的敏感信息" @block="contentBlock = $event" />
         </el-form-item>
         <el-form-item label="情况说明" prop="situation">
-          <el-input v-model="form.situation" type="textarea" :rows="2" placeholder="请输入情况说明" />
+          <SensitiveTextarea v-model="form.situation" field-name="情况说明" :rows="2" placeholder="请输入情况说明，请勿填写未打码的敏感信息" @block="situationBlock = $event" />
         </el-form-item>
         <el-form-item label="存在问题" prop="problem">
-          <el-input v-model="form.problem" type="textarea" :rows="2" placeholder="请输入存在问题" />
+          <SensitiveTextarea v-model="form.problem" field-name="存在问题" :rows="2" placeholder="请输入存在问题，请勿填写未打码的敏感信息" @block="problemBlock = $event" />
         </el-form-item>
       </el-form>
       <div slot="footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="submitForm">确 定</el-button>
+        <el-button type="primary" :loading="submitLoading" :disabled="contentBlock || situationBlock || problemBlock" @click="submitForm">确 定</el-button>
       </div>
     </el-dialog>
+
+    <ComplianceFooter />
   </div>
 </template>
 
@@ -97,9 +100,13 @@ import { listVisits, getVisit, addVisit, updateVisit, deleteVisit, exportVisits 
 import { studentOptions } from '@/api/student'
 import { userOptions } from '@/api/user'
 import { downloadFile } from '@/utils/download'
+import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
+import ComplianceFooter from '@/components/ComplianceFooter.vue'
+import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
 
 export default {
   name: 'Visit',
+  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea },
   data() {
     return {
       list: [],
@@ -112,6 +119,9 @@ export default {
       dialogType: 'create',
       studentOptions: [],
       sponsorOptions: [],
+      contentBlock: false,
+      situationBlock: false,
+      problemBlock: false,
       form: this.getEmptyForm(),
       rules: {
         studentId: [{ required: true, message: '请选择学生', trigger: 'change' }],
@@ -160,6 +170,9 @@ export default {
     handleCreate() {
       this.dialogType = 'create'
       this.form = this.getEmptyForm()
+      this.contentBlock = false
+      this.situationBlock = false
+      this.problemBlock = false
       this.dialogVisible = true
       this.$nextTick(() => { this.$refs.dataForm && this.$refs.dataForm.clearValidate() })
     },
@@ -167,6 +180,9 @@ export default {
       this.dialogType = 'update'
       getVisit(row.id).then(data => {
         this.form = Object.assign(this.getEmptyForm(), data || {})
+        this.contentBlock = false
+        this.situationBlock = false
+        this.problemBlock = false
         this.dialogVisible = true
         this.$nextTick(() => { this.$refs.dataForm && this.$refs.dataForm.clearValidate() })
       })

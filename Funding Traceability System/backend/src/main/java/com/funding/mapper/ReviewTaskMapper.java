@@ -14,7 +14,7 @@ import org.apache.ibatis.annotations.Select;
 public interface ReviewTaskMapper extends BaseMapper<ReviewTask> {
 
     @Select("<script>" +
-            "SELECT t.*, f.amount, f.voucher_no, f.status AS fund_status, s.name AS student_name, u.real_name AS sponsor_name " +
+            "SELECT t.*, f.amount, f.voucher_no, f.status AS fund_status, s.mask_name AS student_name, u.real_name AS sponsor_name " +
             "FROM review_task t " +
             "LEFT JOIN fund f ON t.fund_id = f.id " +
             "LEFT JOIN student s ON f.student_id = s.id " +

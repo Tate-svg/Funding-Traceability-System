@@ -24,14 +24,14 @@ public interface FundMapper extends BaseMapper<Fund> {
             "LEFT JOIN sys_user du ON f.disburse_by = du.id ";
 
     String NAME_COLUMNS =
-            "f.*, s.name AS student_name, u.real_name AS sponsor_name, " +
+            "f.*, s.mask_name AS student_name, u.real_name AS sponsor_name, " +
             "au.real_name AS auditor_name, du.real_name AS disburser_name ";
 
     @Select("<script>" +
             "SELECT " + NAME_COLUMNS + "FROM fund f " + NAME_JOIN +
             "<where>" +
             "<if test='keyword != null and keyword != \"\"'>" +
-            "AND (s.name LIKE CONCAT('%',#{keyword},'%') OR f.purpose LIKE CONCAT('%',#{keyword},'%') OR f.remark LIKE CONCAT('%',#{keyword},'%'))" +
+            "AND (s.mask_name LIKE CONCAT('%',#{keyword},'%') OR f.purpose LIKE CONCAT('%',#{keyword},'%') OR f.remark LIKE CONCAT('%',#{keyword},'%'))" +
             "</if>" +
             "<if test='studentId != null'>" +
             "AND f.student_id = #{studentId}" +
