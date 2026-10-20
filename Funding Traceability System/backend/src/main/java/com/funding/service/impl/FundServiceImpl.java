@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.funding.common.BusinessException;
 import com.funding.common.UserContext;
 import com.funding.entity.Fund;
+import com.funding.entity.TimestampRecord;
 import com.funding.mapper.FundMapper;
 import com.funding.service.FundService;
+import com.funding.service.TimestampService;
 import com.funding.util.ExcelUtils;
 import com.funding.util.HashUtils;
 import com.funding.vo.FundVO;
@@ -37,6 +39,12 @@ public class FundServiceImpl implements FundService {
 
     @Autowired
     private FundMapper fundMapper;
+
+    @Autowired
+    private TimestampService timestampService;
+
+    @Autowired
+    private com.funding.common.MaskingGuard maskingGuard;
 
     /** 大额复核阈值（元） */
     @Value("${funding.review.threshold:5000}")
@@ -71,6 +79,9 @@ public class FundServiceImpl implements FundService {
     @Override
     public void saveFund(Fund fund) {
         fund.setId(null);
+        // 二次脱敏校验：自由文本不得夹带未打码敏感信息
+        maskingGuard.check("POST /api/funds", "用途", fund.getPurpose());
+        maskingGuard.check("POST /api/funds", "备注", fund.getRemark());
         // 强制初始状态，凭证/审核/拨付字段一律清空
         fund.setStatus(Fund.STATUS_SUBMITTED);
         fund.setVoucherNo(null);
@@ -85,6 +96,9 @@ public class FundServiceImpl implements FundService {
 
     @Override
     public void updateFund(Fund fund) {
+        // 二次脱敏校验
+        maskingGuard.check("PUT /api/funds/" + fund.getId(), "用途", fund.getPurpose());
+        maskingGuard.check("PUT /api/funds/" + fund.getId(), "备注", fund.getRemark());
         // 仅 SUBMITTED/REJECTED 可编辑；状态与凭证字段不允许通过本接口变更
         UpdateWrapper<Fund> uw = new UpdateWrapper<>();
         uw.eq("id", fund.getId())
@@ -118,7 +132,8 @@ public class FundServiceImpl implements FundService {
     public void export(HttpServletResponse response) throws Exception {
         List<FundVO> list = fundMapper.selectAllWithNames();
         List<String> headers = Arrays.asList(
-                "ID", "学生", "资助人", "金额", "资助日期", "用途", "备注", "状态", "凭证号", "创建时间");
+                "ID", "学生", "资助人", "金额", "资助日期", "用途", "备注", "状态", "凭证号", "创建时间",
+                "业务节点数", "时间戳序列", "最新存证哈希", "存证标识");
         List<List<Object>> rows = new ArrayList<>();
         for (FundVO f : list) {
             List<Object> row = new ArrayList<>();
@@ -132,6 +147,23 @@ public class FundServiceImpl implements FundService {
             row.add(f.getStatus());
             row.add(f.getVoucherNo());
             row.add(f.getCreateTime() != null ? f.getCreateTime().toString() : "");
+            // 可信时间戳存证信息
+            List<TimestampRecord> tsList = timestampService.listByBiz("fund", f.getId());
+            if (tsList.isEmpty()) {
+                row.add(0);
+                row.add("");
+                row.add("");
+                row.add("—");
+            } else {
+                TimestampRecord first = tsList.get(0);
+                TimestampRecord last = tsList.get(tsList.size() - 1);
+                row.add(tsList.size());
+                row.add(tsList.size() == 1
+                        ? "#" + first.getSerialNo()
+                        : "#" + first.getSerialNo() + "-#" + last.getSerialNo());
+                row.add(last.getTsHash() != null ? last.getTsHash().substring(0, 16) + "…" : "");
+                row.add("✓ 可信存证");
+            }
             rows.add(row);
         }
         ExcelUtils.writeWorkbook(response, "资金流水.xlsx", headers, rows);
@@ -164,6 +196,8 @@ public class FundServiceImpl implements FundService {
             throw new BusinessException(404, "单据不存在");
         }
         boolean pass = "PASS".equals(result);
+        // 二次脱敏校验：审核意见
+        maskingGuard.check("POST /api/funds/" + id + "/audit", "审核意见", remark);
         LocalDateTime now = LocalDateTime.now();
 
         UpdateWrapper<Fund> uw = new UpdateWrapper<>();

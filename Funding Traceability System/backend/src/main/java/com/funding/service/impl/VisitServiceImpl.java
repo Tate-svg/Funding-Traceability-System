@@ -27,6 +27,9 @@ public class VisitServiceImpl implements VisitService {
     @Autowired
     private VisitMapper visitMapper;
 
+    @Autowired
+    private com.funding.common.MaskingGuard maskingGuard;
+
     @Override
     public IPage<VisitVO> page(Integer page, Integer size, Long studentId, String keyword) {
         Page<VisitVO> p = new Page<>(page, size);
@@ -53,11 +56,18 @@ public class VisitServiceImpl implements VisitService {
     @Override
     public void saveVisit(Visit visit) {
         visit.setId(null);
+        // 二次脱敏校验：回访自由文本不得夹带未打码敏感信息
+        maskingGuard.check("POST /api/visits", "回访内容", visit.getContent());
+        maskingGuard.check("POST /api/visits", "情况说明", visit.getSituation());
+        maskingGuard.check("POST /api/visits", "存在问题", visit.getProblem());
         visitMapper.insert(visit);
     }
 
     @Override
     public void updateVisit(Visit visit) {
+        maskingGuard.check("PUT /api/visits/" + visit.getId(), "回访内容", visit.getContent());
+        maskingGuard.check("PUT /api/visits/" + visit.getId(), "情况说明", visit.getSituation());
+        maskingGuard.check("PUT /api/visits/" + visit.getId(), "存在问题", visit.getProblem());
         visitMapper.updateById(visit);
     }
 

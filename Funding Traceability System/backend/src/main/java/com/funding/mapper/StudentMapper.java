@@ -24,7 +24,7 @@ public interface StudentMapper extends BaseMapper<Student> {
             "LEFT JOIN sys_user u ON s.sponsor_id = u.id " +
             "<where>" +
             "<if test='keyword != null and keyword != \"\"'>" +
-            "AND (s.name LIKE CONCAT('%',#{keyword},'%') OR s.school LIKE CONCAT('%',#{keyword},'%') OR s.phone LIKE CONCAT('%',#{keyword},'%'))" +
+            "AND (s.mask_name LIKE CONCAT('%',#{keyword},'%') OR s.school LIKE CONCAT('%',#{keyword},'%') OR s.virtual_id LIKE CONCAT('%',#{keyword},'%'))" +
             "</if>" +
             "<if test='sponsorId != null'>" +
             "AND s.sponsor_id = #{sponsorId}" +
@@ -47,7 +47,7 @@ public interface StudentMapper extends BaseMapper<Student> {
      * 下拉选项
      */
     @Select("<script>" +
-            "SELECT s.id, s.name FROM student s " +
+            "SELECT s.id, s.mask_name AS name FROM student s " +
             "<where>" +
             "<if test='sponsorId != null'>s.sponsor_id = #{sponsorId}</if>" +
             "</where>" +

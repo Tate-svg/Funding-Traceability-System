@@ -1,0 +1,258 @@
+<template>
+  <div class="page-container">
+    <div class="filter-bar">
+      <el-select v-model="listQuery.bizType" placeholder="业务类型" clearable style="width:140px" @change="handleFilter">
+        <el-option label="资助单" value="fund" />
+        <el-option label="学生资料" value="student" />
+        <el-option label="回访" value="visit" />
+        <el-option label="评分" value="score" />
+        <el-option label="复核任务" value="review_task" />
+        <el-option label="用户" value="sys_user" />
+      </el-select>
+      <el-select v-model="listQuery.node" placeholder="业务节点" clearable style="width:140px" @change="handleFilter">
+        <el-option v-for="n in nodeOptions" :key="n.value" :label="n.label" :value="n.value" />
+      </el-select>
+      <el-input v-model="listQuery.keyword" placeholder="摘要 / 操作人关键词" clearable style="width:220px" @keyup.enter.native="handleFilter" />
+      <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
+      <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
+      <span class="flex-fill"></span>
+      <el-button icon="el-icon-check" @click="verifyAll">核验全链</el-button>
+    </div>
+
+    <div v-loading="listLoading" class="ledger-wrap">
+      <el-empty v-if="!listLoading && list.length === 0" description="暂无时间戳台账记录" />
+      <div v-else class="ledger-list">
+        <div
+          v-for="item in list"
+          :key="item.id"
+          class="ledger-card"
+          :class="[nodeClass(item.node), { 'is-anomaly': item.anomaly === 1 }]"
+        >
+          <div class="ts-badge" :style="{ background: nodeColor(item.node) }">
+            <div class="ts-serial">#{{ item.serialNo }}</div>
+            <div class="ts-time">{{ item.tsTime }}</div>
+          </div>
+          <div class="card-body">
+            <div class="card-head">
+              <span class="node-tag" :style="{ background: nodeColor(item.node) }">{{ item.nodeName }}</span>
+              <span class="biz-text">{{ bizTypeText(item.bizType) }}<template v-if="item.bizId"> #{{ item.bizId }}</template></span>
+              <el-tag v-if="item.anomaly === 1" type="danger" size="mini" effect="dark">时序异常</el-tag>
+              <span class="flex-fill"></span>
+              <el-button v-if="item.bizType === 'fund' && item.bizId" type="text" size="mini" @click="goDetail(item)">
+                查看单据 <i class="el-icon-arrow-right"></i>
+              </el-button>
+            </div>
+            <div class="card-summary">{{ item.summary }}</div>
+            <div class="card-meta">
+              <span>操作人：{{ item.operatorName || '—' }}</span>
+              <el-tag :type="roleTagType(item.role)" size="mini">{{ roleText(item.role) }}</el-tag>
+              <el-tooltip :content="item.tsHash" placement="top">
+                <span class="hash-text"><i class="el-icon-lock"></i> {{ shortHash(item.tsHash) }}</span>
+              </el-tooltip>
+              <span class="stamp-flag"><i class="el-icon-circle-check"></i> 可信存证</span>
+            </div>
+            <div v-if="item.anomaly === 1" class="anomaly-reason">
+              <i class="el-icon-warning-outline"></i> {{ item.anomalyReason }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pagination-bar">
+      <el-pagination
+        background
+        :current-page="listQuery.page"
+        :page-size="listQuery.size"
+        :page-sizes="[10, 20, 50]"
+        :total="total"
+        layout="total, sizes, prev, pager, next"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
+
+    <!-- 全链核验结果弹窗 -->
+    <el-dialog title="时间戳哈希链核验" :visible.sync="verifyVisible" width="520px">
+      <template v-if="verifyResult">
+        <el-alert
+          :type="verifyResult.valid ? 'success' : 'error'"
+          :closable="false"
+          show-icon
+          :title="verifyResult.valid ? '哈希链核验通过：全部记录与链上哈希一致，未发现篡改' : ('哈希链核验失败：序列 #' + verifyResult.chainBrokenAt + ' 起与链上哈希不一致，疑似篡改')"
+        />
+        <div class="verify-stats">
+          <span>台账总数：<b>{{ verifyTotal }}</b> 条</span>
+          <span>时序异常：<b :class="{ 'danger-text': verifyResult.anomalyCount > 0 }">{{ verifyResult.anomalyCount }}</b> 条</span>
+        </div>
+      </template>
+      <div slot="footer">
+        <el-button type="primary" @click="verifyVisible = false">关 闭</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { listTimestamps, verifyTimestamps } from '@/api/trace'
+
+// 业务节点差异化色卡
+const NODE_COLORS = {
+  SUBMIT: '#409EFF',        // 提交申请 蓝
+  AUDIT_PASS: '#67C23A',    // 审核通过 绿
+  AUDIT_REJECT: '#F56C6C',  // 审核驳回 红
+  REVIEW: '#E6A23C',        // 复核确认 橙
+  REVIEW_DRAW: '#CC7A00',   // 大额抽检 深橙
+  DISBURSE: '#C9A227',      // 资金拨付 金
+  VOUCHER_MODIFY: '#8E6FE8',// 凭证修改 紫
+  VISIT_RECORD: '#36A3B5',  // 回访录入 青
+  STUDENT_UPLOAD: '#13B5A6',// 资料上传 蓝绿
+  OTHER: '#909399'          // 其他 灰
+}
+
+export default {
+  name: 'TraceLedger',
+  data() {
+    return {
+      list: [],
+      total: 0,
+      listLoading: false,
+      listQuery: { page: 1, size: 10, bizType: undefined, node: undefined, keyword: '' },
+      verifyVisible: false,
+      verifyResult: null,
+      nodeOptions: [
+        { value: 'SUBMIT', label: '提交申请' },
+        { value: 'AUDIT_PASS', label: '审核通过' },
+        { value: 'AUDIT_REJECT', label: '审核驳回' },
+        { value: 'REVIEW_DRAW', label: '大额抽检' },
+        { value: 'REVIEW', label: '复核确认' },
+        { value: 'DISBURSE', label: '资金拨付' },
+        { value: 'VOUCHER_MODIFY', label: '凭证修改' },
+        { value: 'VISIT_RECORD', label: '回访录入' },
+        { value: 'STUDENT_UPLOAD', label: '资料上传' },
+        { value: 'OTHER', label: '其他操作' }
+      ]
+    }
+  },
+  created() {
+    this.getList()
+  },
+  computed: {
+    verifyTotal() {
+      return (this.verifyResult && this.verifyResult.total != null) ? this.verifyResult.total : 0
+    }
+  },
+  methods: {
+    nodeColor(node) {
+      return NODE_COLORS[node] || NODE_COLORS.OTHER
+    },
+    nodeClass(node) {
+      return 'node-' + String(node || 'OTHER').toLowerCase()
+    },
+    bizTypeText(bizType) {
+      const map = { fund: '资助单', student: '学生资料', visit: '回访', score: '评分', score_item: '评分指标', review_task: '复核任务', sys_user: '用户', system: '系统' }
+      return map[bizType] || bizType || '-'
+    },
+    roleText(role) {
+      const map = {
+        AUDIT_ADMIN: '审核管理员',
+        DISBURSE_ADMIN: '拨付管理员',
+        SUPERVISOR: '监事/审计',
+        SPONSOR: '资助人'
+      }
+      return map[role] || role || '-'
+    },
+    roleTagType(role) {
+      const map = { AUDIT_ADMIN: 'danger', DISBURSE_ADMIN: 'warning', SUPERVISOR: 'primary', SPONSOR: 'success' }
+      return map[role] || 'info'
+    },
+    shortHash(hash) {
+      return hash ? hash.substring(0, 16) + '…' : '—'
+    },
+    getList() {
+      this.listLoading = true
+      listTimestamps(this.listQuery).then(data => {
+        this.list = (data && data.records) || []
+        this.total = (data && data.total) || 0
+      }).finally(() => { this.listLoading = false })
+    },
+    handleFilter() { this.listQuery.page = 1; this.getList() },
+    handleReset() {
+      this.listQuery.bizType = undefined
+      this.listQuery.node = undefined
+      this.listQuery.keyword = ''
+      this.listQuery.page = 1
+      this.getList()
+    },
+    handleSizeChange(size) { this.listQuery.size = size; this.listQuery.page = 1; this.getList() },
+    handleCurrentChange(page) { this.listQuery.page = page; this.getList() },
+    goDetail(item) {
+      this.$router.push('/fund/detail/' + item.bizId)
+    },
+    verifyAll() {
+      verifyTimestamps({}).then(data => {
+        this.verifyResult = data
+        this.verifyVisible = true
+      }).catch(() => {})
+    }
+  }
+}
+</script>
+
+<style scoped>
+.page-container { background:#fff; padding:16px; border-radius:4px; }
+.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.flex-fill { flex:1; }
+.ledger-wrap { min-height:200px; }
+.ledger-list { display:flex; flex-direction:column; gap:12px; }
+
+/* 台账卡片：左侧时间戳徽章 + 节点色卡 + 可信存证水印 */
+.ledger-card {
+  position:relative; overflow:hidden;
+  display:flex; align-items:stretch;
+  border:1px solid #EBEEF5; border-left-width:4px; border-radius:6px;
+  background:#fff;
+}
+.ledger-card::before {
+  content:'可信存证 · 不可篡改';
+  position:absolute; right:-20px; top:50%;
+  transform:translateY(-50%) rotate(-24deg);
+  font-size:26px; font-weight:700; letter-spacing:6px;
+  color:rgba(64,158,255,.06); white-space:nowrap; pointer-events:none;
+}
+.ledger-card.is-anomaly { border-color:#F56C6C; border-left-width:4px; background:#FFF7F7; }
+.ledger-card.is-anomaly::before { color:rgba(245,108,108,.08); }
+
+.ts-badge {
+  flex:0 0 118px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  color:#fff; padding:10px 6px; gap:4px;
+}
+.ts-serial { font-size:18px; font-weight:700; font-family:Consolas, monospace; }
+.ts-time { font-size:11px; opacity:.92; text-align:center; line-height:1.5; }
+
+.card-body { flex:1; padding:10px 16px; min-width:0; }
+.card-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.node-tag { color:#fff; font-size:12px; padding:2px 10px; border-radius:10px; line-height:18px; }
+.biz-text { font-weight:600; color:#303133; font-size:13px; }
+.card-summary { margin-top:6px; font-size:13px; color:#606266; word-break:break-all; }
+.card-meta { margin-top:6px; font-size:12px; color:#909399; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.hash-text { font-family:Consolas, monospace; color:#909399; cursor:default; }
+.stamp-flag { color:#67C23A; }
+.anomaly-reason { margin-top:6px; font-size:12px; color:#F56C6C; }
+.danger-text { color:#F56C6C; }
+.verify-stats { margin-top:12px; display:flex; gap:24px; font-size:13px; color:#606266; }
+
+/* 节点色卡左边框与徽章同色 */
+.node-submit { border-left-color:#409EFF; }
+.node-audit_pass { border-left-color:#67C23A; }
+.node-audit_reject { border-left-color:#F56C6C; }
+.node-review { border-left-color:#E6A23C; }
+.node-review_draw { border-left-color:#CC7A00; }
+.node-disburse { border-left-color:#C9A227; }
+.node-voucher_modify { border-left-color:#8E6FE8; }
+.node-visit_record { border-left-color:#36A3B5; }
+.node-student_upload { border-left-color:#13B5A6; }
+.node-other { border-left-color:#909399; }
+
+.pagination-bar { margin-top:16px; text-align:right; }
+</style>

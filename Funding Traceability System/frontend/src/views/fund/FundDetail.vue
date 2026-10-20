@@ -60,29 +60,13 @@
         </el-descriptions>
       </el-card>
 
-      <!-- 关联操作日志（仅审核管理员/监事可见） -->
+      <!-- 可信时间戳溯源（仅审核管理员/监事可见） -->
       <el-card v-if="canViewLogs" shadow="never" class="log-card-wrap">
         <div slot="header" class="card-title">
-          关联操作日志
-          <span class="card-subtitle"><i class="el-icon-lock"></i> 只读存证，不可篡改</span>
+          可信时间戳溯源
+          <span class="card-subtitle"><i class="el-icon-lock"></i> 全流程盖章存证，不可篡改</span>
         </div>
-        <el-empty v-if="logs.length === 0" description="暂无关联日志" :image-size="60" />
-        <el-timeline v-else class="mini-timeline">
-          <el-timeline-item
-            v-for="item in logs"
-            :key="item.id"
-            :timestamp="item.createTime"
-            placement="top"
-            :color="item.targetType === 'fund' ? '#409EFF' : '#E6A23C'"
-          >
-            <div class="mini-log">
-              <span class="operation">{{ item.operation }}</span>
-              <i v-if="item.targetType === 'fund'" class="el-icon-lock lock-icon" title="已存证"></i>
-              <div class="mini-meta">{{ item.username }}（{{ roleText(item.role) }}）</div>
-              <div v-if="item.content" class="mini-content">{{ item.content }}</div>
-            </div>
-          </el-timeline-item>
-        </el-timeline>
+        <trace-timeline biz-type="fund" :biz-id="$route.params.id" />
       </el-card>
     </template>
   </div>
@@ -90,16 +74,16 @@
 
 <script>
 import { getFund } from '@/api/fund'
-import { listOperationLogs } from '@/api/log'
+import TraceTimeline from '@/views/trace/TraceTimeline.vue'
 
 const BIG_THRESHOLD = 5000
 
 export default {
   name: 'FundDetail',
+  components: { TraceTimeline },
   data() {
     return {
       detail: null,
-      logs: [],
       loading: false
     }
   },
@@ -127,9 +111,6 @@ export default {
   },
   created() {
     this.getDetail()
-    if (this.canViewLogs) {
-      this.getLogs()
-    }
   },
   methods: {
     formatAmount(val) {
@@ -147,25 +128,11 @@ export default {
       const map = { SUBMITTED: 'info', AUDITED: 'primary', REJECTED: 'danger', REVIEWED: 'warning', DISBURSED: 'success' }
       return map[status] || 'info'
     },
-    roleText(role) {
-      const map = {
-        AUDIT_ADMIN: '审核管理员',
-        DISBURSE_ADMIN: '拨付管理员',
-        SUPERVISOR: '监事/审计',
-        SPONSOR: '资助人'
-      }
-      return map[role] || role || '-'
-    },
     getDetail() {
       this.loading = true
       getFund(this.$route.params.id).then(data => {
         this.detail = data
       }).finally(() => { this.loading = false })
-    },
-    getLogs() {
-      listOperationLogs({ page: 1, size: 20, targetType: 'fund', targetId: this.$route.params.id }).then(data => {
-        this.logs = (data && data.records) || []
-      }).catch(() => {})
     }
   }
 }
@@ -185,9 +152,4 @@ export default {
 .hash-text { font-family:Consolas, monospace; font-size:12px; color:#909399; cursor:default; }
 .masked-text { color:#C0C4CC; }
 .log-card-wrap { margin-bottom:16px; }
-.mini-timeline { padding-left:4px; }
-.mini-log .operation { font-weight:600; color:#303133; font-size:13px; }
-.lock-icon { color:#E6A23C; margin-left:6px; }
-.mini-meta { font-size:12px; color:#909399; margin-top:4px; }
-.mini-content { font-size:12px; color:#606266; margin-top:4px; word-break:break-all; }
 </style>
