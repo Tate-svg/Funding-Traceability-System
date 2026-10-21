@@ -17,6 +17,12 @@ public class VisitVO {
 
     private Long sponsorId;
 
+    /** 绑定的资助流水号（fund.id） */
+    private Long fundId;
+
+    /** 资助凭证号（联表 fund.voucher_no） */
+    private String voucherNo;
+
     private LocalDate visitDate;
 
     private String content;
@@ -26,6 +32,12 @@ public class VisitVO {
     private String problem;
 
     private String visitor;
+
+    /** 脱敏回访记录 */
+    private String maskedRecord;
+
+    /** 脱敏影像/凭证材料文件名 */
+    private String maskedMaterial;
 
     private LocalDateTime createTime;
 

@@ -22,6 +22,9 @@ public class Visit {
 
     private Long sponsorId;
 
+    /** 绑定的资助流水号（fund.id），形成 资助-拨付-回访 闭环 */
+    private Long fundId;
+
     private LocalDate visitDate;
 
     private String content;
@@ -31,6 +34,12 @@ public class Visit {
     private String problem;
 
     private String visitor;
+
+    /** 脱敏回访记录：content/situation/problem 自动脱敏后合并生成 */
+    private String maskedRecord;
+
+    /** 脱敏影像/凭证材料：上传时自动脱敏后的存储文件名 */
+    private String maskedMaterial;
 
     private LocalDateTime createTime;
 }

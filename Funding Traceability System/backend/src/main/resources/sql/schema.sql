@@ -75,12 +75,19 @@ CREATE TABLE visit (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     student_id BIGINT NOT NULL,
     sponsor_id BIGINT NOT NULL,
+    -- 绑定的资助流水号（fund.id），形成 资助-拨付-回访 闭环
+    fund_id BIGINT,
     visit_date DATE,
     content TEXT,
     situation VARCHAR(255),
     problem TEXT,
     visitor VARCHAR(50),
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    -- 脱敏回访记录：由 content/situation/problem 自动脱敏合并生成（只保留核验必要信息）
+    masked_record TEXT,
+    -- 脱敏影像/凭证材料：上传时自动脱敏（文本内容脱敏/图片剥离EXIF元数据）后的存储文件名
+    masked_material VARCHAR(255),
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_visit_fund (fund_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE score_item (

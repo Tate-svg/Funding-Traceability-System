@@ -20,13 +20,35 @@
       <el-table-column prop="sponsorName" label="资助人" min-width="90" />
       <el-table-column prop="visitDate" label="回访日期" min-width="110" />
       <el-table-column prop="visitor" label="回访人" min-width="90" />
+      <el-table-column label="绑定凭证号" min-width="150">
+        <template slot-scope="{ row }">
+          <span v-if="row.voucherNo" class="voucher-text"><i class="el-icon-lock"></i> {{ row.voucherNo }}</span>
+          <span v-else class="muted-text">—</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="content" label="回访内容" min-width="160" show-overflow-tooltip />
       <el-table-column prop="situation" label="情况" min-width="140" show-overflow-tooltip />
       <el-table-column prop="problem" label="存在问题" min-width="140" show-overflow-tooltip />
+      <el-table-column prop="maskedRecord" label="脱敏回访记录" min-width="200" show-overflow-tooltip>
+        <template slot-scope="{ row }">
+          <span v-if="row.maskedRecord">{{ row.maskedRecord }}</span>
+          <span v-else class="muted-text">—</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="脱敏凭证" width="90" align="center">
+        <template slot-scope="{ row }">
+          <el-button v-if="row.maskedMaterial" type="text" icon="el-icon-view" @click="handleDownloadMaterial(row)">查看</el-button>
+          <span v-else class="muted-text">—</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column v-if="isAdmin" label="操作" width="150" align="center" fixed="right">
+      <el-table-column v-if="isAdmin" label="操作" width="220" align="center" fixed="right">
         <template slot-scope="{ row }">
           <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
+          <el-upload v-if="row.fundId" :show-file-list="false" action="#" :http-request="opt => handleUpload(row, opt)" style="display:inline-block">
+            <el-button type="text" icon="el-icon-upload2" title="图片/文档请先手动脱敏">传凭证</el-button>
+          </el-upload>
+          <span v-else class="muted-text" title="该回访未绑定资助流水，请先编辑绑定">未绑定流水</span>
           <el-button type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -75,6 +97,15 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-form-item label="资助流水" prop="fundId">
+              <el-select v-model="form.fundId" placeholder="请选择资助流水（必选）" filterable style="width:100%">
+                <el-option v-for="item in fundOptions" :key="item.id" :label="fundLabel(item)" :value="item.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="回访内容" prop="content">
           <SensitiveTextarea v-model="form.content" field-name="回访内容" :rows="2" placeholder="请输入回访内容，请勿填写未打码的敏感信息" @block="contentBlock = $event" />
         </el-form-item>
@@ -84,6 +115,10 @@
         <el-form-item label="存在问题" prop="problem">
           <SensitiveTextarea v-model="form.problem" field-name="存在问题" :rows="2" placeholder="请输入存在问题，请勿填写未打码的敏感信息" @block="problemBlock = $event" />
         </el-form-item>
+        <div class="mask-tip">
+          <i class="el-icon-lock"></i> 数据最小采集原则：请勿填写与核验无关的隐私信息；保存后系统将自动脱敏（身份证/手机号/银行卡/邮箱）生成脱敏回访记录。<br>
+          <i class="el-icon-warning-outline"></i> 文本类凭证由系统自动脱敏；图片/PDF/Word 无法自动识别画面内容，上传前请手动遮挡敏感信息，系统会自动剥离图片元数据。
+        </div>
       </el-form>
       <div slot="footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
@@ -96,9 +131,10 @@
 </template>
 
 <script>
-import { listVisits, getVisit, addVisit, updateVisit, deleteVisit, exportVisits } from '@/api/visit'
+import { listVisits, getVisit, addVisit, updateVisit, deleteVisit, exportVisits, uploadVisitMaterial, downloadVisitMaterial } from '@/api/visit'
 import { studentOptions } from '@/api/student'
 import { userOptions } from '@/api/user'
+import { listFunds } from '@/api/fund'
 import { downloadFile } from '@/utils/download'
 import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
 import ComplianceFooter from '@/components/ComplianceFooter.vue'
@@ -119,6 +155,7 @@ export default {
       dialogType: 'create',
       studentOptions: [],
       sponsorOptions: [],
+      fundOptions: [],
       contentBlock: false,
       situationBlock: false,
       problemBlock: false,
@@ -126,6 +163,7 @@ export default {
       rules: {
         studentId: [{ required: true, message: '请选择学生', trigger: 'change' }],
         sponsorId: [{ required: true, message: '请选择资助人', trigger: 'change' }],
+        fundId: [{ required: true, message: '请选择资助流水', trigger: 'change' }],
         visitDate: [{ required: true, message: '请选择回访日期', trigger: 'change' }],
         visitor: [{ required: true, message: '请输入回访人', trigger: 'blur' }],
         content: [{ required: true, message: '请输入回访内容', trigger: 'blur' }]
@@ -142,7 +180,7 @@ export default {
   },
   methods: {
     getEmptyForm() {
-      return { id: null, studentId: undefined, studentName: '', sponsorId: undefined, sponsorName: '', visitDate: '', content: '', situation: '', problem: '', visitor: '' }
+      return { id: null, studentId: undefined, studentName: '', sponsorId: undefined, sponsorName: '', fundId: null, visitDate: '', content: '', situation: '', problem: '', visitor: '' }
     },
     getList() {
       this.listLoading = true
@@ -162,6 +200,47 @@ export default {
     onStudentChange(val) {
       const t = this.studentOptions.find(s => s.id === val)
       this.form.studentName = t ? t.name : ''
+      this.form.fundId = null
+      this.loadFundOptions(val)
+    },
+    loadFundOptions(studentId) {
+      if (!studentId) { this.fundOptions = []; return }
+      listFunds({ page: 1, size: 100, studentId }).then(data => {
+        this.fundOptions = (data && data.records) || []
+      }).catch(() => { this.fundOptions = [] })
+    },
+    fundLabel(item) {
+      const statusMap = { SUBMITTED: '待审核', AUDITED: '审核通过', REJECTED: '已驳回', REVIEWED: '复核通过', DISBURSED: '已拨付' }
+      const no = item.voucherNo || ('申请#' + item.id)
+      return no + ' ￥' + item.amount + '（' + (statusMap[item.status] || item.status) + '）'
+    },
+    handleUpload(row, opt) {
+      const name = (opt.file && opt.file.name) || ''
+      const ext = name.indexOf('.') >= 0 ? name.split('.').pop().toLowerCase() : ''
+      const textExt = ['txt', 'md', 'csv', 'log']
+      const doUpload = manuallyMasked => {
+        uploadVisitMaterial(row.id, opt.file, manuallyMasked).then(() => {
+          this.$message.success(manuallyMasked ? '凭证已上传（已确认人工脱敏）' : '凭证已上传并自动脱敏')
+          this.getList()
+        }).catch(() => {})
+      }
+      if (textExt.indexOf(ext) >= 0) {
+        doUpload(false)
+        return
+      }
+      this.$confirm(
+        '图片/PDF/Word 类凭证无法由系统自动识别画面内容。请确认已手动遮挡身份证号、手机号、住址等敏感信息；系统仍会自动剥离图片元数据。',
+        '上传前确认',
+        { type: 'warning', confirmButtonText: '已手动脱敏，继续上传', cancelButtonText: '取消' }
+      ).then(() => doUpload(true)).catch(() => {})
+    },
+    handleDownloadMaterial(row) {
+      downloadVisitMaterial(row.id).then(blob => {
+        const ext = (row.maskedMaterial || '').split('.').pop() || 'dat'
+        return downloadFile(blob, '回访脱敏凭证_' + row.id + '.' + ext)
+      }).catch(err => {
+        if (err && err.message) this.$message.error(err.message)
+      })
     },
     onSponsorChange(val) {
       const t = this.sponsorOptions.find(s => s.id === val)
@@ -173,6 +252,7 @@ export default {
       this.contentBlock = false
       this.situationBlock = false
       this.problemBlock = false
+      this.fundOptions = []
       this.dialogVisible = true
       this.$nextTick(() => { this.$refs.dataForm && this.$refs.dataForm.clearValidate() })
     },
@@ -183,6 +263,7 @@ export default {
         this.contentBlock = false
         this.situationBlock = false
         this.problemBlock = false
+        this.loadFundOptions(this.form.studentId)
         this.dialogVisible = true
         this.$nextTick(() => { this.$refs.dataForm && this.$refs.dataForm.clearValidate() })
       })
@@ -192,7 +273,7 @@ export default {
         if (!valid) return
         this.submitLoading = true
         const payload = {
-          studentId: this.form.studentId, sponsorId: this.form.sponsorId,
+          studentId: this.form.studentId, sponsorId: this.form.sponsorId, fundId: this.form.fundId,
           visitDate: this.form.visitDate, content: this.form.content,
           situation: this.form.situation, problem: this.form.problem, visitor: this.form.visitor
         }
@@ -231,4 +312,7 @@ export default {
 .filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .danger-text { color:#F56C6C; }
+.muted-text { color:#C0C4CC; }
+.voucher-text { font-size:12px; color:#606266; }
+.mask-tip { margin:0 0 8px 100px; font-size:12px; color:#E6A23C; line-height:1.5; }
 </style>
