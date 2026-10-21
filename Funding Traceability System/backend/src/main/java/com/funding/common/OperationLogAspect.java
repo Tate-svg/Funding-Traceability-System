@@ -106,10 +106,43 @@ public class OperationLogAspect {
                     sb.append(" | [隐私入参已省略]");
                     continue;
                 }
-                sb.append(" | ").append(arg);
+                sb.append(" | ").append(formatArg(arg));
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * 参数可读化：MultipartFile 取文件名与大小，Map 拼 key=value，超长字符串截断
+     */
+    private String formatArg(Object arg) {
+        if (arg instanceof org.springframework.web.multipart.MultipartFile) {
+            org.springframework.web.multipart.MultipartFile f = (org.springframework.web.multipart.MultipartFile) arg;
+            return "文件[" + f.getOriginalFilename() + ", " + (f.getSize() / 1024) + "KB]";
+        }
+        if (arg instanceof Map) {
+            StringBuilder sb = new StringBuilder("[");
+            boolean first = true;
+            for (Map.Entry<?, ?> e : ((Map<?, ?>) arg).entrySet()) {
+                if (!first) {
+                    sb.append(", ");
+                }
+                sb.append(e.getKey()).append("=").append(truncate(String.valueOf(e.getValue()), 60));
+                first = false;
+            }
+            return sb.append("]").toString();
+        }
+        if (arg instanceof String) {
+            return truncate((String) arg, 60);
+        }
+        return String.valueOf(arg);
+    }
+
+    private String truncate(String s, int max) {
+        if (s == null) {
+            return null;
+        }
+        return s.length() > max ? s.substring(0, max) + "…" : s;
     }
 
     private String truncate(String s) {

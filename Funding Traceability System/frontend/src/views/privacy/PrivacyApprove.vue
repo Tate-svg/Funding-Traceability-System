@@ -21,7 +21,11 @@
         </el-table>
       </el-tab-pane>
 
-      <el-tab-pane v-if="role === 'AUDIT_ADMIN'" label="初审待办" name="todoL1">
+      <el-tab-pane v-if="role === 'AUDIT_ADMIN'" name="todoL1">
+        <span slot="label">
+          初审待办
+          <el-badge v-if="todoList.length" :value="todoList.length" :max="99" class="tab-badge" />
+        </span>
         <el-table v-loading="todoLoading" :data="todoList" border stripe style="width:100%">
           <el-table-column prop="id" label="申请单号" width="90" align="center" />
           <el-table-column prop="applicantName" label="申请人" min-width="100" />
@@ -33,14 +37,20 @@
           <el-table-column prop="createTime" label="申请时间" min-width="150" />
           <el-table-column label="操作" width="140" align="center" fixed="right">
             <template slot-scope="{ row }">
-              <el-button type="success" size="mini" @click="openApprove(row, 'APPROVE')">通过</el-button>
-              <el-button type="danger" size="mini" @click="openApprove(row, 'REJECT')">驳回</el-button>
+              <div class="op-btns">
+                <el-button type="success" size="mini" @click="openApprove(row, 'APPROVE')">通过</el-button>
+                <el-button type="danger" size="mini" @click="openApprove(row, 'REJECT')">驳回</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
       </el-tab-pane>
 
-      <el-tab-pane v-if="role === 'SUPERVISOR'" label="终审待办" name="todoL2">
+      <el-tab-pane v-if="role === 'SUPERVISOR'" name="todoL2">
+        <span slot="label">
+          终审待办
+          <el-badge v-if="todoList.length" :value="todoList.length" :max="99" class="tab-badge" />
+        </span>
         <el-table v-loading="todoLoading" :data="todoList" border stripe style="width:100%">
           <el-table-column prop="id" label="申请单号" width="90" align="center" />
           <el-table-column prop="applicantName" label="申请人" min-width="100" />
@@ -55,8 +65,10 @@
           <el-table-column prop="createTime" label="申请时间" min-width="150" />
           <el-table-column label="操作" width="140" align="center" fixed="right">
             <template slot-scope="{ row }">
-              <el-button type="success" size="mini" @click="openApprove(row, 'APPROVE')">通过</el-button>
-              <el-button type="danger" size="mini" @click="openApprove(row, 'REJECT')">驳回</el-button>
+              <div class="op-btns">
+                <el-button type="success" size="mini" @click="openApprove(row, 'APPROVE')">通过</el-button>
+                <el-button type="danger" size="mini" @click="openApprove(row, 'REJECT')">驳回</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -119,6 +131,10 @@ export default {
   },
   created() {
     this.loadMine()
+    // 预载待办数量用于 Tab 红色未读角标
+    if (this.role === 'AUDIT_ADMIN' || this.role === 'SUPERVISOR') {
+      this.loadTodo()
+    }
   },
   methods: {
     scopeText(scope) {
@@ -181,5 +197,28 @@ export default {
   background: #fff;
   padding: 16px;
   border-radius: 4px;
+}
+
+/* 操作列按钮：水平居中、等距、不换行 */
+.op-btns {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.op-btns .el-button + .el-button {
+  margin-left: 0;
+}
+
+/* Tab 未读角标位置微调 */
+.tab-badge {
+  margin-left: 4px;
+  vertical-align: 2px;
+}
+.tab-badge ::v-deep .el-badge__content {
+  position: static;
+  transform: none;
+  border: none;
 }
 </style>

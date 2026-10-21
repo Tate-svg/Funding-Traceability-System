@@ -134,7 +134,7 @@
         <el-descriptions-item label="姓名(脱敏)">{{ privacyRow.maskName }}</el-descriptions-item>
       </el-descriptions>
 
-      <el-form label-width="90px" class="privacy-form">
+      <el-form v-if="!canDirectView" label-width="90px" class="privacy-form">
         <el-form-item label="字段范围" required>
           <el-checkbox-group v-model="privacyFields">
             <el-checkbox label="name">姓名</el-checkbox>
@@ -152,6 +152,14 @@
           <span class="apply-tip">提交后须经初审、终审两级审批</span>
         </el-form-item>
       </el-form>
+      <el-alert
+        v-else
+        class="privacy-form"
+        type="success"
+        :closable="false"
+        title="您具有档案核验直接查看权，点击下方「查看明文」即可调取，调取行为将全程留痕"
+        show-icon
+      />
 
       <el-divider />
 
@@ -169,9 +177,9 @@
             <el-alert
               type="success"
               :closable="false"
-              :title="'审批单 #' + profile.applyId + '，明文可见至 ' + profile.expireTime"
+              :title="profile.directView ? '直接查看（审核管理员档案核验权，已全程留痕）' : ('审批单 #' + profile.applyId + '，明文可见至 ' + profile.expireTime)"
               show-icon
-              class="profile-alert"
+              style="margin-bottom:12px"
             />
             <el-descriptions :column="1" border size="small">
               <el-descriptions-item v-if="profile.name" label="姓名">{{ profile.name }}</el-descriptions-item>
@@ -273,6 +281,10 @@ export default {
   computed: {
     isAdmin() {
       return this.$store.getters.role === 'AUDIT_ADMIN'
+    },
+    // 审核管理员：档案核验直接查看权，无需审批
+    canDirectView() {
+      return this.isAdmin
     },
     isEdit() {
       return this.dialogType === 'update'
