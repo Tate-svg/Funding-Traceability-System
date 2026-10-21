@@ -73,7 +73,7 @@ export const asyncRoutes = [
         path: 'privacy',
         name: 'PrivacyApprove',
         component: () => import('@/views/privacy/PrivacyApprove.vue'),
-        meta: { title: '隐私审批', icon: 'el-icon-lock', roles: ['AUDIT_ADMIN', 'DISBURSE_ADMIN', 'SUPERVISOR', 'SPONSOR'] }
+        meta: { title: '隐私审批', icon: 'el-icon-lock', roles: ['AUDIT_ADMIN', 'SUPERVISOR', 'SPONSOR'] }
       },
       {
         path: 'operation-log',
@@ -104,7 +104,7 @@ export const asyncRoutes = [
         path: 'visit',
         name: 'Visit',
         component: () => import('@/views/visit/Visit.vue'),
-        meta: { title: '回访管理', icon: 'el-icon-chat-line-round', roles: ['AUDIT_ADMIN', 'SPONSOR'] }
+        meta: { title: '回访管理', icon: 'el-icon-chat-line-round', roles: ['AUDIT_ADMIN', 'SPONSOR', 'SUPERVISOR'] }
       },
       {
         path: 'score',

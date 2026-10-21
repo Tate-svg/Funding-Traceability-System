@@ -248,7 +248,10 @@ INSERT INTO sys_user (id, username, password, real_name, role, phone) VALUES
 (1, 'audit_admin', '123456', '王审核', 'AUDIT_ADMIN', '13800000001'),
 (2, 'sponsor', '123456', '张资助', 'SPONSOR', '13800000002'),
 (3, 'disburse_admin', '123456', '李拨付', 'DISBURSE_ADMIN', '13800000003'),
-(4, 'supervisor', '123456', '赵监事', 'SUPERVISOR', '13800000004');
+(4, 'supervisor', '123456', '赵监事', 'SUPERVISOR', '13800000004'),
+-- 第二审批人：满足「申请人不能审批本人申请」的双人审批约束
+(5, 'audit_admin2', '123456', '李复审', 'AUDIT_ADMIN', '13800000005'),
+(6, 'supervisor2', '123456', '孙监事', 'SUPERVISOR', '13800000006');
 
 -- 角色权限点预置
 INSERT INTO role_permission (role, permission) VALUES
@@ -267,10 +270,11 @@ INSERT INTO role_permission (role, permission) VALUES
 ('AUDIT_ADMIN', 'log:view'),
 ('AUDIT_ADMIN', 'privacy:apply'),
 ('AUDIT_ADMIN', 'privacy:approve:l1'),
--- 拨付管理员：仅查看已审单据 + 执行发放
+-- 审核管理员：档案核验职责所需，学生隐私明文可直接查看（全程留痕，无需审批）
+('AUDIT_ADMIN', 'privacy:view:direct'),
+-- 拨付管理员：仅查看已审单据 + 执行发放（不可查看敏感隐私，无 privacy:apply）
 ('DISBURSE_ADMIN', 'fund:view'),
 ('DISBURSE_ADMIN', 'fund:disburse'),
-('DISBURSE_ADMIN', 'privacy:apply'),
 -- 监事/审计：大额抽检复核 + 日志查看 + 隐私调取终审
 ('SUPERVISOR', 'fund:view'),
 ('SUPERVISOR', 'review:draw'),

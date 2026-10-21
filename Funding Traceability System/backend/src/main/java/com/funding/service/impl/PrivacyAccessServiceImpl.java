@@ -35,9 +35,15 @@ import java.util.Map;
 @Service
 public class PrivacyAccessServiceImpl implements PrivacyAccessService {
 
-    /** 可调取字段全集 */
+    /** 可调取字段全集（学生隐私） */
     private static final List<String> ALL_FIELDS =
             Arrays.asList("name", "idCard", "phone", "familyAddress", "familySituation");
+
+    /** 用户（资助人）联系方式调取对象的 virtualId 前缀，如 USER-2 */
+    private static final String USER_PREFIX = "USER-";
+
+    /** 用户联系方式可调取字段 */
+    private static final List<String> USER_FIELDS = java.util.Collections.singletonList("sponsorPhone");
 
     /** 终审通过后明文可见时长（小时） */
     private static final int APPROVE_VALID_HOURS = 2;
@@ -55,6 +61,9 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
     private StudentMapper studentMapper;
 
     @Autowired
+    private com.funding.mapper.SysUserMapper sysUserMapper;
+
+    @Autowired
     private PermissionHolder permissionHolder;
 
     @Override
@@ -62,15 +71,25 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
         if (virtualId == null || virtualId.isEmpty()) {
             throw new BusinessException(400, "请选择调取对象");
         }
-        Student student = studentMapper.selectOne(
-                new QueryWrapper<Student>().eq("virtual_id", virtualId));
-        if (student == null) {
-            throw new BusinessException(404, "虚拟ID对应的学生不存在");
+        if (virtualId.startsWith(USER_PREFIX)) {
+            // 资助人联系方式：校验用户存在
+            Long uid = parseUserId(virtualId);
+            if (sysUserMapper.selectById(uid) == null) {
+                throw new BusinessException(404, "对应的用户不存在");
+            }
+        } else {
+            Student student = studentMapper.selectOne(
+                    new QueryWrapper<Student>().eq("virtual_id", virtualId));
+            if (student == null) {
+                throw new BusinessException(404, "虚拟ID对应的学生不存在");
+            }
         }
         if (reason == null || reason.trim().isEmpty()) {
             throw new BusinessException(400, "请填写调取理由");
         }
-        String scope = normalizeScope(fieldScope);
+        String scope = virtualId.startsWith(USER_PREFIX)
+                ? String.join(",", USER_FIELDS)
+                : normalizeScope(fieldScope);
         UserInfo user = currentUser();
 
         PrivacyAccessApply apply = new PrivacyAccessApply();
@@ -94,6 +113,10 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
             throw new BusinessException(400, "result 只能为 APPROVE/REJECT");
         }
         UserInfo user = currentUser();
+        // 双人审批约束：任何一级都不得审批本人提交的申请
+        if (user.getUserId() != null && user.getUserId().equals(apply.getApplicantId())) {
+            throw new BusinessException(400, "不能审批本人提交的申请，须由另一角色完成双人审批");
+        }
         LocalDateTime now = LocalDateTime.now();
         String status = apply.getStatus();
 
@@ -159,6 +182,9 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
 
     @Override
     public Map<String, Object> profile(String virtualId) {
+        if (virtualId != null && virtualId.startsWith(USER_PREFIX)) {
+            return userProfile(virtualId);
+        }
         Student student = studentMapper.selectOne(
                 new QueryWrapper<Student>().eq("virtual_id", virtualId));
         if (student == null) {
@@ -177,6 +203,33 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
 
         Map<String, Object> result = new HashMap<>();
         if (valid == null) {
+            // 审核管理员等持 privacy:view:direct 的角色：档案核验职责所需，直接解密全字段，全程留痕
+            if (permissionHolder.hasPermission(user.getRole(), new String[]{"privacy:view:direct"})) {
+                PrivacyProfile directProfile = privacyProfileMapper.selectOne(
+                        new QueryWrapper<PrivacyProfile>().eq("virtual_id", virtualId));
+                Map<String, Object> direct = new LinkedHashMap<>();
+                if (directProfile != null) {
+                    direct.put("name", CryptoUtils.decrypt(directProfile.getNameEnc()));
+                    direct.put("idCard", CryptoUtils.decrypt(directProfile.getIdCardEnc()));
+                    direct.put("phone", CryptoUtils.decrypt(directProfile.getPhoneEnc()));
+                    direct.put("familyAddress", CryptoUtils.decrypt(directProfile.getFamilyAddressEnc()));
+                    direct.put("familySituation", CryptoUtils.decrypt(directProfile.getFamilySituationEnc()));
+                }
+                // 直接查看留痕：无审批单，apply_id 置空标识直接调取
+                PrivacyAccessLog directLog = new PrivacyAccessLog();
+                directLog.setApplyId(null);
+                directLog.setUserId(user.getUserId());
+                directLog.setUsername(user.getUsername());
+                directLog.setVirtualId(virtualId);
+                directLog.setFields(String.join(",", direct.keySet()));
+                accessLogMapper.insert(directLog);
+
+                result.put("masked", false);
+                result.put("directView", true);
+                result.put("virtualId", virtualId);
+                result.putAll(direct);
+                return result;
+            }
             // 无有效审批：仅返回业务库脱敏视图
             result.put("masked", true);
             result.put("virtualId", student.getVirtualId());
@@ -231,6 +284,61 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
         result.put("expireTime", valid.getExpireTime());
         result.putAll(plain);
         return result;
+    }
+
+    /**
+     * 资助人联系方式调取：无有效审批返回脱敏视图，有审批返回明文并留痕
+     */
+    private Map<String, Object> userProfile(String virtualId) {
+        Long uid = parseUserId(virtualId);
+        com.funding.entity.SysUser target = sysUserMapper.selectById(uid);
+        if (target == null) {
+            throw new BusinessException(404, "对应的用户不存在");
+        }
+        UserInfo user = currentUser();
+
+        PrivacyAccessApply valid = applyMapper.selectOne(new QueryWrapper<PrivacyAccessApply>()
+                .eq("applicant_id", user.getUserId())
+                .eq("virtual_id", virtualId)
+                .eq("status", PrivacyAccessApply.STATUS_APPROVED)
+                .gt("expire_time", LocalDateTime.now())
+                .orderByDesc("id")
+                .last("LIMIT 1"));
+
+        Map<String, Object> result = new HashMap<>();
+        if (valid == null) {
+            // 无有效审批：姓名可见，联系方式打码
+            result.put("masked", true);
+            result.put("virtualId", virtualId);
+            result.put("realName", target.getRealName());
+            result.put("sponsorPhone", com.funding.util.MaskingEngine.maskOf("PHONE", target.getPhone()));
+            return result;
+        }
+
+        // 调取留痕：谁/何时/哪位用户/哪些字段/关联申请单
+        PrivacyAccessLog log = new PrivacyAccessLog();
+        log.setApplyId(valid.getId());
+        log.setUserId(user.getUserId());
+        log.setUsername(user.getUsername());
+        log.setVirtualId(virtualId);
+        log.setFields(String.join(",", USER_FIELDS));
+        accessLogMapper.insert(log);
+
+        result.put("masked", false);
+        result.put("virtualId", virtualId);
+        result.put("applyId", valid.getId());
+        result.put("expireTime", valid.getExpireTime());
+        result.put("realName", target.getRealName());
+        result.put("sponsorPhone", target.getPhone());
+        return result;
+    }
+
+    private Long parseUserId(String virtualId) {
+        try {
+            return Long.parseLong(virtualId.substring(USER_PREFIX.length()));
+        } catch (Exception e) {
+            throw new BusinessException(400, "调取对象标识不合法");
+        }
     }
 
     /** 规范化字段范围：非法字段剔除，为空则默认全集 */

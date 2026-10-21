@@ -22,8 +22,9 @@
       </el-table-column>
       <el-table-column prop="phone" label="联系电话" min-width="120" />
       <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column v-if="isAuditAdmin" label="操作" width="150" align="center">
+      <el-table-column v-if="isAuditAdmin" label="操作" width="230" align="center">
         <template slot-scope="{ row }">
+          <el-button type="text" icon="el-icon-key" @click="openPrivacy(row)">联系方式调取</el-button>
           <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
           <el-button type="text" class="danger-text" icon="el-icon-delete" :disabled="row.id === currentUserId" @click="handleDelete(row)">删除</el-button>
         </template>
@@ -63,7 +64,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="联系电话" prop="phone">
-          <el-input v-model="form.phone" placeholder="请输入联系电话" />
+          <el-input v-model="form.phone" :placeholder="dialogType === 'update' ? '打码值保持不变则不修改' : '请输入联系电话'" />
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -71,11 +72,58 @@
         <el-button type="primary" :loading="submitLoading" @click="submitForm">确 定</el-button>
       </div>
     </el-dialog>
+
+    <!-- 联系方式明文调取弹窗 -->
+    <el-dialog title="联系方式明文调取" :visible.sync="privacyVisible" width="560px" :close-on-click-modal="false">
+      <el-descriptions :column="2" border size="small">
+        <el-descriptions-item label="姓名">{{ privacyRow.realName }}</el-descriptions-item>
+        <el-descriptions-item label="电话(脱敏)">{{ privacyRow.phone }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-form label-width="90px" style="margin-top:16px">
+        <el-form-item label="调取理由" required>
+          <el-input v-model="privacyReason" type="textarea" :rows="3" placeholder="请填写调取理由（必填）" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="applyLoading" @click="submitApply">提交申请</el-button>
+          <span class="apply-tip">明文调取须经初审、终审双人两级审批</span>
+        </el-form-item>
+      </el-form>
+
+      <el-divider />
+
+      <div>
+        <el-button type="warning" icon="el-icon-view" :loading="profileLoading" @click="viewProfile">查看明文</el-button>
+        <div v-if="profile" style="margin-top:12px">
+          <el-alert
+            v-if="profile.masked"
+            type="info"
+            :closable="false"
+            title="暂无有效审批单，请提交申请并等待两级审批"
+            show-icon
+          />
+          <template v-else>
+            <el-alert
+              type="success"
+              :closable="false"
+              :title="'审批单 #' + profile.applyId + '，明文可见至 ' + profile.expireTime"
+              show-icon
+              style="margin-bottom:12px"
+            />
+            <el-descriptions :column="1" border size="small">
+              <el-descriptions-item label="姓名">{{ profile.realName }}</el-descriptions-item>
+              <el-descriptions-item label="联系电话">{{ profile.sponsorPhone }}</el-descriptions-item>
+            </el-descriptions>
+          </template>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { listUsers, addUser, updateUser, deleteUser } from '@/api/user'
+import { applyPrivacyAccess, getPrivacyProfile } from '@/api/privacy'
 
 export default {
   name: 'User',
@@ -96,6 +144,13 @@ export default {
       submitLoading: false,
       dialogType: 'create',
       form: this.getEmptyForm(),
+      // 联系方式明文调取
+      privacyVisible: false,
+      privacyRow: {},
+      privacyReason: '',
+      applyLoading: false,
+      profileLoading: false,
+      profile: null,
       rules: {
         username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
         password: [{ validator: validatePassword, trigger: 'blur' }],
@@ -191,6 +246,34 @@ export default {
           this.getList()
         })
       }).catch(() => {})
+    },
+    // 联系方式明文调取
+    openPrivacy(row) {
+      this.privacyRow = row
+      this.privacyReason = ''
+      this.profile = null
+      this.privacyVisible = true
+    },
+    submitApply() {
+      if (!this.privacyReason.trim()) {
+        this.$message.warning('请填写调取理由')
+        return
+      }
+      this.applyLoading = true
+      applyPrivacyAccess({
+        virtualId: 'USER-' + this.privacyRow.id,
+        fieldScope: 'sponsorPhone',
+        reason: this.privacyReason.trim()
+      }).then(() => {
+        this.$message.success('申请已提交，待两级审批')
+        this.privacyReason = ''
+      }).finally(() => { this.applyLoading = false })
+    },
+    viewProfile() {
+      this.profileLoading = true
+      getPrivacyProfile('USER-' + this.privacyRow.id).then(data => {
+        this.profile = data
+      }).finally(() => { this.profileLoading = false })
     }
   }
 }
