@@ -25,29 +25,31 @@
       <el-table-column type="index" label="序号" width="55" align="center" />
       <el-table-column prop="studentName" label="学生" min-width="90" />
       <el-table-column prop="sponsorName" label="资助人" min-width="90" />
-      <el-table-column prop="amount" label="金额(元)" min-width="110" align="right">
-        <template slot-scope="{ row }">{{ formatAmount(row.amount) }}</template>
-      </el-table-column>
-      <el-table-column prop="fundDate" label="资助日期" min-width="110" />
-      <el-table-column label="状态" width="100" align="center">
+      <el-table-column prop="amount" label="金额(元)" min-width="120" align="right">
         <template slot-scope="{ row }">
-          <el-tag :type="statusTagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
+          <span class="amount amount-cell">{{ formatAmount(row.amount) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="凭证号" min-width="170">
+      <el-table-column prop="fundDate" label="资助日期" min-width="110" />
+      <el-table-column label="状态" width="95" align="center">
+        <template slot-scope="{ row }">
+          <el-tag :type="statusTagType(row.status)" :class="statusTagClass(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="凭证号" min-width="165">
         <template slot-scope="{ row }">
           <span v-if="row.voucherNo" class="voucher-text"><i class="el-icon-lock"></i> {{ row.voucherNo }}</span>
           <span v-else class="empty-text">—</span>
         </template>
       </el-table-column>
-      <el-table-column prop="purpose" label="用途" min-width="140" show-overflow-tooltip>
+      <el-table-column prop="purpose" label="用途" min-width="95" show-overflow-tooltip>
         <template slot-scope="{ row }">
           <span v-if="row.purpose">{{ row.purpose }}</span>
           <span v-else class="locked-text">已锁定</span>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column label="操作" width="200" align="center" fixed="right">
+      <el-table-column prop="createTime" label="创建时间" width="160" />
+      <el-table-column label="操作" width="175" align="center" fixed="right">
         <template slot-scope="{ row }">
           <el-button type="text" icon="el-icon-view" @click="handleDetail(row)">详情</el-button>
           <template v-if="isAuditAdmin">
@@ -56,6 +58,9 @@
           </template>
         </template>
       </el-table-column>
+      <template slot="empty">
+        <EmptyState type="ledger" title="暂无资金记录" desc="调整筛选条件，或新增一笔资金记录" />
+      </template>
     </el-table>
 
     <div class="pagination-bar">
@@ -114,10 +119,11 @@ import { downloadFile } from '@/utils/download'
 import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
 import ComplianceFooter from '@/components/ComplianceFooter.vue'
 import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'Fund',
-  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea },
+  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea, EmptyState },
   data() {
     return {
       list: [],
@@ -174,6 +180,12 @@ export default {
     statusTagType(status) {
       const map = { SUBMITTED: 'info', AUDITED: 'primary', REJECTED: 'danger', REVIEWED: 'warning', DISBURSED: 'success' }
       return map[status] || 'info'
+    },
+    statusTagClass(status) {
+      // 仅视觉区分：审核通过=蓝色描边，已拨付=绿色填充，其余沿用语义色
+      if (status === 'AUDITED') return 'tag-outline'
+      if (status === 'DISBURSED') return 'tag-solid'
+      return ''
     },
     handleDetail(row) {
       this.$router.push('/fund/detail/' + row.id)
@@ -250,7 +262,15 @@ export default {
 .filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .danger-text { color:#F56C6C; }
-.voucher-text { font-size:12px; color:#606266; }
-.empty-text { color:#C0C4CC; }
+.amount-cell { display:inline-block; font-size:15px; font-weight:700; color:var(--c-text-1); letter-spacing:0.2px; font-variant-numeric:tabular-nums; }
+.voucher-text {
+  font-size:12px;
+  color:var(--c-primary);
+  text-decoration:none;
+  text-underline-offset:2px;
+  transition:color var(--t-fast);
+}
+.voucher-text:hover { text-decoration:underline; color:var(--c-primary-hover); }
+.empty-text { color:var(--c-text-4); }
 .locked-text { color:#C0C4CC; font-style:italic; }
 </style>

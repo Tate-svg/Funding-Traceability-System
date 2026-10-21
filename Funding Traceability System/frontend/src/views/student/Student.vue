@@ -14,8 +14,8 @@
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <div class="filter-actions">
-        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增学生</el-button>
-        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="primary" icon="el-icon-plus" @click="handleCreate">新增学生</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
       </div>
     </div>
 
@@ -28,23 +28,26 @@
       style="width: 100%"
     >
       <el-table-column type="index" label="序号" width="55" align="center" />
-      <el-table-column prop="virtualId" label="虚拟ID" min-width="110" />
+      <el-table-column prop="virtualId" label="虚拟ID" min-width="135" />
       <el-table-column prop="maskName" label="姓名(脱敏)" min-width="100" />
       <el-table-column prop="gender" label="性别" width="60" align="center" />
       <el-table-column prop="school" label="学校" min-width="120" show-overflow-tooltip />
       <el-table-column prop="grade" label="年级" min-width="100" show-overflow-tooltip />
       <el-table-column prop="sponsorName" label="资助人" min-width="90" />
       <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column label="操作" width="230" align="center" fixed="right">
+      <el-table-column label="操作" width="320" align="center" fixed="right" class-name="op-col">
         <template slot-scope="{ row }">
-          <el-button type="text" icon="el-icon-key" @click="openPrivacy(row)">隐私调取</el-button>
+          <el-button type="text" class="link-secondary" icon="el-icon-key" @click="openPrivacy(row)">隐私调取</el-button>
           <template v-if="isAdmin">
             <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
-            <el-button type="text" icon="el-icon-folder" @click="openAttachments(row)">材料</el-button>
+            <el-button type="text" class="link-secondary" icon="el-icon-folder" @click="openAttachments(row)">材料</el-button>
             <el-button type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
           </template>
         </template>
       </el-table-column>
+      <template slot="empty">
+        <EmptyState type="student" title="暂无学生档案" desc="新增学生后，档案将在这里统一管理与脱敏展示" />
+      </template>
     </el-table>
 
     <!-- 分页 -->
@@ -243,10 +246,11 @@ import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
 import ComplianceFooter from '@/components/ComplianceFooter.vue'
 import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
 import AttachmentMaskPreview from '@/components/AttachmentMaskPreview.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'Student',
-  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea, AttachmentMaskPreview },
+  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea, AttachmentMaskPreview, EmptyState },
   data() {
     return {
       list: [],
@@ -506,6 +510,23 @@ export default {
   padding: 16px;
   border-radius: 4px;
 }
+/* 顶部隐私提示栏：浅蓝底 + 左侧主色条 */
+.page-container .privacy-tip-bar {
+  background: #eaf2fb;
+  border: 1px solid #cfe0f3;
+  border-left: 3px solid #2b6cb0;
+  border-radius: 8px;
+  color: #2b6cb0;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  gap: 6px;
+}
+.page-container .privacy-tip-bar ::v-deep i {
+  color: #2b6cb0;
+  font-size: 14px;
+}
 .filter-bar {
   display: flex;
   align-items: center;
@@ -522,7 +543,21 @@ export default {
   text-align: right;
 }
 .danger-text {
-  color: #F56C6C;
+  color: var(--c-danger) !important;
+}
+.danger-text:hover,
+.danger-text:focus {
+  color: var(--c-danger) !important;
+  background: var(--c-danger-light) !important;
+}
+/* 次级文字按钮：隐私调取 / 材料 */
+.el-button--text.link-secondary {
+  color: var(--c-text-3) !important;
+}
+.el-button--text.link-secondary:hover,
+.el-button--text.link-secondary:focus {
+  color: var(--c-primary) !important;
+  background: var(--c-primary-light);
 }
 .privacy-desc {
   margin-bottom: 12px;
@@ -540,6 +575,12 @@ export default {
 }
 .profile-result {
   margin-top: 10px;
+}
+/* 桌面端操作列按钮单行排列，避免换行错位（移动端仍按 responsive.css 换行） */
+@media (min-width: 769px) {
+  ::v-deep .op-col .cell {
+    white-space: nowrap;
+  }
 }
 .profile-alert {
   margin-bottom: 10px;

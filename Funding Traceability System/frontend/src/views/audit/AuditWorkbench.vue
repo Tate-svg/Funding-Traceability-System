@@ -2,23 +2,23 @@
   <div class="page-container">
     <!-- 顶部统计卡片区 -->
     <div class="stat-row">
-      <el-card shadow="hover" class="stat-card">
+      <el-card shadow="hover" class="stat-card stat-card--pending">
         <div class="stat-inner">
           <div class="stat-icon pending"><i class="el-icon-s-check"></i></div>
           <div class="stat-info">
             <div class="stat-label">待审核申请</div>
-            <el-badge :value="pendingCount" :max="99" type="danger" class="stat-badge">
-              <span class="stat-num">{{ pendingCount }}</span>
-            </el-badge>
+            <span class="stat-num">{{ pendingCount }}</span>
+            <div class="stat-hint">资助申请待处理</div>
           </div>
         </div>
       </el-card>
-      <el-card shadow="hover" class="stat-card">
+      <el-card shadow="hover" class="stat-card stat-card--big">
         <div class="stat-inner">
           <div class="stat-icon big"><i class="el-icon-warning-outline"></i></div>
           <div class="stat-info">
             <div class="stat-label">本页大额待审（≥5000元）</div>
             <span class="stat-num">{{ bigCount }}</span>
+            <div class="stat-hint">需重点关注的资助款项</div>
           </div>
         </div>
       </el-card>
@@ -28,7 +28,7 @@
       <!-- 待审核卡片列表 -->
       <el-tab-pane label="待审核申请" name="pending">
         <div v-loading="listLoading">
-          <el-empty v-if="!listLoading && list.length === 0" description="暂无待审核申请" />
+          <EmptyState v-if="!listLoading && list.length === 0" type="todo" title="当前没有待审核事项" desc="审核队列已清空，暂无待办" />
           <el-row :gutter="16">
             <el-col v-for="item in list" :key="item.id" :xs="24" :sm="12" :md="8">
               <el-card shadow="hover" class="apply-card">
@@ -137,11 +137,13 @@
 <script>
 import { listPendingAudit, countPendingAudit, auditFund } from '@/api/audit'
 import { listFunds } from '@/api/fund'
+import EmptyState from '@/components/EmptyState'
 
 const BIG_THRESHOLD = 5000
 
 export default {
   name: 'AuditWorkbench',
+  components: { EmptyState },
   data() {
     return {
       activeTab: 'pending',
@@ -238,13 +240,19 @@ export default {
 <style scoped>
 .page-container { background:#fff; padding:16px; border-radius:4px; }
 .stat-row { display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
-.stat-card { flex:1; min-width:240px; }
+.stat-card { flex:1; min-width:240px; border:none; border-radius:12px; overflow:hidden; transition:transform .2s ease, box-shadow .2s ease; }
+.stat-card ::v-deep .el-card__body { padding:20px 22px; }
+.stat-card.stat-card--pending { background:linear-gradient(135deg, #1e4c7e 0%, #2b6cb0 52%, #4d8fcf 100%); }
+.stat-card.stat-card--big { background:linear-gradient(135deg, #17614c 0%, #2f9e6e 55%, #52bb92 100%); }
+.stat-card.stat-card:hover { transform:translateY(-3px); box-shadow:var(--sh-3); }
 .stat-inner { display:flex; align-items:center; gap:14px; }
-.stat-icon { width:48px; height:48px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px; color:#fff; }
-.stat-icon.pending { background:#F56C6C; }
-.stat-icon.big { background:#E6A23C; }
-.stat-label { font-size:13px; color:#909399; margin-bottom:4px; }
-.stat-num { font-size:26px; font-weight:700; color:#303133; line-height:1.2; }
+.stat-icon { flex:0 0 52px; width:52px; height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:26px; color:#fff; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.26); }
+.stat-icon.pending, .stat-icon.big { background:rgba(255,255,255,.16); }
+.stat-info { min-width:0; }
+.stat-label { font-size:13px; color:rgba(255,255,255,.82); margin-bottom:4px; letter-spacing:.2px; }
+.stat-num { display:inline-block; font-size:30px; font-weight:700; color:#fff; line-height:1.15; letter-spacing:.5px; font-variant-numeric:tabular-nums; font-feature-settings:'tnum'; }
+.stat-badge ::v-deep .el-badge__content { border:none; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
+.stat-hint { margin-top:4px; font-size:12px; color:rgba(255,255,255,.6); }
 .workbench-tabs { margin-top:4px; }
 .apply-card { margin-bottom:16px; }
 .card-header { display:flex; align-items:center; justify-content:space-between; }

@@ -75,7 +75,7 @@
           关联回访凭证
           <span class="card-subtitle"><i class="el-icon-lock"></i> 回访材料已脱敏，资助-拨付-回访业务闭环</span>
         </div>
-        <el-empty v-if="visits.length === 0" description="暂无关联回访" :image-size="60" />
+        <EmptyState v-if="visits.length === 0" type="folder" title="暂无关联回访" desc="回访记录录入后，将在这里展示脱敏凭证" />
         <el-table v-else :data="visits" border size="mini">
           <el-table-column prop="visitDate" label="回访日期" width="110" />
           <el-table-column prop="visitor" label="回访人" width="100" />
@@ -102,12 +102,13 @@ import { getFund } from '@/api/fund'
 import { listVisits, downloadVisitMaterial } from '@/api/visit'
 import { downloadFile } from '@/utils/download'
 import TraceTimeline from '@/views/trace/TraceTimeline.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const BIG_THRESHOLD = 5000
 
 export default {
   name: 'FundDetail',
-  components: { TraceTimeline },
+  components: { TraceTimeline, EmptyState },
   data() {
     return {
       detail: null,

@@ -17,20 +17,30 @@
       <el-table-column prop="studentName" label="学生" min-width="100" />
       <el-table-column prop="sponsorName" label="资助人" min-width="100" />
       <el-table-column prop="scoreDate" label="评分日期" min-width="110" />
-      <el-table-column prop="totalScore" label="总分" min-width="90" align="center">
+      <el-table-column prop="totalScore" label="总分" min-width="120" align="center">
         <template slot-scope="{ row }">
-          <el-tag type="success" size="medium">{{ formatScore(row.totalScore) }}</el-tag>
+          <span :class="['score-total', scoreLevelClass(row.totalScore)]">{{ formatScore(row.totalScore) }}</span>
+          <el-progress
+            :percentage="scorePercent(row.totalScore)"
+            :stroke-width="6"
+            :show-text="false"
+            :color="scoreLevelColor(row.totalScore)"
+            class="score-progress"
+          />
         </template>
       </el-table-column>
       <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
       <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column v-if="isAdmin" label="操作" width="190" align="center" fixed="right">
+      <el-table-column v-if="isAdmin" label="操作" width="215" align="center" fixed="right" class-name="op-col">
         <template slot-scope="{ row }">
           <el-button type="text" icon="el-icon-view" @click="handleDetail(row)">详情</el-button>
           <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
           <el-button type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
+      <template slot="empty">
+        <EmptyState type="chart" title="暂无评分记录" desc="调整筛选条件，或新增一条评分记录" />
+      </template>
     </el-table>
 
     <div class="pagination-bar">
@@ -133,9 +143,11 @@ import { listScoreItems } from '@/api/scoreItem'
 import { studentOptions } from '@/api/student'
 import { userOptions } from '@/api/user'
 import { downloadFile } from '@/utils/download'
+import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'Score',
+  components: { EmptyState },
   data() {
     return {
       list: [],
@@ -299,6 +311,30 @@ export default {
     formatScore(val) {
       if (val === undefined || val === null || val === '') return '-'
       return Number(val).toFixed(2)
+    },
+    // 展示用等级阈值：优秀≥90、良好≥75、合格≥60、不合格<60（后端未返回评分等级字段）
+    scoreLevelClass(val) {
+      if (val === undefined || val === null || val === '') return 'score-muted'
+      const n = Number(val)
+      if (n >= 90) return 'score-excellent'
+      if (n >= 75) return 'score-good'
+      if (n >= 60) return 'score-qualified'
+      return 'score-fail'
+    },
+    scoreLevelColor(val) {
+      if (val === undefined || val === null || val === '') return '#9aa6b5'
+      const n = Number(val)
+      if (n >= 90) return '#2f9e6e'
+      if (n >= 75) return '#2b6cb0'
+      if (n >= 60) return '#c07f2e'
+      return '#c24a45'
+    },
+    // 领域内总分为加权百分制，后端未返回满分字段，此处固定按满分 100 计算进度
+    scorePercent(val) {
+      if (val === undefined || val === null || val === '') return 0
+      const n = Number(val)
+      if (isNaN(n)) return 0
+      return Math.max(0, Math.min(100, n))
     }
   }
 }
@@ -310,7 +346,20 @@ export default {
 .filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .danger-text { color:#F56C6C; }
-.score-items-title { font-size:14px; font-weight:600; color:#303133; margin:10px 0 8px; border-left:3px solid #409EFF; padding-left:8px; }
+.score-total { display:inline-block; font-size:21px; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }
+.score-excellent { color:var(--c-success); }
+.score-good { color:var(--c-primary); }
+.score-qualified { color:var(--c-warning); }
+.score-fail { color:var(--c-danger); }
+.score-muted { color:var(--c-text-4); }
+.score-progress { width:100px; margin:12px auto 0; }
+.score-progress ::v-deep .el-progress-bar__outer { background-color:#e3eaf3; border-radius:5px; }
+.score-progress ::v-deep .el-progress-bar__inner { border-radius:5px; }
+.score-items-title { font-size:14px; font-weight:600; color:var(--c-text-1); margin:10px 0 8px; border-left:3px solid var(--c-primary); padding-left:8px; }
 .tip-text { font-size:12px; color:#909399; margin-left:8px; }
 .empty-tip { color:#909399; font-size:13px; text-align:center; padding:12px 0; }
+/* 桌面端操作列按钮单行排列 */
+@media (min-width: 769px) {
+  ::v-deep .op-col .cell { white-space: nowrap; }
+}
 </style>

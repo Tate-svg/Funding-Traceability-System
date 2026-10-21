@@ -11,13 +11,16 @@
           <el-table-column prop="reason" label="理由" min-width="160" show-overflow-tooltip />
           <el-table-column label="状态" width="100" align="center">
             <template slot-scope="{ row }">
-              <el-tag :type="statusTagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
+              <el-tag :type="statusTagType(row.status)" :class="statusTagClass(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="expireTime" label="有效截止时间" min-width="150">
             <template slot-scope="{ row }">{{ row.expireTime || '—' }}</template>
           </el-table-column>
           <el-table-column prop="createTime" label="申请时间" min-width="150" />
+          <template slot="empty">
+            <EmptyState type="todo" title="暂无隐私调取申请" desc="提交隐私调取申请后，审批进度会在这里展示" />
+          </template>
         </el-table>
       </el-tab-pane>
 
@@ -43,6 +46,9 @@
               </div>
             </template>
           </el-table-column>
+          <template slot="empty">
+            <EmptyState type="todo" title="暂无待审批申请" desc="收到新的隐私调取申请后会出现在这里" />
+          </template>
         </el-table>
       </el-tab-pane>
 
@@ -71,6 +77,9 @@
               </div>
             </template>
           </el-table-column>
+          <template slot="empty">
+            <EmptyState type="todo" title="暂无待审批申请" desc="初审通过的申请会流转到这里等待终审" />
+          </template>
         </el-table>
       </el-tab-pane>
     </el-tabs>
@@ -88,13 +97,16 @@
       </div>
     </el-dialog>
 
-    <ComplianceFooter />
+    <div class="privacy-footer">
+      <ComplianceFooter />
+    </div>
   </div>
 </template>
 
 <script>
 import { listMyApplies, listTodoApplies, approvePrivacyAccess } from '@/api/privacy'
 import ComplianceFooter from '@/components/ComplianceFooter.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const FIELD_NAMES = {
   name: '姓名',
@@ -106,7 +118,7 @@ const FIELD_NAMES = {
 
 export default {
   name: 'PrivacyApprove',
-  components: { ComplianceFooter },
+  components: { ComplianceFooter, EmptyState },
   data() {
     return {
       activeTab: 'mine',
@@ -148,6 +160,15 @@ export default {
     statusTagType(status) {
       const map = { PENDING_L1: 'info', PENDING_L2: 'warning', APPROVED: 'success', REJECTED: 'danger' }
       return map[status] || 'info'
+    },
+    statusTagClass(status) {
+      const map = {
+        PENDING_L1: 'status-tag--l1',
+        PENDING_L2: 'status-tag--l2',
+        APPROVED: 'status-tag--approved',
+        REJECTED: 'status-tag--rejected'
+      }
+      return map[status] || ''
     },
     loadMine() {
       this.mineLoading = true
@@ -220,5 +241,44 @@ export default {
   position: static;
   transform: none;
   border: none;
+}
+
+/* 状态标签：待初审蓝描边 / 待终审橙 / 已通过绿填充 / 已驳回红 */
+.el-tag.status-tag--l1 {
+  background: transparent;
+  border-color: var(--c-primary-border);
+  color: var(--c-primary);
+}
+.el-tag.status-tag--l2 {
+  background: var(--c-warning-light);
+  border-color: #f2ddbe;
+  color: var(--c-warning);
+}
+.el-tag.status-tag--approved {
+  background: var(--c-success);
+  border-color: var(--c-success);
+  color: #fff;
+}
+.el-tag.status-tag--rejected {
+  background: var(--c-danger-light);
+  border-color: #f0cfcd;
+  color: var(--c-danger);
+}
+
+/* 底部隐私提示：浅灰提示条 */
+.privacy-footer {
+  margin-top: 16px;
+  padding: 10px 12px 10px 14px;
+  background: #f7f9fc;
+  border: 1px solid var(--c-border-light);
+  border-left: 3px solid #dbe3ec;
+  border-radius: 4px;
+}
+.privacy-footer ::v-deep .compliance-footer {
+  margin-top: 0;
+  text-align: left;
+  color: var(--c-text-3);
+  font-size: 12px;
+  line-height: 1.6;
 }
 </style>

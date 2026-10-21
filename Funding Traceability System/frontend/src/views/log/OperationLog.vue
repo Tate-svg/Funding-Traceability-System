@@ -18,7 +18,7 @@
     </div>
 
     <div v-loading="listLoading" class="timeline-wrap">
-      <el-empty v-if="!listLoading && list.length === 0" description="暂无操作日志" />
+      <EmptyState v-if="!listLoading && list.length === 0" type="ledger" title="暂无操作日志" desc="系统产生的每一次业务操作都会在此留下只读存证记录" />
       <el-timeline v-else>
         <el-timeline-item
           v-for="item in list"
@@ -79,9 +79,11 @@
 
 <script>
 import { listOperationLogs } from '@/api/log'
+import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'OperationLog',
+  components: { EmptyState },
   data() {
     return {
       list: [],
