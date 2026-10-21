@@ -3,6 +3,11 @@ server:
   # context-path 保持根，不设置
 
 spring:
+  servlet:
+    multipart:
+      # 回访凭证上传大小限制
+      max-file-size: 10MB
+      max-request-size: 10MB
   datasource:
     # 业务流水库：仅存虚拟ID、金额、流转节点等业务数据
     business:
@@ -31,6 +36,9 @@ funding:
   privacy:
     # 学生隐私字段 AES 密钥（必须16位），生产环境应通过环境变量注入
     aes-key: ${PRIVACY_AES_KEY:FundingPrivacy16}
+  upload:
+    # 回访脱敏凭证材料存储目录（相对工作目录，与 upload/attachments 同根）
+    dir: upload/visit-material
 
 logging:
   level:

@@ -68,12 +68,39 @@
         </div>
         <trace-timeline biz-type="fund" :biz-id="$route.params.id" />
       </el-card>
+
+      <!-- 关联回访凭证（脱敏后纳入全链路溯源台账） -->
+      <el-card shadow="never" class="visit-card">
+        <div slot="header" class="card-title">
+          关联回访凭证
+          <span class="card-subtitle"><i class="el-icon-lock"></i> 回访材料已脱敏，资助-拨付-回访业务闭环</span>
+        </div>
+        <el-empty v-if="visits.length === 0" description="暂无关联回访" :image-size="60" />
+        <el-table v-else :data="visits" border size="mini">
+          <el-table-column prop="visitDate" label="回访日期" width="110" />
+          <el-table-column prop="visitor" label="回访人" width="100" />
+          <el-table-column label="脱敏回访记录" min-width="240" show-overflow-tooltip>
+            <template slot-scope="{ row }">
+              <span v-if="row.maskedRecord">{{ row.maskedRecord }}</span>
+              <span v-else class="masked-text">—</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="脱敏凭证" width="100" align="center">
+            <template slot-scope="{ row }">
+              <el-button v-if="row.maskedMaterial" type="text" icon="el-icon-view" @click="downloadMaterial(row)">查看</el-button>
+              <span v-else class="masked-text">—</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
     </template>
   </div>
 </template>
 
 <script>
 import { getFund } from '@/api/fund'
+import { listVisits, downloadVisitMaterial } from '@/api/visit'
+import { downloadFile } from '@/utils/download'
 import TraceTimeline from '@/views/trace/TraceTimeline.vue'
 
 const BIG_THRESHOLD = 5000
@@ -84,6 +111,7 @@ export default {
   data() {
     return {
       detail: null,
+      visits: [],
       loading: false
     }
   },
@@ -111,6 +139,7 @@ export default {
   },
   created() {
     this.getDetail()
+    this.getVisits()
   },
   methods: {
     formatAmount(val) {
@@ -133,6 +162,19 @@ export default {
       getFund(this.$route.params.id).then(data => {
         this.detail = data
       }).finally(() => { this.loading = false })
+    },
+    getVisits() {
+      listVisits({ page: 1, size: 50, fundId: this.$route.params.id }).then(data => {
+        this.visits = (data && data.records) || []
+      }).catch(() => {})
+    },
+    downloadMaterial(row) {
+      downloadVisitMaterial(row.id).then(blob => {
+        const ext = (row.maskedMaterial || '').split('.').pop() || 'dat'
+        return downloadFile(blob, '回访脱敏凭证_' + row.id + '.' + ext)
+      }).catch(err => {
+        if (err && err.message) this.$message.error(err.message)
+      })
     }
   }
 }
@@ -152,4 +194,5 @@ export default {
 .hash-text { font-family:Consolas, monospace; font-size:12px; color:#909399; cursor:default; }
 .masked-text { color:#C0C4CC; }
 .log-card-wrap { margin-bottom:16px; }
+.visit-card { margin-bottom:16px; }
 </style>

@@ -161,6 +161,8 @@ public class LocalTimestampServiceImpl implements TimestampService {
             case "新增回访":
             case "修改回访":
                 return new String[]{"VISIT_RECORD", "回访录入"};
+            case "上传回访脱敏凭证":
+                return new String[]{"VISIT_RECORD", "回访凭证上传"};
             case "新增学生":
             case "修改学生":
                 return new String[]{"STUDENT_UPLOAD", "资料上传"};
