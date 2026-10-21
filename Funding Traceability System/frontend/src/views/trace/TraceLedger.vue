@@ -20,13 +20,13 @@
     </div>
 
     <div v-loading="listLoading" class="ledger-wrap">
-      <el-empty v-if="!listLoading && list.length === 0" description="暂无时间戳台账记录" />
+      <EmptyState v-if="!listLoading && list.length === 0" type="ledger" title="暂无时间戳台账记录" desc="业务操作发生后，系统会自动生成不可篡改的时间戳存证" />
       <div v-else class="ledger-list">
         <div
           v-for="item in list"
           :key="item.id"
           class="ledger-card"
-          :class="[nodeClass(item.node), { 'is-anomaly': item.anomaly === 1 }]"
+          :class="[nodeClass(item.node), 'op-' + opType(item), { 'is-anomaly': item.anomaly === 1 }]"
         >
           <div class="ts-badge" :style="{ background: nodeColor(item.node) }">
             <div class="ts-serial">#{{ item.serialNo }}</div>
@@ -46,7 +46,10 @@
             <div class="card-meta">
               <span>操作人：{{ item.operatorName || '—' }}</span>
               <el-tag :type="roleTagType(item.role)" size="mini">{{ roleText(item.role) }}</el-tag>
-              <el-tooltip :content="item.tsHash" placement="top">
+              <span class="op-flag" :class="'op-' + opType(item)">
+                <i :class="opIcon(item)"></i> {{ opLabel(item) }}
+              </span>
+              <el-tooltip :content="item.tsHash || '暂无哈希'" placement="top">
                 <span class="hash-text"><i class="el-icon-lock"></i> {{ shortHash(item.tsHash) }}</span>
               </el-tooltip>
               <span class="stamp-flag"><i class="el-icon-circle-check"></i> 可信存证</span>
@@ -95,6 +98,7 @@
 
 <script>
 import { listTimestamps, verifyTimestamps } from '@/api/trace'
+import EmptyState from '@/components/EmptyState.vue'
 
 // 业务节点差异化色卡
 const NODE_COLORS = {
@@ -112,6 +116,7 @@ const NODE_COLORS = {
 
 export default {
   name: 'TraceLedger',
+  components: { EmptyState },
   data() {
     return {
       list: [],
@@ -166,8 +171,29 @@ export default {
       const map = { AUDIT_ADMIN: 'danger', DISBURSE_ADMIN: 'warning', SUPERVISOR: 'primary', SPONSOR: 'success' }
       return map[role] || 'info'
     },
+    // 归纳操作类型：新增 / 修改 / 删除（仅用于视觉标注，不改动字段本身）
+    // 优先依据摘要语义判定，摘要无明确动作词时回落到业务节点
+    opType(item) {
+      const summary = (item && item.summary) || ''
+      if (summary.indexOf('删除') > -1) return 'del'
+      if (summary.indexOf('修改') > -1 || summary.indexOf('更新') > -1) return 'edit'
+      if (summary.indexOf('新增') > -1 || summary.indexOf('录入') > -1 || summary.indexOf('上传') > -1 || summary.indexOf('提交') > -1) return 'add'
+      const node = item && item.node
+      if (node === 'SUBMIT' || node === 'VISIT_RECORD' || node === 'STUDENT_UPLOAD' || node === 'DISBURSE') return 'add'
+      return 'edit'
+    },
+    opLabel(item) {
+      const map = { add: '新增', edit: '修改', del: '删除' }
+      return map[this.opType(item)]
+    },
+    opIcon(item) {
+      const map = { add: 'el-icon-plus', edit: 'el-icon-edit', del: 'el-icon-delete' }
+      return map[this.opType(item)]
+    },
     shortHash(hash) {
-      return hash ? hash.substring(0, 16) + '…' : '—'
+      if (!hash) return '—'
+      if (hash.length <= 16) return hash
+      return hash.substring(0, 8) + '…' + hash.substring(hash.length - 6)
     },
     getList() {
       this.listLoading = true
@@ -236,8 +262,12 @@ export default {
 .biz-text { font-weight:600; color:#303133; font-size:13px; }
 .card-summary { margin-top:6px; font-size:13px; color:#606266; word-break:break-all; }
 .card-meta { margin-top:6px; font-size:12px; color:#909399; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-.hash-text { font-family:Consolas, monospace; color:#909399; cursor:default; }
-.stamp-flag { color:#67C23A; }
+.card-meta .hash-text { display:inline-flex; align-items:center; gap:4px; }
+.stamp-flag {
+  display:inline-flex; align-items:center; gap:4px;
+  color:#2f9e6e; background:#eaf6f0; border:1px solid #cbe9dc;
+  font-size:11px; line-height:18px; padding:0 8px; border-radius:4px;
+}
 .anomaly-reason { margin-top:6px; font-size:12px; color:#F56C6C; }
 .danger-text { color:#F56C6C; }
 .verify-stats { margin-top:12px; display:flex; gap:24px; font-size:13px; color:#606266; }
@@ -253,6 +283,26 @@ export default {
 .node-visit_record { border-left-color:#36A3B5; }
 .node-student_upload { border-left-color:#13B5A6; }
 .node-other { border-left-color:#909399; }
+
+/* 左侧色条按操作类型区分：新增绿 / 修改蓝 / 删除红 */
+.ledger-card.op-add { border-left-color:#2f9e6e; --op-color:#2f9e6e; }
+.ledger-card.op-edit { border-left-color:#2b6cb0; --op-color:#2b6cb0; }
+.ledger-card.op-del { border-left-color:#c24a45; --op-color:#c24a45; }
+/* 操作类型色条置于卡片最左侧，避免被时间戳徽章底色覆盖 */
+.ledger-card::after {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
+  background:var(--op-color,#cfd8e3); z-index:2; pointer-events:none;
+}
+.op-flag {
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:11px; line-height:18px; padding:0 8px;
+  border-radius:4px; border:1px solid transparent;
+}
+.op-flag.op-add { color:#2f9e6e; background:#eaf6f0; border-color:#cbe9dc; }
+.op-flag.op-edit { color:#2b6cb0; background:#eaf2fb; border-color:#cfe0f3; }
+.op-flag.op-del { color:#c24a45; background:#fbedec; border-color:#f2d3d1; }
+/* 时序异常保留红色边框与浅红底，覆盖操作色条 */
+.ledger-card.is-anomaly { border-left-color:#c24a45; }
 
 .pagination-bar { margin-top:16px; text-align:right; }
 </style>

@@ -15,20 +15,27 @@
       <el-table-column prop="realName" label="姓名" min-width="100" />
       <el-table-column label="角色" min-width="110" align="center">
         <template slot-scope="{ row }">
-          <el-tag :type="roleTagType(row.role)" size="small">
+          <el-tag :type="roleTagType(row.role)" :class="roleTagClass(row.role)" size="small">
             {{ roleText(row.role) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="phone" label="联系电话" min-width="120" />
-      <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column v-if="isAuditAdmin" label="操作" width="230" align="center">
+      <el-table-column prop="phone" label="联系电话" min-width="120">
         <template slot-scope="{ row }">
-          <el-button type="text" icon="el-icon-key" @click="openPrivacy(row)">联系方式调取</el-button>
+          <span class="mono">{{ row.phone }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="createTime" label="创建时间" min-width="150" />
+      <el-table-column v-if="isAuditAdmin" label="操作" width="265" align="center" class-name="op-col">
+        <template slot-scope="{ row }">
+          <el-button type="text" class="link-secondary" icon="el-icon-key" @click="openPrivacy(row)">联系方式调取</el-button>
           <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
           <el-button type="text" class="danger-text" icon="el-icon-delete" :disabled="row.id === currentUserId" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
+      <template slot="empty">
+        <EmptyState type="folder" title="暂无用户" desc="新增用户后，可在这里统一管理账号角色与权限" />
+      </template>
     </el-table>
 
     <div class="pagination-bar">
@@ -124,9 +131,11 @@
 <script>
 import { listUsers, addUser, updateUser, deleteUser } from '@/api/user'
 import { applyPrivacyAccess, getPrivacyProfile } from '@/api/privacy'
+import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'User',
+  components: { EmptyState },
   data() {
     const validatePassword = (rule, value, callback) => {
       if (this.dialogType === 'create' && !value) {
@@ -188,6 +197,15 @@ export default {
         SPONSOR: 'success'
       }
       return map[role] || 'info'
+    },
+    roleTagClass(role) {
+      const map = {
+        SUPERVISOR: 'role-tag--supervisor',
+        DISBURSE_ADMIN: 'role-tag--disburse',
+        SPONSOR: 'role-tag--sponsor',
+        AUDIT_ADMIN: 'role-tag--audit'
+      }
+      return map[role] || ''
     },
     getList() {
       this.listLoading = true
@@ -284,5 +302,36 @@ export default {
 .filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
 .filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
-.danger-text { color:#F56C6C; }
+.danger-text { color: var(--c-danger) !important; }
+.danger-text:hover,
+.danger-text:focus { color: var(--c-danger) !important; background: var(--c-danger-light) !important; }
+/* 次级文字按钮：联系方式调取 */
+.el-button--text.link-secondary { color: var(--c-text-3) !important; }
+.el-button--text.link-secondary:hover,
+.el-button--text.link-secondary:focus { color: var(--c-primary) !important; background: var(--c-primary-light); }
+/* 角色标签配色：监事蓝 / 拨付橙 / 资助绿 / 审核红 */
+.el-tag.role-tag--supervisor {
+  background: #eaf2fb;
+  border-color: #cfe0f3;
+  color: #2b6cb0;
+}
+.el-tag.role-tag--disburse {
+  background: #fcf4e8;
+  border-color: #f2ddbe;
+  color: #c07f2e;
+}
+.el-tag.role-tag--sponsor {
+  background: #eaf6f0;
+  border-color: #c8e8d8;
+  color: #2f9e6e;
+}
+.el-tag.role-tag--audit {
+  background: #fbedec;
+  border-color: #f0cfcd;
+  color: #c24a45;
+}
+/* 桌面端操作列按钮单行排列 */
+@media (min-width: 769px) {
+  ::v-deep .op-col .cell { white-space: nowrap; }
+}
 </style>

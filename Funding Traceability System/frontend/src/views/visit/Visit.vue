@@ -20,15 +20,47 @@
       <el-table-column prop="sponsorName" label="资助人" min-width="90" />
       <el-table-column prop="visitDate" label="回访日期" min-width="110" />
       <el-table-column prop="visitor" label="回访人" min-width="90" />
-      <el-table-column label="绑定凭证号" min-width="150">
+      <el-table-column label="绑定凭证号" min-width="205">
         <template slot-scope="{ row }">
-          <span v-if="row.voucherNo" class="voucher-text"><i class="el-icon-lock"></i> {{ row.voucherNo }}</span>
+          <el-tag v-if="row.voucherNo" size="small" type="info" class="voucher-tag">
+            <i class="el-icon-lock"></i><span>{{ row.voucherNo }}</span>
+          </el-tag>
           <span v-else class="muted-text">—</span>
         </template>
       </el-table-column>
-      <el-table-column prop="content" label="回访内容" min-width="160" show-overflow-tooltip />
-      <el-table-column prop="situation" label="情况" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="problem" label="存在问题" min-width="140" show-overflow-tooltip />
+      <el-table-column prop="content" label="回访内容" min-width="180">
+        <template slot-scope="{ row }">
+          <div class="clamp-cell">
+            <div
+              :data-expand-key="expandKey(row, 'content')"
+              :class="['clamp-text', { 'is-expanded': expanded(row, 'content') }]"
+            >{{ row.content }}</div>
+            <el-button v-if="overflow(row, 'content')" type="text" class="expand-btn" @click="toggleExpand(row, 'content')">{{ expanded(row, 'content') ? '收起' : '展开' }}</el-button>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column prop="situation" label="情况" min-width="160">
+        <template slot-scope="{ row }">
+          <div class="clamp-cell">
+            <div
+              :data-expand-key="expandKey(row, 'situation')"
+              :class="['clamp-text', { 'is-expanded': expanded(row, 'situation') }]"
+            >{{ row.situation }}</div>
+            <el-button v-if="overflow(row, 'situation')" type="text" class="expand-btn" @click="toggleExpand(row, 'situation')">{{ expanded(row, 'situation') ? '收起' : '展开' }}</el-button>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column prop="problem" label="存在问题" min-width="160">
+        <template slot-scope="{ row }">
+          <div class="clamp-cell">
+            <div
+              :data-expand-key="expandKey(row, 'problem')"
+              :class="['clamp-text', { 'is-expanded': expanded(row, 'problem') }]"
+            >{{ row.problem }}</div>
+            <el-button v-if="overflow(row, 'problem')" type="text" class="expand-btn" @click="toggleExpand(row, 'problem')">{{ expanded(row, 'problem') ? '收起' : '展开' }}</el-button>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column prop="maskedRecord" label="脱敏回访记录" min-width="200" show-overflow-tooltip>
         <template slot-scope="{ row }">
           <span v-if="row.maskedRecord">{{ row.maskedRecord }}</span>
@@ -44,14 +76,17 @@
       <el-table-column prop="createTime" label="创建时间" min-width="150" />
       <el-table-column v-if="isAdmin" label="操作" width="220" align="center" fixed="right">
         <template slot-scope="{ row }">
-          <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
+          <el-button type="text" class="action-primary" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
           <el-upload v-if="row.fundId" :show-file-list="false" action="#" :http-request="opt => handleUpload(row, opt)" style="display:inline-block">
-            <el-button type="text" icon="el-icon-upload2" title="图片/文档请先手动脱敏">传凭证</el-button>
+            <el-button type="text" class="action-secondary" icon="el-icon-upload2" title="图片/文档请先手动脱敏">传凭证</el-button>
           </el-upload>
           <span v-else class="muted-text" title="该回访未绑定资助流水，请先编辑绑定">未绑定流水</span>
           <el-button type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
+      <template slot="empty">
+        <EmptyState type="folder" title="暂无回访记录" desc="调整筛选条件，或新增一条回访记录" />
+      </template>
     </el-table>
 
     <div class="pagination-bar">
@@ -139,10 +174,11 @@ import { downloadFile } from '@/utils/download'
 import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
 import ComplianceFooter from '@/components/ComplianceFooter.vue'
 import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'Visit',
-  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea },
+  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea, EmptyState },
   data() {
     return {
       list: [],
@@ -159,6 +195,8 @@ export default {
       contentBlock: false,
       situationBlock: false,
       problemBlock: false,
+      expandedMap: {},
+      overflowMap: {},
       form: this.getEmptyForm(),
       rules: {
         studentId: [{ required: true, message: '请选择学生', trigger: 'change' }],
@@ -178,6 +216,12 @@ export default {
     this.getList()
     this.loadOptions()
   },
+  mounted() {
+    window.addEventListener('resize', this.measureOverflow)
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.measureOverflow)
+  },
   methods: {
     getEmptyForm() {
       return { id: null, studentId: undefined, studentName: '', sponsorId: undefined, sponsorName: '', fundId: null, visitDate: '', content: '', situation: '', problem: '', visitor: '' }
@@ -187,11 +231,42 @@ export default {
       listVisits(this.listQuery).then(data => {
         this.list = (data && data.records) || []
         this.total = (data && data.total) || 0
+        this.measureOverflow()
       }).finally(() => { this.listLoading = false })
     },
     loadOptions() {
       studentOptions().then(data => { this.studentOptions = data || [] }).catch(() => {})
       userOptions('SPONSOR').then(data => { this.sponsorOptions = data || [] }).catch(() => {})
+    },
+    // 长文本展开状态（仅展示用，不影响数据）
+    expandKey(row, field) {
+      return row.id + ':' + field
+    },
+    expanded(row, field) {
+      return !!this.expandedMap[this.expandKey(row, field)]
+    },
+    overflow(row, field) {
+      return !!this.overflowMap[this.expandKey(row, field)]
+    },
+    toggleExpand(row, field) {
+      const key = this.expandKey(row, field)
+      const next = !this.expandedMap[key]
+      this.$set(this.expandedMap, key, next)
+      if (!next) this.measureOverflow()
+    },
+    // 根据 3 行截断后的实际高度判断是否需要「展开」
+    measureOverflow() {
+      this.$nextTick(() => {
+        if (!this.$el || !this.$el.querySelectorAll) return
+        const cells = this.$el.querySelectorAll('[data-expand-key]')
+        const map = {}
+        Array.prototype.forEach.call(cells, el => {
+          const key = el.getAttribute('data-expand-key')
+          if (!key) return
+          map[key] = this.expandedMap[key] ? true : el.scrollHeight > el.clientHeight + 1
+        })
+        this.overflowMap = map
+      })
     },
     handleFilter() { this.listQuery.page = 1; this.getList() },
     handleReset() { this.listQuery.studentId = undefined; this.listQuery.keyword = ''; this.listQuery.page = 1; this.getList() },
@@ -312,7 +387,24 @@ export default {
 .filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .danger-text { color:#F56C6C; }
-.muted-text { color:#C0C4CC; }
-.voucher-text { font-size:12px; color:#606266; }
+.muted-text { color:var(--c-text-4); }
+.voucher-tag { display:inline-flex; align-items:center; max-width:100%; }
+.voucher-tag i { margin-right:4px; }
+.voucher-tag span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-family:'SFMono-Regular', Consolas, Menlo, monospace; }
+.clamp-cell { line-height:1.5; }
+.clamp-text {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
+  white-space:normal;
+  word-break:break-word;
+  color:var(--c-text-2);
+}
+.clamp-text.is-expanded { display:block; overflow:visible; -webkit-line-clamp:unset; }
+.expand-btn { padding:0; margin-top:2px; font-size:12px; line-height:1.4; }
+.el-table .action-primary { font-weight:600; }
+.el-table .el-button--text.action-secondary { color:var(--c-text-3); }
+.el-table .el-button--text.action-secondary:hover { color:var(--c-text-2); background-color:var(--c-bg-head); }
 .mask-tip { margin:0 0 8px 100px; font-size:12px; color:#E6A23C; line-height:1.5; }
 </style>

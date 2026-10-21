@@ -12,7 +12,7 @@
         : ('哈希链核验失败：序列 #' + verify.chainBrokenAt + ' 起与链上哈希不一致，疑似篡改')"
     />
 
-    <el-empty v-if="!loading && nodes.length === 0" description="暂无时间戳记录" :image-size="60" />
+    <EmptyState v-if="!loading && nodes.length === 0" type="ledger" title="暂无时间戳记录" desc="该单据尚未产生时间戳存证节点" />
     <el-timeline v-else class="timeline">
       <el-timeline-item
         v-for="item in nodes"
@@ -28,10 +28,13 @@
           :content="item.anomalyReason || '时序异常'"
           placement="top"
         >
-          <div class="trace-node" :class="{ 'is-anomaly': item.anomaly === 1, 'is-broken': item.hashValid === false }">
+          <div class="trace-node" :class="['op-' + opType(item), { 'is-anomaly': item.anomaly === 1, 'is-broken': item.hashValid === false }]">
             <div class="node-head">
               <span class="node-tag" :style="{ background: nodeColor(item.node) }">{{ item.nodeName }}</span>
               <span class="node-serial">#{{ item.serialNo }}</span>
+              <span class="op-flag" :class="'op-' + opType(item)">
+                <i :class="opIcon(item)"></i> {{ opLabel(item) }}
+              </span>
               <el-tag v-if="item.anomaly === 1" type="danger" size="mini" effect="dark">时序异常</el-tag>
               <el-tag v-else-if="item.hashValid === false" type="danger" size="mini" effect="plain">哈希不一致</el-tag>
               <span class="stamp-flag"><i class="el-icon-lock"></i> 可信存证</span>
@@ -50,6 +53,7 @@
 
 <script>
 import { listTimestamps, verifyTimestamps } from '@/api/trace'
+import EmptyState from '@/components/EmptyState.vue'
 
 const NODE_COLORS = {
   SUBMIT: '#409EFF',
@@ -66,6 +70,7 @@ const NODE_COLORS = {
 
 export default {
   name: 'TraceTimeline',
+  components: { EmptyState },
   props: {
     bizType: { type: String, required: true },
     bizId: { type: [String, Number], required: true }
@@ -97,6 +102,24 @@ export default {
       const map = { AUDIT_ADMIN: 'danger', DISBURSE_ADMIN: 'warning', SUPERVISOR: 'primary', SPONSOR: 'success' }
       return map[role] || 'info'
     },
+    // 归纳操作类型：新增 / 修改 / 删除（仅用于视觉标注，不改动字段本身）
+    opType(item) {
+      const summary = (item && item.summary) || ''
+      if (summary.indexOf('删除') > -1) return 'del'
+      if (summary.indexOf('修改') > -1 || summary.indexOf('更新') > -1) return 'edit'
+      if (summary.indexOf('新增') > -1 || summary.indexOf('录入') > -1 || summary.indexOf('上传') > -1 || summary.indexOf('提交') > -1) return 'add'
+      const node = item && item.node
+      if (node === 'SUBMIT' || node === 'VISIT_RECORD' || node === 'STUDENT_UPLOAD' || node === 'DISBURSE') return 'add'
+      return 'edit'
+    },
+    opLabel(item) {
+      const map = { add: '新增', edit: '修改', del: '删除' }
+      return map[this.opType(item)]
+    },
+    opIcon(item) {
+      const map = { add: 'el-icon-plus', edit: 'el-icon-edit', del: 'el-icon-delete' }
+      return map[this.opType(item)]
+    },
     loadData() {
       this.loading = true
       const params = { bizType: this.bizType, bizId: this.bizId, page: 1, size: 50 }
@@ -121,7 +144,7 @@ export default {
 /* 节点卡片：可信存证水印底纹 */
 .trace-node {
   position: relative; overflow: hidden;
-  background: #FAFBFC; border: 1px solid #EBEEF5; border-radius: 6px;
+  background: #FAFBFC; border: 1px solid #EBEEF5; border-left: 3px solid transparent; border-radius: 6px;
   padding: 10px 14px;
 }
 .trace-node::before {
@@ -144,7 +167,27 @@ export default {
 .node-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .node-tag { color: #fff; font-size: 12px; padding: 2px 10px; border-radius: 10px; line-height: 18px; }
 .node-serial { font-family: Consolas, monospace; font-size: 12px; color: #909399; }
-.stamp-flag { color: #67C23A; font-size: 12px; margin-left: auto; }
+.stamp-flag {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: #2f9e6e; background: #eaf6f0; border: 1px solid #cbe9dc;
+  font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: 4px;
+  margin-left: auto;
+}
 .node-meta { margin-top: 6px; font-size: 12px; color: #909399; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .node-summary { margin-top: 6px; font-size: 13px; color: #606266; word-break: break-all; }
+
+/* 左侧色条按操作类型区分：新增绿 / 修改蓝 / 删除红 */
+.trace-node.op-add { border-left-color: #2f9e6e; }
+.trace-node.op-edit { border-left-color: #2b6cb0; }
+.trace-node.op-del { border-left-color: #c24a45; }
+.op-flag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; line-height: 18px; padding: 0 8px;
+  border-radius: 4px; border: 1px solid transparent;
+}
+.op-flag.op-add { color: #2f9e6e; background: #eaf6f0; border-color: #cbe9dc; }
+.op-flag.op-edit { color: #2b6cb0; background: #eaf2fb; border-color: #cfe0f3; }
+.op-flag.op-del { color: #c24a45; background: #fbedec; border-color: #f2d3d1; }
+/* 时序异常保留红色边框与浅红底，覆盖操作色条 */
+.trace-node.is-anomaly { border-left-color: #c24a45; }
 </style>

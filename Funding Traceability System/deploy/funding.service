@@ -1,0 +1,33 @@
+# 助学帮扶管理系统 后端服务
+# 放置位置：/etc/systemd/system/funding.service
+# 启用命令：systemctl daemon-reload && systemctl enable --now funding
+
+[Unit]
+Description=Funding Traceability System Backend
+After=network.target mysqld.service
+
+[Service]
+Type=simple
+User=funding
+Group=funding
+WorkingDirectory=/opt/funding
+
+# ===== 连接与密钥（部署时替换为真实值）=====
+Environment="DB_URL=jdbc:mysql://127.0.0.1:3306/funding_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+Environment="PRIVACY_DB_URL=jdbc:mysql://127.0.0.1:3306/funding_privacy?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+Environment="DB_USERNAME=funding"
+Environment="DB_PASSWORD=CHANGE_ME"
+# 16 位密钥，上线后不可更换，否则历史密文无法解密
+Environment="PRIVACY_AES_KEY=FundingPrivacy16"
+
+ExecStart=/usr/bin/java -Xms256m -Xmx512m -Dfile.encoding=UTF-8 -jar /opt/funding/app.jar
+Restart=always
+RestartSec=5
+SuccessExitStatus=143
+
+# 日志：journalctl -u funding -f
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
