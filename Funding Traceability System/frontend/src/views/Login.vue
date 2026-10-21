@@ -102,6 +102,14 @@ export default {
   border-radius: 8px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
 }
+
+/* 手机端登录卡片自适应 */
+@media (max-width: 768px) {
+  .login-card {
+    width: 88vw;
+    padding: 7vw 6vw;
+  }
+}
 .login-header {
   text-align: center;
   margin-bottom: 24px;
