@@ -1,6 +1,36 @@
 <template>
   <div class="page-container">
-    <div class="filter-bar">
+    <div class="page-header">
+      <div>
+        <div class="page-title">溯源台账</div>
+        <div class="page-subtitle">每个业务节点自动生成时间戳存证，哈希成链，逐条可核验</div>
+      </div>
+      <div class="page-actions">
+        <el-button icon="el-icon-download" :loading="exporting === 'pdf'" @click="exportAudit('pdf')">导出 PDF</el-button>
+        <el-button icon="el-icon-picture-outline" :loading="exporting === 'png'" @click="exportAudit('png')">导出图片</el-button>
+        <el-button type="primary" icon="el-icon-check" @click="verifyAll">核验全链</el-button>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">台账总数</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">条时间戳存证记录</div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-label">本页可信存证</div>
+        <div class="kpi-value">{{ list.length - anomalyInPage }}</div>
+        <div class="kpi-hint">本页 {{ list.length }} 条中的存证数</div>
+      </div>
+      <div class="kpi-card" :class="anomalyInPage > 0 ? 'kpi-card--danger' : ''">
+        <div class="kpi-label">本页时序异常</div>
+        <div class="kpi-value">{{ anomalyInPage }}</div>
+        <div class="kpi-hint">条时间戳顺序异常</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
       <el-select v-model="listQuery.bizType" placeholder="业务类型" clearable style="width:140px" @change="handleFilter">
         <el-option label="资助单" value="fund" />
         <el-option label="学生资料" value="student" />
@@ -15,8 +45,6 @@
       <el-input v-model="listQuery.keyword" placeholder="摘要 / 操作人关键词" clearable style="width:220px" @keyup.enter.native="handleFilter" />
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <span class="flex-fill"></span>
-      <el-button icon="el-icon-check" @click="verifyAll">核验全链</el-button>
     </div>
 
     <div v-loading="listLoading" class="ledger-wrap">
@@ -93,35 +121,41 @@
         <el-button type="primary" @click="verifyVisible = false">关 闭</el-button>
       </div>
     </el-dialog>
+
+    <!-- 审计专用页面水印：账号 + 访问时间，离开本页自动销毁 -->
+    <audit-watermark />
   </div>
 </template>
 
 <script>
-import { listTimestamps, verifyTimestamps } from '@/api/trace'
+import { listTimestamps, verifyTimestamps, exportAuditTrail } from '@/api/trace'
+import { downloadFile } from '@/utils/download'
 import EmptyState from '@/components/EmptyState.vue'
+import AuditWatermark from '@/components/AuditWatermark.vue'
 
-// 业务节点差异化色卡
+// 业务节点差异化色卡（统一到全站设计令牌色系，降低饱和度）
 const NODE_COLORS = {
-  SUBMIT: '#409EFF',        // 提交申请 蓝
-  AUDIT_PASS: '#67C23A',    // 审核通过 绿
-  AUDIT_REJECT: '#F56C6C',  // 审核驳回 红
-  REVIEW: '#E6A23C',        // 复核确认 橙
-  REVIEW_DRAW: '#CC7A00',   // 大额抽检 深橙
-  DISBURSE: '#C9A227',      // 资金拨付 金
-  VOUCHER_MODIFY: '#8E6FE8',// 凭证修改 紫
-  VISIT_RECORD: '#36A3B5',  // 回访录入 青
-  STUDENT_UPLOAD: '#13B5A6',// 资料上传 蓝绿
-  OTHER: '#909399'          // 其他 灰
+  SUBMIT: '#2b6cb0',        // 提交申请 蓝
+  AUDIT_PASS: '#2f9e6e',    // 审核通过 绿
+  AUDIT_REJECT: '#c24a45',  // 审核驳回 红
+  REVIEW: '#c07f2e',        // 复核确认 橙
+  REVIEW_DRAW: '#9e6420',   // 大额抽检 深橙
+  DISBURSE: '#a88523',      // 资金拨付 金
+  VOUCHER_MODIFY: '#6b5bb5',// 凭证修改 紫
+  VISIT_RECORD: '#2f8f9e',  // 回访录入 青
+  STUDENT_UPLOAD: '#22998c',// 资料上传 蓝绿
+  OTHER: '#7a8798'          // 其他 灰
 }
 
 export default {
   name: 'TraceLedger',
-  components: { EmptyState },
+  components: { EmptyState, AuditWatermark },
   data() {
     return {
       list: [],
       total: 0,
       listLoading: false,
+      exporting: '',
       listQuery: { page: 1, size: 10, bizType: undefined, node: undefined, keyword: '' },
       verifyVisible: false,
       verifyResult: null,
@@ -145,6 +179,10 @@ export default {
   computed: {
     verifyTotal() {
       return (this.verifyResult && this.verifyResult.total != null) ? this.verifyResult.total : 0
+    },
+    // 仅用于顶部统计展示，不改变任何台账逻辑
+    anomalyInPage() {
+      return this.list.filter(item => item.anomaly === 1).length
     }
   },
   methods: {
@@ -220,15 +258,33 @@ export default {
         this.verifyResult = data
         this.verifyVisible = true
       }).catch(() => {})
+    },
+    // 审计专用导出：文件由服务端渲染并自带「账号 + 导出时间」水印
+    exportAudit(format) {
+      if (this.exporting) return
+      this.exporting = format
+      const params = {
+        bizType: this.listQuery.bizType || undefined,
+        node: this.listQuery.node || undefined,
+        keyword: this.listQuery.keyword || undefined
+      }
+      exportAuditTrail(format, params).then(blob => {
+        const now = new Date()
+        const pad = n => (n < 10 ? '0' + n : '' + n)
+        const stamp = '' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) +
+          '_' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds())
+        return downloadFile(blob, '审计溯源单_' + stamp + '.' + format)
+      }).catch(err => {
+        this.$message.error((err && err.message) || '导出失败，请稍后重试')
+      }).finally(() => {
+        this.exporting = ''
+      })
     }
   }
 }
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-.flex-fill { flex:1; }
 .ledger-wrap { min-height:200px; }
 .ledger-list { display:flex; flex-direction:column; gap:12px; }
 
@@ -236,18 +292,22 @@ export default {
 .ledger-card {
   position:relative; overflow:hidden;
   display:flex; align-items:stretch;
-  border:1px solid #EBEEF5; border-left-width:4px; border-radius:6px;
-  background:#fff;
+  border:1px solid var(--c-border-light); border-left-width:4px;
+  border-radius:var(--r-panel);
+  background:var(--c-bg-card);
+  box-shadow:var(--sh-1);
+  transition:box-shadow var(--t-fast), transform var(--t-fast);
 }
+.ledger-card:hover { box-shadow:var(--sh-2); transform:translateY(-1px); }
 .ledger-card::before {
   content:'可信存证 · 不可篡改';
   position:absolute; right:-20px; top:50%;
   transform:translateY(-50%) rotate(-24deg);
   font-size:26px; font-weight:700; letter-spacing:6px;
-  color:rgba(64,158,255,.06); white-space:nowrap; pointer-events:none;
+  color:rgba(43,108,176,.06); white-space:nowrap; pointer-events:none;
 }
-.ledger-card.is-anomaly { border-color:#F56C6C; border-left-width:4px; background:#FFF7F7; }
-.ledger-card.is-anomaly::before { color:rgba(245,108,108,.08); }
+.ledger-card.is-anomaly { border-color:var(--c-danger); background:var(--c-danger-light); }
+.ledger-card.is-anomaly::before { color:rgba(194,74,69,.08); }
 
 .ts-badge {
   flex:0 0 118px; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -258,36 +318,36 @@ export default {
 
 .card-body { flex:1; padding:10px 16px; min-width:0; }
 .card-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.node-tag { color:#fff; font-size:12px; padding:2px 10px; border-radius:10px; line-height:18px; }
-.biz-text { font-weight:600; color:#303133; font-size:13px; }
-.card-summary { margin-top:6px; font-size:13px; color:#606266; word-break:break-all; }
-.card-meta { margin-top:6px; font-size:12px; color:#909399; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.node-tag { color:#fff; font-size:12px; padding:2px 10px; border-radius:var(--r-pill); line-height:18px; }
+.biz-text { font-weight:600; color:var(--c-text-1); font-size:13px; }
+.card-summary { margin-top:6px; font-size:13px; color:var(--c-text-2); word-break:break-all; }
+.card-meta { margin-top:6px; font-size:12px; color:var(--c-text-3); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 .card-meta .hash-text { display:inline-flex; align-items:center; gap:4px; }
 .stamp-flag {
   display:inline-flex; align-items:center; gap:4px;
-  color:#2f9e6e; background:#eaf6f0; border:1px solid #cbe9dc;
-  font-size:11px; line-height:18px; padding:0 8px; border-radius:4px;
+  color:var(--c-success); background:var(--c-success-light); border:1px solid #cbe9dc;
+  font-size:11px; line-height:18px; padding:0 8px; border-radius:var(--r-tag);
 }
-.anomaly-reason { margin-top:6px; font-size:12px; color:#F56C6C; }
-.danger-text { color:#F56C6C; }
-.verify-stats { margin-top:12px; display:flex; gap:24px; font-size:13px; color:#606266; }
+.anomaly-reason { margin-top:6px; font-size:12px; color:var(--c-danger); }
+.danger-text { color:var(--c-danger); }
+.verify-stats { margin-top:12px; display:flex; gap:24px; font-size:13px; color:var(--c-text-2); }
 
-/* 节点色卡左边框与徽章同色 */
-.node-submit { border-left-color:#409EFF; }
-.node-audit_pass { border-left-color:#67C23A; }
-.node-audit_reject { border-left-color:#F56C6C; }
-.node-review { border-left-color:#E6A23C; }
-.node-review_draw { border-left-color:#CC7A00; }
-.node-disburse { border-left-color:#C9A227; }
-.node-voucher_modify { border-left-color:#8E6FE8; }
-.node-visit_record { border-left-color:#36A3B5; }
-.node-student_upload { border-left-color:#13B5A6; }
-.node-other { border-left-color:#909399; }
+/* 节点色卡左边框与徽章同色（仅作兜底，实际由下方操作类型色条覆盖） */
+.node-submit { border-left-color:#2b6cb0; }
+.node-audit_pass { border-left-color:#2f9e6e; }
+.node-audit_reject { border-left-color:#c24a45; }
+.node-review { border-left-color:#c07f2e; }
+.node-review_draw { border-left-color:#9e6420; }
+.node-disburse { border-left-color:#a88523; }
+.node-voucher_modify { border-left-color:#6b5bb5; }
+.node-visit_record { border-left-color:#2f8f9e; }
+.node-student_upload { border-left-color:#22998c; }
+.node-other { border-left-color:#7a8798; }
 
 /* 左侧色条按操作类型区分：新增绿 / 修改蓝 / 删除红 */
-.ledger-card.op-add { border-left-color:#2f9e6e; --op-color:#2f9e6e; }
-.ledger-card.op-edit { border-left-color:#2b6cb0; --op-color:#2b6cb0; }
-.ledger-card.op-del { border-left-color:#c24a45; --op-color:#c24a45; }
+.ledger-card.op-add { border-left-color:var(--c-success); --op-color:var(--c-success); }
+.ledger-card.op-edit { border-left-color:var(--c-primary); --op-color:var(--c-primary); }
+.ledger-card.op-del { border-left-color:var(--c-danger); --op-color:var(--c-danger); }
 /* 操作类型色条置于卡片最左侧，避免被时间戳徽章底色覆盖 */
 .ledger-card::after {
   content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
@@ -296,13 +356,19 @@ export default {
 .op-flag {
   display:inline-flex; align-items:center; gap:3px;
   font-size:11px; line-height:18px; padding:0 8px;
-  border-radius:4px; border:1px solid transparent;
+  border-radius:var(--r-tag); border:1px solid transparent;
 }
-.op-flag.op-add { color:#2f9e6e; background:#eaf6f0; border-color:#cbe9dc; }
-.op-flag.op-edit { color:#2b6cb0; background:#eaf2fb; border-color:#cfe0f3; }
-.op-flag.op-del { color:#c24a45; background:#fbedec; border-color:#f2d3d1; }
+.op-flag.op-add { color:var(--c-success); background:var(--c-success-light); border-color:#cbe9dc; }
+.op-flag.op-edit { color:var(--c-primary); background:var(--c-primary-light); border-color:var(--c-primary-border); }
+.op-flag.op-del { color:var(--c-danger); background:var(--c-danger-light); border-color:#f2d3d1; }
 /* 时序异常保留红色边框与浅红底，覆盖操作色条 */
-.ledger-card.is-anomaly { border-left-color:#c24a45; }
+.ledger-card.is-anomaly { border-left-color:var(--c-danger); }
 
 .pagination-bar { margin-top:16px; text-align:right; }
+
+@media (max-width: 768px) {
+  .ledger-card { flex-direction:column; }
+  .ts-badge { flex:0 0 auto; flex-direction:row; justify-content:flex-start; gap:10px; padding:8px 12px; }
+  .ts-badge .ts-time { text-align:left; }
+}
 </style>

@@ -1,58 +1,155 @@
 <template>
   <div class="page-container">
-    <!-- 顶部统计卡片区 -->
+    <!-- 顶部统计区：不对称栅格 + 差异化渐变 -->
     <div class="stat-row">
-      <el-card shadow="hover" class="stat-card stat-card--pending">
+      <div class="stat-card stat-card--main">
         <div class="stat-inner">
-          <div class="stat-icon pending"><i class="el-icon-s-check"></i></div>
+          <div class="stat-icon"><i class="el-icon-s-check"></i></div>
           <div class="stat-info">
             <div class="stat-label">待审核申请</div>
-            <span class="stat-num">{{ pendingCount }}</span>
+            <div class="stat-value-row">
+              <span class="stat-num">{{ pendingCount }}</span>
+              <span class="stat-unit">笔</span>
+            </div>
             <div class="stat-hint">资助申请待处理</div>
           </div>
         </div>
-      </el-card>
-      <el-card shadow="hover" class="stat-card stat-card--big">
+        <div class="stat-progress">
+          <div class="stat-progress-head">
+            <span>本页大额占比</span>
+            <span class="stat-progress-val">{{ bigRatio }}%</span>
+          </div>
+          <div class="stat-progress-track">
+            <div class="stat-progress-fill" :style="{ width: bigRatio + '%' }"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--side">
         <div class="stat-inner">
-          <div class="stat-icon big"><i class="el-icon-warning-outline"></i></div>
+          <div class="stat-icon"><i class="el-icon-warning-outline"></i></div>
           <div class="stat-info">
             <div class="stat-label">本页大额待审（≥5000元）</div>
-            <span class="stat-num">{{ bigCount }}</span>
+            <div class="stat-value-row">
+              <span class="stat-num">{{ bigCount }}</span>
+              <span class="stat-unit">笔</span>
+            </div>
             <div class="stat-hint">需重点关注的资助款项</div>
           </div>
         </div>
-      </el-card>
+        <div class="stat-legend">
+          <div class="legend-item">
+            <span class="legend-dot legend-dot--normal"></span>
+            <span>本页待审</span>
+            <b>{{ list.length }}</b>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot legend-dot--big"></span>
+            <span>大额待审</span>
+            <b>{{ bigCount }}</b>
+          </div>
+        </div>
+      </div>
     </div>
 
     <el-tabs v-model="activeTab" class="workbench-tabs">
-      <!-- 待审核卡片列表 -->
+      <!-- 待审核：双列分流队列 -->
       <el-tab-pane label="待审核申请" name="pending">
         <div v-loading="listLoading">
-          <EmptyState v-if="!listLoading && list.length === 0" type="todo" title="当前没有待审核事项" desc="审核队列已清空，暂无待办" />
-          <el-row :gutter="16">
-            <el-col v-for="item in list" :key="item.id" :xs="24" :sm="12" :md="8">
-              <el-card shadow="hover" class="apply-card">
-                <div slot="header" class="card-header">
-                  <span class="student-name">{{ item.studentName }}</span>
-                  <el-tag v-if="isBig(item)" type="danger" size="mini">大额</el-tag>
+          <EmptyState
+            v-if="!listLoading && list.length === 0"
+            type="todo"
+            title="当前没有待审核事项"
+            desc="审核队列已清空，暂无待办"
+          />
+
+          <div v-else class="queue-grid">
+            <section class="queue-col">
+              <header class="queue-head">
+                <span class="queue-title">待初审</span>
+                <span class="queue-count">{{ normalList.length }}</span>
+                <span class="queue-sub">常规金额</span>
+              </header>
+
+              <article v-for="item in normalList" :key="item.id" class="queue-card">
+                <div class="qc-head">
+                  <span class="qc-name">{{ item.studentName }}</span>
                 </div>
-                <div class="card-body">
-                  <div class="amount-line" :class="{ 'big-amount': isBig(item) }">¥ {{ formatAmount(item.amount) }}</div>
-                  <div class="info-line"><span class="label">资助人：</span>{{ item.sponsorName }}</div>
-                  <div class="info-line"><span class="label">资助日期：</span>{{ item.fundDate }}</div>
-                  <div class="info-line"><span class="label">用途：</span>{{ item.purpose || '—' }}</div>
-                  <div class="info-line"><span class="label">备注：</span>{{ item.remark || '—' }}</div>
-                  <div class="info-line muted"><span class="label">提交时间：</span>{{ item.createTime }}</div>
+                <div class="qc-amount">¥ {{ formatAmount(item.amount) }}</div>
+                <div class="qc-meta">
+                  <span class="qc-label">资助人</span>
+                  <span class="qc-value" :title="item.sponsorName">{{ item.sponsorName }}</span>
                 </div>
-                <div class="card-footer">
-                  <el-button type="success" size="mini" icon="el-icon-check" @click="handleAudit(item, 'PASS')">通过</el-button>
-                  <el-button type="danger" size="mini" plain icon="el-icon-close" @click="handleAudit(item, 'REJECT')">驳回</el-button>
+                <div class="qc-meta">
+                  <span class="qc-label">资助日期</span>
+                  <span class="qc-value">{{ item.fundDate }}</span>
+                </div>
+                <div class="qc-meta">
+                  <span class="qc-label">用途</span>
+                  <span class="qc-value" :title="item.purpose">{{ item.purpose || '—' }}</span>
+                </div>
+                <div class="qc-meta">
+                  <span class="qc-label">备注</span>
+                  <span class="qc-value" :title="item.remark">{{ item.remark || '—' }}</span>
+                </div>
+                <div class="qc-meta qc-meta--muted">
+                  <span class="qc-label">提交时间</span>
+                  <span class="qc-value">{{ item.createTime }}</span>
+                </div>
+                <div class="qc-foot">
+                  <el-button type="primary" size="mini" icon="el-icon-check" @click="handleAudit(item, 'PASS')">通过</el-button>
+                  <el-button size="mini" plain icon="el-icon-close" class="btn-reject" @click="handleAudit(item, 'REJECT')">驳回</el-button>
                   <el-button type="text" size="mini" icon="el-icon-view" @click="handleDetail(item)">详情</el-button>
                 </div>
-              </el-card>
-            </el-col>
-          </el-row>
-          <div class="pagination-bar">
+              </article>
+
+              <div v-if="normalList.length === 0" class="queue-empty">本页暂无常规金额申请</div>
+            </section>
+
+            <section class="queue-col queue-col--alert">
+              <header class="queue-head queue-head--alert">
+                <span class="queue-title">大额待审</span>
+                <span class="queue-count queue-count--alert">{{ bigList.length }}</span>
+                <span class="queue-sub">≥ 5000 元</span>
+              </header>
+
+              <article v-for="item in bigList" :key="item.id" class="queue-card queue-card--alert">
+                <span class="amount-badge">¥ {{ formatAmount(item.amount) }}</span>
+                <div class="qc-head">
+                  <span class="qc-name">{{ item.studentName }}</span>
+                </div>
+                <div class="qc-meta">
+                  <span class="qc-label">资助人</span>
+                  <span class="qc-value" :title="item.sponsorName">{{ item.sponsorName }}</span>
+                </div>
+                <div class="qc-meta">
+                  <span class="qc-label">资助日期</span>
+                  <span class="qc-value">{{ item.fundDate }}</span>
+                </div>
+                <div class="qc-meta">
+                  <span class="qc-label">用途</span>
+                  <span class="qc-value" :title="item.purpose">{{ item.purpose || '—' }}</span>
+                </div>
+                <div class="qc-meta">
+                  <span class="qc-label">备注</span>
+                  <span class="qc-value" :title="item.remark">{{ item.remark || '—' }}</span>
+                </div>
+                <div class="qc-meta qc-meta--muted">
+                  <span class="qc-label">提交时间</span>
+                  <span class="qc-value">{{ item.createTime }}</span>
+                </div>
+                <div class="qc-foot">
+                  <el-button type="primary" size="mini" icon="el-icon-check" @click="handleAudit(item, 'PASS')">通过</el-button>
+                  <el-button size="mini" plain icon="el-icon-close" class="btn-reject" @click="handleAudit(item, 'REJECT')">驳回</el-button>
+                  <el-button type="text" size="mini" icon="el-icon-view" @click="handleDetail(item)">详情</el-button>
+                </div>
+              </article>
+
+              <div v-if="bigList.length === 0" class="queue-empty">本页暂无大额申请</div>
+            </section>
+          </div>
+
+          <div v-if="list.length > 0" class="pagination-bar">
             <el-pagination
               background
               :current-page="listQuery.page"
@@ -80,7 +177,9 @@
           <el-table-column prop="studentName" label="学生" min-width="90" />
           <el-table-column prop="sponsorName" label="资助人" min-width="90" />
           <el-table-column label="金额(元)" min-width="110" align="right">
-            <template slot-scope="{ row }">{{ formatAmount(row.amount) }}</template>
+            <template slot-scope="{ row }">
+              <span class="amount">{{ formatAmount(row.amount) }}</span>
+            </template>
           </el-table-column>
           <el-table-column label="状态" width="100" align="center">
             <template slot-scope="{ row }">
@@ -99,6 +198,9 @@
               <el-button type="text" icon="el-icon-view" @click="handleDetail(row)">详情</el-button>
             </template>
           </el-table-column>
+          <template slot="empty">
+            <EmptyState type="ledger" title="暂无已审记录" desc="完成审核后，记录会在这里按时间归档" />
+          </template>
         </el-table>
         <div class="pagination-bar">
           <el-pagination
@@ -115,18 +217,29 @@
 
     <!-- 审核意见弹窗 -->
     <el-dialog :title="auditDialogTitle" :visible.sync="auditDialogVisible" width="480px" :close-on-click-modal="false">
-      <el-alert v-if="auditTarget && isBig(auditTarget) && auditResult === 'PASS'" type="warning" :closable="false" show-icon
-        title="该申请金额 ≥ 5000 元，审核通过后将自动进入复核抽检池" class="big-tip" />
+      <el-alert
+        v-if="auditTarget && isBig(auditTarget) && auditResult === 'PASS'"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="该申请金额 ≥ 5000 元，审核通过后将自动进入复核抽检池"
+        class="big-tip"
+      />
       <el-form label-width="80px">
         <el-form-item label="学生">{{ auditTarget ? auditTarget.studentName : '' }}</el-form-item>
         <el-form-item label="金额">¥ {{ auditTarget ? formatAmount(auditTarget.amount) : '' }}</el-form-item>
         <el-form-item :label="auditResult === 'PASS' ? '审核意见' : '驳回原因'" required>
-          <el-input v-model="auditRemark" type="textarea" :rows="3" :placeholder="auditResult === 'PASS' ? '请填写审核意见（选填）' : '请填写驳回原因（必填）'" />
+          <el-input
+            v-model="auditRemark"
+            type="textarea"
+            :rows="3"
+            :placeholder="auditResult === 'PASS' ? '请填写审核意见（选填）' : '请填写驳回原因（必填）'"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer">
         <el-button @click="auditDialogVisible = false">取 消</el-button>
-        <el-button :type="auditResult === 'PASS' ? 'success' : 'danger'" :loading="auditLoading" @click="submitAudit">
+        <el-button :type="auditResult === 'PASS' ? 'primary' : 'danger'" :loading="auditLoading" @click="submitAudit">
           {{ auditResult === 'PASS' ? '确认通过' : '确认驳回' }}
         </el-button>
       </div>
@@ -152,8 +265,9 @@ export default {
       total: 0,
       listLoading: false,
       listQuery: { page: 1, size: 9 },
-      auditedList: [],
-      auditedTotal: 0,
+      // 已审记录：后端 /funds 仅支持单一 status 过滤，且分页 total 会含待审单据
+      // 故一次性取回后在本地按非 SUBMITTED 过滤 + 分页，保证 total 与列表一致
+      auditedAll: [],
       auditedLoading: false,
       auditedQuery: { page: 1, size: 10, status: undefined },
       auditDialogVisible: false,
@@ -166,6 +280,24 @@ export default {
   computed: {
     bigCount() {
       return this.list.filter(item => this.isBig(item)).length
+    },
+    // 仅用于双列分流展示，不改变任何审核逻辑
+    bigList() {
+      return this.list.filter(item => this.isBig(item))
+    },
+    normalList() {
+      return this.list.filter(item => !this.isBig(item))
+    },
+    bigRatio() {
+      if (!this.list.length) return 0
+      return Math.round((this.bigCount / this.list.length) * 100)
+    },
+    auditedTotal() {
+      return this.auditedAll.length
+    },
+    auditedList() {
+      const start = (this.auditedQuery.page - 1) * this.auditedQuery.size
+      return this.auditedAll.slice(start, start + this.auditedQuery.size)
     },
     auditDialogTitle() {
       return this.auditResult === 'PASS' ? '审核通过' : '驳回申请'
@@ -202,14 +334,17 @@ export default {
     },
     getAuditedList() {
       this.auditedLoading = true
-      listFunds(this.auditedQuery).then(data => {
-        this.auditedList = ((data && data.records) || []).filter(r => r.status !== 'SUBMITTED')
-        this.auditedTotal = (data && data.total) || 0
+      listFunds({ page: 1, size: 1000, status: this.auditedQuery.status || undefined }).then(data => {
+        this.auditedAll = ((data && data.records) || []).filter(r => r.status !== 'SUBMITTED')
+        // 过滤后总数变少时，回退到仍有效的页码
+        const maxPage = Math.max(1, Math.ceil(this.auditedAll.length / this.auditedQuery.size))
+        if (this.auditedQuery.page > maxPage) this.auditedQuery.page = maxPage
       }).finally(() => { this.auditedLoading = false })
     },
     handleCurrentChange(page) { this.listQuery.page = page; this.getList() },
     handleAuditedFilter() { this.auditedQuery.page = 1; this.getAuditedList() },
-    handleAuditedCurrentChange(page) { this.auditedQuery.page = page; this.getAuditedList() },
+    // 已审记录已全量取回，翻页只需切换本地页码，无需再次请求
+    handleAuditedCurrentChange(page) { this.auditedQuery.page = page },
     handleDetail(row) {
       this.$router.push('/fund/detail/' + row.id)
     },
@@ -238,33 +373,385 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.stat-row { display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
-.stat-card { flex:1; min-width:240px; border:none; border-radius:12px; overflow:hidden; transition:transform .2s ease, box-shadow .2s ease; }
-.stat-card ::v-deep .el-card__body { padding:20px 22px; }
-.stat-card.stat-card--pending { background:linear-gradient(135deg, #1e4c7e 0%, #2b6cb0 52%, #4d8fcf 100%); }
-.stat-card.stat-card--big { background:linear-gradient(135deg, #17614c 0%, #2f9e6e 55%, #52bb92 100%); }
-.stat-card.stat-card:hover { transform:translateY(-3px); box-shadow:var(--sh-3); }
-.stat-inner { display:flex; align-items:center; gap:14px; }
-.stat-icon { flex:0 0 52px; width:52px; height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:26px; color:#fff; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.26); }
-.stat-icon.pending, .stat-icon.big { background:rgba(255,255,255,.16); }
-.stat-info { min-width:0; }
-.stat-label { font-size:13px; color:rgba(255,255,255,.82); margin-bottom:4px; letter-spacing:.2px; }
-.stat-num { display:inline-block; font-size:30px; font-weight:700; color:#fff; line-height:1.15; letter-spacing:.5px; font-variant-numeric:tabular-nums; font-feature-settings:'tnum'; }
-.stat-badge ::v-deep .el-badge__content { border:none; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
-.stat-hint { margin-top:4px; font-size:12px; color:rgba(255,255,255,.6); }
-.workbench-tabs { margin-top:4px; }
-.apply-card { margin-bottom:16px; }
-.card-header { display:flex; align-items:center; justify-content:space-between; }
-.student-name { font-weight:600; font-size:15px; }
-.card-body { padding:4px 0; }
-.amount-line { font-size:20px; font-weight:700; color:#303133; margin-bottom:8px; }
-.amount-line.big-amount { color:#F56C6C; }
-.info-line { font-size:13px; color:#606266; line-height:1.9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.info-line .label { color:#909399; }
-.info-line.muted { color:#909399; font-size:12px; }
-.card-footer { border-top:1px solid #EBEEF5; padding-top:10px; margin-top:10px; display:flex; align-items:center; }
-.pagination-bar { margin-top:8px; text-align:right; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
-.big-tip { margin-bottom:12px; }
+/* ---------- 统计区：不对称栅格 ---------- */
+.stat-row {
+  display: grid;
+  grid-template-columns: 1.62fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--r-card);
+  color: #fff;
+  overflow: hidden;
+  box-shadow: var(--sh-2);
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: -46px;
+  right: -30px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 68%);
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh-3);
+}
+
+.stat-card--main {
+  background: linear-gradient(135deg, #1e4c7e 0%, #2b6cb0 55%, #4d8fcf 100%);
+}
+
+.stat-card--side {
+  background: linear-gradient(135deg, #17614c 0%, #2f9e6e 55%, #52bb92 100%);
+}
+
+.stat-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-icon {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.stat-info {
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.2px;
+  margin-bottom: 2px;
+}
+
+.stat-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.stat-num {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+.stat-unit {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.stat-hint {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 主卡：占比进度 */
+.stat-progress {
+  position: relative;
+  z-index: 1;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.stat-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 7px;
+}
+
+.stat-progress-val {
+  font-weight: 600;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-progress-track {
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+.stat-progress-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: #fff;
+  transition: width 0.3s ease;
+}
+
+/* 副卡：图例 */
+.stat-legend {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.legend-item b {
+  font-weight: 600;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot--normal {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.legend-dot--big {
+  background: #ffd9a8;
+}
+
+/* ---------- 双列分流队列 ---------- */
+.workbench-tabs {
+  margin-top: 4px;
+}
+
+.queue-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.queue-col {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-card);
+  padding: 14px 14px 4px;
+}
+
+.queue-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--c-border-light);
+}
+
+.queue-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text-1);
+}
+
+.queue-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--c-primary-light);
+  color: var(--c-primary);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-count--alert {
+  background: var(--c-warning-light);
+  color: var(--c-warning);
+}
+
+.queue-sub {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--c-text-4);
+}
+
+.queue-card {
+  position: relative;
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border-light);
+  border-radius: var(--r-panel);
+  padding: 12px 13px;
+  margin-bottom: 10px;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+}
+
+.queue-card:hover {
+  border-color: var(--c-primary-border);
+  box-shadow: var(--sh-2);
+  transform: translateY(-1px);
+}
+
+.queue-card--alert::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--c-warning);
+}
+
+.amount-badge {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  background: var(--c-warning-light);
+  border: 1px solid #f2ddbe;
+  color: var(--c-warning);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.qc-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 104px;
+}
+
+.qc-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text-1);
+}
+
+.qc-amount {
+  margin: 5px 0 7px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--c-text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.qc-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.95;
+}
+
+.qc-label {
+  flex: 0 0 58px;
+  color: var(--c-text-4);
+}
+
+.qc-value {
+  min-width: 0;
+  color: var(--c-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qc-meta--muted .qc-value {
+  color: var(--c-text-3);
+  font-size: 12px;
+}
+
+.qc-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--c-border-light);
+}
+
+.btn-reject:hover {
+  color: var(--c-danger);
+  border-color: #e6b4b1;
+  background: var(--c-danger-light);
+}
+
+.queue-empty {
+  padding: 26px 0;
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--c-text-4);
+  background: var(--c-bg-page);
+  border-radius: var(--r-table);
+}
+
+.pagination-bar {
+  margin-top: 12px;
+  text-align: right;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.big-tip {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 1024px) {
+  .stat-row {
+    grid-template-columns: 1fr;
+  }
+
+  .queue-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

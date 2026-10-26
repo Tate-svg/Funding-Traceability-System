@@ -1,7 +1,37 @@
 <template>
   <div class="page-container">
-    <el-alert type="info" :closable="false" show-icon class="readonly-tip"
-      title="操作日志为只读存证记录，一经写入不可删除、不可篡改" />
+    <div class="page-header">
+      <div>
+        <div class="page-title">操作日志</div>
+        <div class="page-subtitle">系统每一次业务操作都会在此留下只读存证痕迹，可检索、可追溯</div>
+      </div>
+      <div class="page-actions">
+        <span class="readonly-pill"><i class="el-icon-lock"></i> 只读存证</span>
+      </div>
+    </div>
+
+    <div class="note-bar">
+      <i class="el-icon-lock"></i>
+      <span>操作日志为只读存证记录，一经写入不可删除、不可篡改</span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">日志总数</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">条只读存证记录</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">本页记录</div>
+        <div class="kpi-value">{{ list.length }}</div>
+        <div class="kpi-hint">当前页展示条数</div>
+      </div>
+      <div class="kpi-card kpi-card--warn">
+        <div class="kpi-label">本页存证操作</div>
+        <div class="kpi-value">{{ sealedCount }}</div>
+        <div class="kpi-hint">资助单 / 复核任务类</div>
+      </div>
+    </div>
 
     <div class="filter-bar">
       <el-select v-model="listQuery.targetType" placeholder="操作对象" clearable style="width:150px" @change="handleFilter">
@@ -27,7 +57,7 @@
           placement="top"
           :color="timelineColor(item.targetType)"
         >
-          <div class="log-card">
+          <div class="log-card" :style="{ borderLeftColor: timelineColor(item.targetType) }">
             <div class="log-title">
               <span class="operation">{{ item.operation }}</span>
               <el-tag :type="roleTagType(item.role)" size="mini">{{ roleText(item.role) }}</el-tag>
@@ -97,13 +127,19 @@ export default {
   created() {
     this.getList()
   },
+  computed: {
+    // 本页中属于「存证类」操作的条数（仅展示统计，不改变任何逻辑）
+    sealedCount() {
+      return this.list.filter(item => this.isVoucherOp(item)).length
+    }
+  },
   methods: {
     isVoucherOp(item) {
       return item.targetType === 'fund' || item.targetType === 'review_task'
     },
     timelineColor(targetType) {
-      const map = { fund: '#409EFF', review_task: '#E6A23C' }
-      return map[targetType] || '#C0C4CC'
+      const map = { fund: '#2b6cb0', review_task: '#c07f2e' }
+      return map[targetType] || '#7a8798'
     },
     roleText(role) {
       const map = {
@@ -142,17 +178,65 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.readonly-tip { margin-bottom:16px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
-.timeline-wrap { padding:4px 8px; }
-.log-card { background:#fafafa; border:1px solid #EBEEF5; border-radius:4px; padding:10px 14px; }
+.readonly-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-warning-light);
+  border: 1px solid #f2ddbe;
+  color: var(--c-warning);
+  font-size: 12px;
+  font-weight: 600;
+}
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--c-bg-head);
+  border: 1px solid var(--c-border-light);
+  border-radius: var(--r-panel);
+}
+.timeline-wrap { padding: 2px 4px; }
+.timeline-wrap ::v-deep .el-timeline-item__timestamp {
+  color: var(--c-text-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.timeline-wrap ::v-deep .el-timeline-item__tail {
+  border-left-color: var(--c-border);
+}
+.log-card {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border-light);
+  border-left: 3px solid var(--c-border);
+  border-radius: var(--r-panel);
+  padding: 11px 14px;
+  box-shadow: var(--sh-1);
+  transition: box-shadow var(--t-fast), transform var(--t-fast);
+}
+.log-card:hover {
+  box-shadow: var(--sh-2);
+  transform: translateX(2px);
+}
 .log-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.operation { font-weight:600; color:#303133; }
-.lock-icon { color:#E6A23C; }
+.operation { font-weight:600; color:var(--c-text-1); font-size:13.5px; }
+.lock-icon { color:var(--c-warning); }
 .sealed-tag { cursor:pointer; }
-.log-meta { margin-top:6px; font-size:12px; color:#909399; display:flex; gap:16px; flex-wrap:wrap; }
-.log-content { margin-top:6px; font-size:13px; color:#606266; word-break:break-all; }
+.log-meta { margin-top:6px; font-size:12px; color:var(--c-text-3); display:flex; gap:16px; flex-wrap:wrap; }
+.log-content { margin-top:6px; font-size:12.5px; color:var(--c-text-2); word-break:break-all; line-height:1.6; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .sealed-alert { margin-top:12px; }
+
+@media (max-width: 768px) {
+  .filter-bar > .el-select,
+  .filter-bar > .el-input {
+    width: 100% !important;
+  }
+}
 </style>

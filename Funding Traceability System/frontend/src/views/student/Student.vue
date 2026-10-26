@@ -1,9 +1,38 @@
 <template>
   <div class="page-container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">学生管理</div>
+        <div class="page-subtitle">敏感字段加密独立存储，列表仅展示脱敏信息，明文须走隐私调取审批</div>
+      </div>
+      <div class="page-actions">
+        <el-button v-permission="['AUDIT_ADMIN']" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="primary" icon="el-icon-plus" @click="handleCreate">新增学生</el-button>
+      </div>
+    </div>
+
     <PrivacyTipBar />
 
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">学生档案总数</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">份学生档案</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">本页档案</div>
+        <div class="kpi-value">{{ list.length }}</div>
+        <div class="kpi-hint">当前页展示条数</div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-label">本页资助人</div>
+        <div class="kpi-value">{{ sponsorCountInPage }}</div>
+        <div class="kpi-hint">位资助人关联</div>
+      </div>
+    </div>
+
     <!-- 查询区 -->
-    <div class="filter-bar">
+    <div class="toolbar">
       <el-input
         v-model="listQuery.keyword"
         placeholder="虚拟ID / 学校"
@@ -13,10 +42,6 @@
       />
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <div class="filter-actions">
-        <el-button v-permission="['AUDIT_ADMIN']" type="primary" icon="el-icon-plus" @click="handleCreate">新增学生</el-button>
-        <el-button v-permission="['AUDIT_ADMIN']" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
-      </div>
     </div>
 
     <!-- 表格 -->
@@ -296,6 +321,10 @@ export default {
     dialogTitle() {
       return this.isEdit ? '编辑学生' : '新增学生'
     },
+    // 仅用于顶部统计展示，不改变任何列表逻辑
+    sponsorCountInPage() {
+      return new Set(this.list.map(item => item.sponsorName).filter(Boolean)).size
+    },
     rules() {
       return {
         name: [{ required: !this.isEdit, message: '请输入姓名', trigger: 'blur' }],
@@ -505,11 +534,6 @@ export default {
 </script>
 
 <style scoped>
-.page-container {
-  background: #fff;
-  padding: 16px;
-  border-radius: 4px;
-}
 /* 顶部隐私提示栏：浅蓝底 + 左侧主色条 */
 .page-container .privacy-tip-bar {
   background: #eaf2fb;
@@ -526,17 +550,6 @@ export default {
 .page-container .privacy-tip-bar ::v-deep i {
   color: #2b6cb0;
   font-size: 14px;
-}
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.filter-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
 }
 .pagination-bar {
   margin-top: 16px;
@@ -568,7 +581,7 @@ export default {
 .apply-tip {
   margin-left: 10px;
   font-size: 12px;
-  color: #909399;
+  color: var(--c-text-3);
 }
 .profile-section {
   margin-top: 4px;
@@ -593,6 +606,6 @@ export default {
 }
 .upload-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--c-text-3);
 }
 </style>

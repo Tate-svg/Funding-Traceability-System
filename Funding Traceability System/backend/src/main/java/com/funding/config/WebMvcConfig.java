@@ -24,12 +24,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // JwtInterceptor 必须先执行（设置 UserContext），RoleInterceptor 后执行
+        // 白名单：登录接口 + 扫码公开核验接口（第三方监事/审计无需登录，仅只读公开数据）
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/api/auth/login");
+                .excludePathPatterns("/api/auth/login", "/api/public/**");
         registry.addInterceptor(roleInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/api/auth/login");
+                .excludePathPatterns("/api/auth/login", "/api/public/**");
     }
 
     @Override

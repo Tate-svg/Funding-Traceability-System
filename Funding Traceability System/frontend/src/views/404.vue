@@ -32,11 +32,11 @@ export default {
 }
 .code {
   font-size: 90px;
-  color: #409EFF;
+  color: var(--c-primary);
   margin: 0 0 10px;
 }
 .desc {
-  color: #909399;
+  color: var(--c-text-3);
   margin-bottom: 24px;
 }
 </style>

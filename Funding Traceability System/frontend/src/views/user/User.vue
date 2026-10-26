@@ -1,12 +1,37 @@
 <template>
   <div class="page-container">
-    <div class="filter-bar">
+    <div class="page-header">
+      <div>
+        <div class="page-title">用户管理</div>
+        <div class="page-subtitle">账号、角色与联系方式明文调取统一在此维护，调取须两级审批</div>
+      </div>
+      <div class="page-actions">
+        <el-button v-permission="['AUDIT_ADMIN']" type="primary" icon="el-icon-plus" @click="handleCreate">新增用户</el-button>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">用户总数</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">个系统账号</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">本页账号</div>
+        <div class="kpi-value">{{ list.length }}</div>
+        <div class="kpi-hint">当前页展示条数</div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-label">本页角色种类</div>
+        <div class="kpi-value">{{ roleCount }}</div>
+        <div class="kpi-hint">种角色分布</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
       <el-input v-model="listQuery.keyword" placeholder="用户名 / 姓名" clearable style="width:220px" @keyup.enter.native="handleFilter" />
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <div class="filter-actions">
-        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增用户</el-button>
-      </div>
     </div>
 
     <el-table v-loading="listLoading" :data="list" border stripe style="width:100%">
@@ -171,7 +196,11 @@ export default {
   computed: {
     isAuditAdmin() { return this.$store.getters.role === 'AUDIT_ADMIN' },
     currentUserId() { return this.$store.getters.userId },
-    dialogTitle() { return this.dialogType === 'create' ? '新增用户' : '编辑用户' }
+    dialogTitle() { return this.dialogType === 'create' ? '新增用户' : '编辑用户' },
+    // 仅用于顶部统计展示，不改变任何列表逻辑
+    roleCount() {
+      return new Set(this.list.map(item => item.role).filter(Boolean)).size
+    }
   },
   created() {
     this.getList()
@@ -298,9 +327,6 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
-.filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .danger-text { color: var(--c-danger) !important; }
 .danger-text:hover,

@@ -1,17 +1,43 @@
 <template>
   <div class="page-container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">回访管理</div>
+        <div class="page-subtitle">回访内容与凭证材料自动脱敏留存，与资助流水绑定后可追溯到人</div>
+      </div>
+      <div class="page-actions">
+        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="primary" icon="el-icon-plus" @click="handleCreate">新增回访</el-button>
+      </div>
+    </div>
+
     <PrivacyTipBar />
-    <div class="filter-bar">
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">回访记录总数</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">条回访记录</div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-label">本页已绑凭证</div>
+        <div class="kpi-value">{{ boundInPage }}</div>
+        <div class="kpi-hint">条已生成资助凭证</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">本页凭证材料</div>
+        <div class="kpi-value">{{ materialInPage }}</div>
+        <div class="kpi-hint">条已上传脱敏材料</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
       <el-select v-model="listQuery.studentId" placeholder="选择学生筛选" clearable filterable style="width:180px" @change="handleFilter">
         <el-option v-for="item in studentOptions" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-input v-model="listQuery.keyword" placeholder="回访内容 / 问题" clearable style="width:220px" @keyup.enter.native="handleFilter" />
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <div class="filter-actions">
-        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增回访</el-button>
-        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
-      </div>
     </div>
 
     <el-table v-loading="listLoading" :data="list" border stripe style="width:100%">
@@ -210,7 +236,14 @@ export default {
   },
   computed: {
     isAdmin() { return this.$store.getters.role === 'AUDIT_ADMIN' },
-    dialogTitle() { return this.dialogType === 'create' ? '新增回访' : '编辑回访' }
+    dialogTitle() { return this.dialogType === 'create' ? '新增回访' : '编辑回访' },
+    // 仅用于顶部统计展示，不改变任何列表/回访逻辑
+    boundInPage() {
+      return this.list.filter(item => !!item.voucherNo).length
+    },
+    materialInPage() {
+      return this.list.filter(item => !!item.maskedMaterial).length
+    }
   },
   created() {
     this.getList()
@@ -382,11 +415,8 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
-.filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
-.danger-text { color:#F56C6C; }
+.danger-text { color:var(--c-danger); }
 .muted-text { color:var(--c-text-4); }
 .voucher-tag { display:inline-flex; align-items:center; max-width:100%; }
 .voucher-tag i { margin-right:4px; }
@@ -406,5 +436,5 @@ export default {
 .el-table .action-primary { font-weight:600; }
 .el-table .el-button--text.action-secondary { color:var(--c-text-3); }
 .el-table .el-button--text.action-secondary:hover { color:var(--c-text-2); background-color:var(--c-bg-head); }
-.mask-tip { margin:0 0 8px 100px; font-size:12px; color:#E6A23C; line-height:1.5; }
+.mask-tip { margin:0 0 8px 100px; font-size:12px; color:var(--c-warning); line-height:1.5; }
 </style>

@@ -27,6 +27,8 @@
         <jjwt.version>0.11.5</jjwt.version>
         <poi.version>5.2.3</poi.version>
         <lombok.version>1.18.30</lombok.version>
+        <zxing.version>3.5.3</zxing.version>
+        <pdfbox.version>2.0.30</pdfbox.version>
     </properties>
 
     <dependencies>
@@ -75,6 +77,25 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
+        </dependency>
+
+        <!-- 资助凭证溯源核验二维码（服务端生成 PNG） -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+
+        <!-- 审计溯源单据导出 PDF（页面由 Java2D 渲染为图片后嵌入，中文不依赖 PDF 字体） -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
         </dependency>
 
         <dependency>

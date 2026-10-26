@@ -1,9 +1,16 @@
 <template>
   <div class="page-container" v-loading="loading">
-    <div class="header-bar">
-      <el-button icon="el-icon-arrow-left" size="small" @click="$router.back()">返回</el-button>
-      <span class="page-title">资助单详情 #{{ $route.params.id }}</span>
-      <el-tag v-if="detail" :type="statusTagType(detail.status)" size="small">{{ statusText(detail.status) }}</el-tag>
+    <div class="page-header">
+      <div class="detail-head">
+        <el-button icon="el-icon-arrow-left" size="small" @click="$router.back()">返回</el-button>
+        <div>
+          <div class="page-title">资助单详情 #{{ $route.params.id }}</div>
+          <div class="page-subtitle">全流程进度、单据信息与可信时间戳溯源</div>
+        </div>
+      </div>
+      <div class="page-actions">
+        <el-tag v-if="detail" :type="statusTagType(detail.status)" size="small">{{ statusText(detail.status) }}</el-tag>
+      </div>
     </div>
 
     <template v-if="detail">
@@ -60,6 +67,47 @@
         </el-descriptions>
       </el-card>
 
+      <!-- 溯源核验二维码（对外只读公开核验，不含任何隐私字段） -->
+      <el-card shadow="never" class="qr-card">
+        <div slot="header" class="card-title">
+          溯源核验二维码
+          <span class="card-subtitle"><i class="el-icon-lock"></i> 监事 / 审计人员免登录扫码核验，仅展示单号、金额、节点时间与状态</span>
+        </div>
+        <div class="qr-body">
+          <div class="qr-img-wrap">
+            <img v-if="qrcode && qrcode.qrImage" :src="qrcode.qrImage" class="qr-img" alt="资助凭证溯源核验二维码">
+            <div v-else class="qr-placeholder">
+              <i class="el-icon-loading"></i>
+              <span>二维码生成中…</span>
+            </div>
+          </div>
+          <div class="qr-side">
+            <div class="qr-row">
+              <span class="qr-label">业务单号</span>
+              <span class="qr-value mono">{{ qrcode ? qrcode.businessNo : '—' }}</span>
+            </div>
+            <div class="qr-row">
+              <span class="qr-label">当前状态</span>
+              <el-tag v-if="qrcode" size="mini" :type="statusTagType(qrcode.status)">{{ qrcode.statusText }}</el-tag>
+              <span v-else class="masked-text">—</span>
+            </div>
+            <div class="qr-row">
+              <span class="qr-label">核验地址</span>
+              <span v-if="qrcode" class="qr-url" :title="qrcode.verifyUrl" @click="openVerify">{{ qrcode.verifyUrl }}</span>
+              <span v-else class="masked-text">—</span>
+            </div>
+            <div class="qr-actions">
+              <el-button type="primary" size="small" icon="el-icon-link" :disabled="!qrcode" @click="openVerify">打开核验页</el-button>
+              <el-button size="small" icon="el-icon-copy-document" :disabled="!qrcode" @click="copyVerifyLink">复制链接</el-button>
+              <el-button size="small" icon="el-icon-download" :disabled="!qrcode" @click="downloadQr">下载二维码</el-button>
+            </div>
+            <p class="qr-tip">
+              核验页为只读公开入口，与内部业务页面隔离：仅展示业务单号、资助金额、各审批节点时间与业务状态，不含学生任何隐私信息。单据状态更新后，扫码展示内容实时同步。
+            </p>
+          </div>
+        </div>
+      </el-card>
+
       <!-- 可信时间戳溯源（仅审核管理员/监事可见） -->
       <el-card v-if="canViewLogs" shadow="never" class="log-card-wrap">
         <div slot="header" class="card-title">
@@ -99,6 +147,7 @@
 
 <script>
 import { getFund } from '@/api/fund'
+import { getFundQrCode } from '@/api/verify'
 import { listVisits, downloadVisitMaterial } from '@/api/visit'
 import { downloadFile } from '@/utils/download'
 import TraceTimeline from '@/views/trace/TraceTimeline.vue'
@@ -113,6 +162,7 @@ export default {
     return {
       detail: null,
       visits: [],
+      qrcode: null,
       loading: false
     }
   },
@@ -141,6 +191,7 @@ export default {
   created() {
     this.getDetail()
     this.getVisits()
+    this.getQrCode()
   },
   methods: {
     formatAmount(val) {
@@ -169,6 +220,56 @@ export default {
         this.visits = (data && data.records) || []
       }).catch(() => {})
     },
+    getQrCode() {
+      getFundQrCode(this.$route.params.id).then(data => {
+        this.qrcode = data
+      }).catch(() => {
+        this.qrcode = null
+      })
+    },
+    openVerify() {
+      if (!this.qrcode || !this.qrcode.verifyUrl) return
+      window.open(this.qrcode.verifyUrl, '_blank')
+    },
+    copyVerifyLink() {
+      if (!this.qrcode || !this.qrcode.verifyUrl) return
+      this.copyText(this.qrcode.verifyUrl).then(() => {
+        this.$message.success('核验链接已复制')
+      }).catch(() => {
+        this.$message.warning('复制失败，请手动选择核验地址复制')
+      })
+    },
+    copyText(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text)
+      }
+      return new Promise((resolve, reject) => {
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.setAttribute('readonly', '')
+        textarea.style.position = 'fixed'
+        textarea.style.top = '-9999px'
+        document.body.appendChild(textarea)
+        textarea.select()
+        try {
+          const ok = document.execCommand('copy')
+          document.body.removeChild(textarea)
+          ok ? resolve() : reject(new Error('copy failed'))
+        } catch (e) {
+          document.body.removeChild(textarea)
+          reject(e)
+        }
+      })
+    },
+    downloadQr() {
+      if (!this.qrcode || !this.qrcode.qrImage) return
+      const link = document.createElement('a')
+      link.href = this.qrcode.qrImage
+      link.download = '资助凭证核验二维码_' + this.qrcode.businessNo + '.png'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    },
     downloadMaterial(row) {
       downloadVisitMaterial(row.id).then(blob => {
         const ext = (row.maskedMaterial || '').split('.').pop() || 'dat'
@@ -182,18 +283,43 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.header-bar { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-.page-title { font-size:16px; font-weight:600; }
+.detail-head { display:flex; align-items:center; gap:12px; }
 .steps-card { margin-bottom:16px; }
 .info-card { margin-bottom:16px; }
-.card-title { font-weight:600; display:flex; align-items:center; gap:10px; }
-.card-subtitle { font-weight:400; font-size:12px; color:#E6A23C; }
-.amount-text { font-weight:700; color:#303133; }
+.card-title { font-weight:600; display:flex; align-items:center; gap:10px; color:var(--c-text-1); }
+.card-subtitle { font-weight:400; font-size:12px; color:var(--c-warning); }
+.amount-text { font-weight:700; color:var(--c-text-1); font-variant-numeric:tabular-nums; }
 .big-tag { margin-left:8px; }
-.voucher-text { font-size:13px; color:#606266; }
-.hash-text { font-family:Consolas, monospace; font-size:12px; color:#909399; cursor:default; }
-.masked-text { color:#C0C4CC; }
+.voucher-text { font-size:13px; color:var(--c-text-2); }
+.hash-text { font-family:Consolas, monospace; font-size:12px; color:var(--c-text-3); cursor:default; }
+.masked-text { color:var(--c-text-4); }
+.qr-card { margin-bottom:16px; }
+.qr-body { display:flex; gap:20px; align-items:center; }
+.qr-img-wrap {
+  width:180px; height:180px; flex:none; padding:8px;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--c-border-light); border-radius:var(--r-panel);
+  background:var(--c-bg-head);
+}
+.qr-img { width:100%; height:100%; object-fit:contain; display:block; }
+.qr-placeholder { display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--c-text-4); font-size:12px; }
+.qr-side { flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; }
+.qr-row { display:flex; align-items:center; gap:12px; font-size:13px; }
+.qr-label { width:64px; flex:none; color:var(--c-text-3); font-size:12px; }
+.qr-value { color:var(--c-text-1); font-weight:600; word-break:break-all; }
+.mono { font-family:Consolas, monospace; }
+.qr-url { font-size:12px; color:var(--c-primary); cursor:pointer; word-break:break-all; }
+.qr-url:hover { text-decoration:underline; }
+.qr-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
+.qr-actions .el-button + .el-button { margin-left:0; }
+.qr-tip { margin:0; font-size:12px; line-height:1.6; color:var(--c-text-4); }
 .log-card-wrap { margin-bottom:16px; }
 .visit-card { margin-bottom:16px; }
+@media (max-width: 768px) {
+  .detail-head { align-items:flex-start; }
+  .detail-head > div { min-width:0; }
+  .qr-body { flex-direction:column; align-items:stretch; }
+  .qr-img-wrap { width:160px; height:160px; align-self:center; }
+  .qr-row { align-items:flex-start; }
+}
 </style>

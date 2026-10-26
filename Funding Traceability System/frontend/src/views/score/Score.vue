@@ -1,15 +1,40 @@
 <template>
   <div class="page-container">
-    <div class="filter-bar">
+    <div class="page-header">
+      <div>
+        <div class="page-title">评分管理</div>
+        <div class="page-subtitle">按指标权重加权计分，记录资助对象阶段表现，用于复核与抽检参考</div>
+      </div>
+      <div class="page-actions">
+        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="primary" icon="el-icon-plus" @click="handleCreate">新增评分</el-button>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">评分记录总数</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">条评分记录</div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-label">本页平均总分</div>
+        <div class="kpi-value">{{ pageAvgScore }}</div>
+        <div class="kpi-hint">百分制加权均分</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">本页优秀记录</div>
+        <div class="kpi-value">{{ excellentCount }}</div>
+        <div class="kpi-hint">总分 ≥ 90 分</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
       <el-select v-model="listQuery.studentId" placeholder="选择学生筛选" clearable filterable style="width:180px" @change="handleFilter">
         <el-option v-for="item in studentOptions" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <div class="filter-actions">
-        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增评分</el-button>
-        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
-      </div>
     </div>
 
     <el-table v-loading="listLoading" :data="list" border stripe style="width:100%">
@@ -179,6 +204,16 @@ export default {
         return s + Number(d.itemScore || 0) * Number(d.weight || 0) / 100
       }, 0)
       return sum.toFixed(2)
+    },
+    // 以下三项仅用于顶部统计展示，不改变任何评分逻辑
+    pageAvgScore() {
+      const valid = this.list.filter(item => item.totalScore !== null && item.totalScore !== undefined && item.totalScore !== '')
+      if (!valid.length) return '-'
+      const sum = valid.reduce((s, item) => s + Number(item.totalScore || 0), 0)
+      return (sum / valid.length).toFixed(2)
+    },
+    excellentCount() {
+      return this.list.filter(item => Number(item.totalScore) >= 90).length
     }
   },
   created() {
@@ -341,11 +376,8 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
-.filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
-.danger-text { color:#F56C6C; }
+.danger-text { color:var(--c-danger); }
 .score-total { display:inline-block; font-size:21px; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }
 .score-excellent { color:var(--c-success); }
 .score-good { color:var(--c-primary); }
@@ -356,8 +388,8 @@ export default {
 .score-progress ::v-deep .el-progress-bar__outer { background-color:#e3eaf3; border-radius:5px; }
 .score-progress ::v-deep .el-progress-bar__inner { border-radius:5px; }
 .score-items-title { font-size:14px; font-weight:600; color:var(--c-text-1); margin:10px 0 8px; border-left:3px solid var(--c-primary); padding-left:8px; }
-.tip-text { font-size:12px; color:#909399; margin-left:8px; }
-.empty-tip { color:#909399; font-size:13px; text-align:center; padding:12px 0; }
+.tip-text { font-size:12px; color:var(--c-text-3); margin-left:8px; }
+.empty-tip { color:var(--c-text-3); font-size:13px; text-align:center; padding:12px 0; }
 /* 桌面端操作列按钮单行排列 */
 @media (min-width: 769px) {
   ::v-deep .op-col .cell { white-space: nowrap; }

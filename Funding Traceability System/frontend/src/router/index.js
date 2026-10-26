@@ -6,8 +6,16 @@ import Layout from '@/layout/Layout.vue'
 
 Vue.use(VueRouter)
 
-// 静态路由：登录页、404 页
+// 静态路由：公开核验页、登录页、404 页
 export const constantRoutes = [
+  {
+    // 扫码公开核验页：不经过 Layout，无需登录，只读
+    path: '/verify/:code',
+    name: 'PublicVerify',
+    component: () => import('@/views/public/Verify.vue'),
+    meta: { public: true, title: '资助凭证核验' },
+    hidden: true
+  },
   {
     path: '/login',
     name: 'Login',
@@ -166,6 +174,11 @@ export function resetRouter() {
 const whiteList = ['/login', '/404']
 
 router.beforeEach(async (to, from, next) => {
+  // 公开核验页：扫码人员无需登录，也不加载系统内部动态路由
+  if (to.meta && to.meta.public) {
+    next()
+    return
+  }
   const hasToken = getToken()
   if (hasToken) {
     if (to.path === '/login') {

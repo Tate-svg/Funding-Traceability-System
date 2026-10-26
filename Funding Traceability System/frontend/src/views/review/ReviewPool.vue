@@ -1,12 +1,40 @@
 <template>
   <div class="page-container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">复核抽检池</div>
+        <div class="page-subtitle">大额资助随机抽检与复核任务处理，复核结论全程留痕</div>
+      </div>
+      <div class="page-actions">
+        <span class="review-pill"><i class="el-icon-lock"></i> 复核结论不可撤销</span>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">复核任务总数</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">条抽检任务</div>
+      </div>
+      <div class="kpi-card kpi-card--warn">
+        <div class="kpi-label">本页待复核</div>
+        <div class="kpi-value">{{ pendingInPage }}</div>
+        <div class="kpi-hint">条待处理任务</div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-label">本页金额合计（元）</div>
+        <div class="kpi-value kpi-value--amount">{{ formatAmount(pageAmount) }}</div>
+        <div class="kpi-hint">当前页 {{ list.length }} 笔合计</div>
+      </div>
+    </div>
+
     <!-- 抽检设置卡片 -->
     <el-card shadow="never" class="draw-card">
       <div slot="header" class="draw-header">
         <span><i class="el-icon-aim"></i> 大额资助随机抽检</span>
         <span class="draw-tip">审核通过且金额 ≥ 5000 元的资助单自动进入复核候选池</span>
       </div>
-      <el-form inline>
+      <el-form inline class="draw-form">
         <el-form-item label="金额区间">
           <el-input-number v-model="drawForm.minAmount" :min="5000" :precision="2" :step="1000" controls-position="right" style="width:150px" placeholder="最低" />
           <span class="range-sep">—</span>
@@ -17,7 +45,7 @@
           <span class="range-sep">%</span>
         </el-form-item>
         <el-form-item>
-          <el-button type="danger" icon="el-icon-aim" :loading="drawLoading" @click="handleDraw">开始抽取</el-button>
+          <el-button type="primary" icon="el-icon-aim" :loading="drawLoading" @click="handleDraw">开始抽取</el-button>
         </el-form-item>
       </el-form>
       <el-alert v-if="drawResult" type="success" show-icon :closable="false" class="draw-result">
@@ -29,7 +57,7 @@
     </el-card>
 
     <!-- 复核任务表 -->
-    <div class="filter-bar">
+    <div class="toolbar">
       <el-input v-model="listQuery.batchNo" placeholder="批次号" clearable style="width:200px" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.status" placeholder="任务状态" clearable style="width:140px" @change="handleFilter">
         <el-option label="待复核" value="PENDING" />
@@ -105,7 +133,7 @@
       <el-alert v-if="reviewResult === 'FAIL'" type="warning" :closable="false" show-icon title="复核不通过后，该资助单将被打回「待审核」状态，需重新审核" />
       <div slot="footer">
         <el-button @click="reviewDialogVisible = false">取 消</el-button>
-        <el-button :type="reviewResult === 'PASS' ? 'success' : 'danger'" :loading="reviewLoading" @click="submitReview">确认提交</el-button>
+        <el-button :type="reviewResult === 'PASS' ? 'primary' : 'danger'" :loading="reviewLoading" @click="submitReview">确认提交</el-button>
       </div>
     </el-dialog>
   </div>
@@ -130,6 +158,15 @@ export default {
       reviewTarget: null,
       reviewResult: 'PASS',
       reviewRemark: ''
+    }
+  },
+  computed: {
+    // 仅用于顶部统计展示，不改变任何抽检/复核逻辑
+    pendingInPage() {
+      return this.list.filter(item => item.status === 'PENDING').length
+    },
+    pageAmount() {
+      return this.list.reduce((sum, item) => sum + Number(item.amount || 0), 0)
     }
   },
   created() {
@@ -194,17 +231,35 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
+.review-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-warning-light);
+  border: 1px solid #f2ddbe;
+  color: var(--c-warning);
+  font-size: 12px;
+  font-weight: 600;
+}
+.kpi-value--amount { font-size:20px; letter-spacing:0.3px; }
 .draw-card { margin-bottom:16px; }
-.draw-header { display:flex; align-items:center; justify-content:space-between; font-weight:600; }
-.draw-tip { font-weight:400; font-size:12px; color:#909399; }
-.range-sep { margin:0 6px; color:#909399; }
-.draw-result { margin-top:4px; }
+.draw-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.draw-header > span:first-child { font-size:13.5px; }
+.draw-tip { font-weight:400; font-size:12px; color:var(--c-text-3); }
+.draw-form { margin-bottom:-6px; }
+.range-sep { margin:0 6px; color:var(--c-text-4); }
+.draw-result { margin-top:10px; }
 .view-batch { padding:0 0 0 8px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-.amount-text { font-weight:600; color:#F56C6C; }
-.done-text { color:#909399; font-size:12px; cursor:default; }
+.amount-text { font-weight:600; color:var(--c-text-1); font-variant-numeric:tabular-nums; }
+.done-text { color:var(--c-text-4); font-size:12px; cursor:default; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .review-desc { margin-bottom:16px; }
 .review-form { margin-bottom:8px; }
+.review-form ::v-deep .el-form-item:last-child { margin-bottom:12px; }
+@media (max-width: 768px) {
+  .draw-header { align-items:flex-start; }
+}
 </style>

@@ -1,7 +1,37 @@
 <template>
   <div class="page-container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">资金管理</div>
+        <div class="page-subtitle">资助申请全生命周期：提交 → 审核 → 复核 → 拨付，关键节点自动存证</div>
+      </div>
+      <div class="page-actions">
+        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="primary" icon="el-icon-plus" @click="handleCreate">新增资金</el-button>
+      </div>
+    </div>
+
     <PrivacyTipBar />
-    <div class="filter-bar">
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">资金记录总数</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">条资助流水</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">本页金额合计（元）</div>
+        <div class="kpi-value kpi-value--amount">{{ formatAmount(pageAmount) }}</div>
+        <div class="kpi-hint">当前页 {{ list.length }} 笔合计</div>
+      </div>
+      <div class="kpi-card kpi-card--warn">
+        <div class="kpi-label">本页待审核</div>
+        <div class="kpi-value">{{ pendingInPage }}</div>
+        <div class="kpi-hint">条尚未审核的申请</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
       <el-select v-model="listQuery.studentId" placeholder="选择学生筛选" clearable filterable style="width:180px" @change="handleFilter">
         <el-option v-for="item in studentOptions" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
@@ -15,10 +45,6 @@
       <el-input v-model="listQuery.keyword" placeholder="用途 / 备注" clearable style="width:220px" @keyup.enter.native="handleFilter" />
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <div class="filter-actions">
-        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增资金</el-button>
-        <el-button v-permission="['AUDIT_ADMIN']" type="warning" icon="el-icon-download" :loading="exportLoading" @click="handleExport">导出</el-button>
-      </div>
     </div>
 
     <el-table v-loading="listLoading" :data="list" border stripe style="width:100%">
@@ -95,6 +121,11 @@
           <el-date-picker v-model="form.fundDate" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="width:100%" />
         </el-form-item>
         <el-form-item label="用途" prop="purpose">
+          <div class="purpose-quick">
+            <el-tooltip v-for="item in purposeCategories" :key="item.name" :content="item.desc" placement="top">
+              <span class="purpose-chip" :class="{ 'is-active': form.purpose === item.name }" @click="pickPurpose(item)">{{ item.name }}</span>
+            </el-tooltip>
+          </div>
           <SensitiveTextarea v-model="form.purpose" field-name="用途" :rows="2" placeholder="请输入用途，请勿填写未打码的敏感信息" @block="purposeBlock = $event" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
@@ -138,6 +169,16 @@ export default {
       sponsorOptions: [],
       purposeBlock: false,
       remarkBlock: false,
+      // 标准用途分类：与仪表盘「资金用途分布」的统计口径保持一致，点击可快速填入用途
+      purposeCategories: [
+        { name: '学费', desc: '学年学费（统一归类，不再拆分春秋学期）' },
+        { name: '住宿费', desc: '在校宿舍住宿费用' },
+        { name: '生活费', desc: '餐饮、日常基础生活开支' },
+        { name: '学习资料费', desc: '教材、书本、习题、线上学习资源' },
+        { name: '实验耗材费', desc: '实验课程材料、实训配件、专业工具' },
+        { name: '医保体检费', desc: '大学生医保、入学/年度体检' },
+        { name: '其他专项资助', desc: '临时困难补助、综合助学补贴、交通补助等' }
+      ],
       form: this.getEmptyForm(),
       rules: {
         studentId: [{ required: true, message: '请选择学生', trigger: 'change' }],
@@ -150,7 +191,14 @@ export default {
   },
   computed: {
     isAuditAdmin() { return this.$store.getters.role === 'AUDIT_ADMIN' },
-    dialogTitle() { return this.dialogType === 'create' ? '新增资金' : '编辑资金' }
+    dialogTitle() { return this.dialogType === 'create' ? '新增资金' : '编辑资金' },
+    // 仅用于顶部统计展示，不改变任何列表/筛选逻辑
+    pageAmount() {
+      return this.list.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    },
+    pendingInPage() {
+      return this.list.filter(item => item.status === 'SUBMITTED').length
+    }
   },
   created() {
     this.getList()
@@ -251,17 +299,31 @@ export default {
     formatAmount(val) {
       if (val === undefined || val === null) return '0.00'
       return Number(val).toFixed(2)
+    },
+    // 快速填入标准用途，仍可继续编辑为更具体的说明
+    pickPurpose(item) {
+      this.form.purpose = item.name
+      this.$nextTick(() => {
+        if (this.$refs.dataForm) this.$refs.dataForm.validateField('purpose', () => {})
+      })
     }
   }
 }
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
-.filter-actions { margin-left:auto; display:flex; gap:8px; }
 .pagination-bar { margin-top:16px; text-align:right; }
-.danger-text { color:#F56C6C; }
+.purpose-quick { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+.purpose-chip {
+  display:inline-flex; align-items:center; height:24px; padding:0 10px;
+  border-radius:var(--r-pill); border:1px solid var(--c-border); background:var(--c-bg-head);
+  color:var(--c-text-2); font-size:12px; cursor:pointer;
+  transition:color var(--t-fast), border-color var(--t-fast), background-color var(--t-fast);
+}
+.purpose-chip:hover { border-color:var(--c-primary-border); color:var(--c-primary); background:var(--c-primary-light); }
+.purpose-chip.is-active { border-color:var(--c-primary); background:var(--c-primary); color:#fff; }
+.danger-text { color:var(--c-danger); }
+.kpi-value--amount { font-size:20px; letter-spacing:0.3px; }
 .amount-cell { display:inline-block; font-size:15px; font-weight:700; color:var(--c-text-1); letter-spacing:0.2px; font-variant-numeric:tabular-nums; }
 .voucher-text {
   font-size:12px;
@@ -272,5 +334,5 @@ export default {
 }
 .voucher-text:hover { text-decoration:underline; color:var(--c-primary-hover); }
 .empty-text { color:var(--c-text-4); }
-.locked-text { color:#C0C4CC; font-style:italic; }
+.locked-text { color:var(--c-text-4); font-style:italic; }
 </style>

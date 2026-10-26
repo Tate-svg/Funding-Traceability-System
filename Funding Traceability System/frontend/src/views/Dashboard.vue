@@ -1,5 +1,15 @@
 <template>
-  <div class="dashboard-container">
+  <div class="page-container dashboard-container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">首页</div>
+        <div class="page-subtitle">我资助的学生、资金、回访与评分数据总览</div>
+      </div>
+      <div class="page-actions">
+        <span class="data-pill"><i class="el-icon-data-analysis"></i> 数据实时汇总</span>
+      </div>
+    </div>
+
     <!-- 数据卡片 -->
     <el-row :gutter="16" class="card-row">
       <el-col :span="6" v-for="card in cards" :key="card.key">
@@ -33,7 +43,7 @@
     <el-row :gutter="16" class="chart-row">
       <el-col :span="12">
         <div class="chart-card">
-          <div class="chart-title">资金用途分布</div>
+          <div class="chart-title">资金用途分布 <span class="chart-hint">按 7 类标准用途归类</span></div>
           <div ref="purposePie" class="chart-box"></div>
         </div>
       </el-col>
@@ -63,10 +73,10 @@ export default {
     cards() {
       const s = this.stats || {}
       return [
-        { key: 'student', label: '学生总数', value: s.studentCount || 0, icon: 'el-icon-user', color: '#409EFF' },
-        { key: 'fundAmount', label: '资助总金额(元)', value: this.formatAmount(s.fundTotalAmount), icon: 'el-icon-money', color: '#67C23A' },
-        { key: 'fundCount', label: '资助次数', value: s.fundCount || 0, icon: 'el-icon-wallet', color: '#E6A23C' },
-        { key: 'visit', label: '回访次数', value: s.visitCount || 0, icon: 'el-icon-chat-line-round', color: '#F56C6C' }
+        { key: 'student', label: '学生总数', value: s.studentCount || 0, icon: 'el-icon-user', color: '#2b6cb0' },
+        { key: 'fundAmount', label: '资助总金额(元)', value: this.formatAmount(s.fundTotalAmount), icon: 'el-icon-money', color: '#2f9e6e' },
+        { key: 'fundCount', label: '资助次数', value: s.fundCount || 0, icon: 'el-icon-wallet', color: '#c07f2e' },
+        { key: 'visit', label: '回访次数', value: s.visitCount || 0, icon: 'el-icon-chat-line-round', color: '#2f8f9e' }
       ]
     }
   },
@@ -124,7 +134,7 @@ export default {
           type: 'bar',
           data: data.map(d => d.value),
           barWidth: '40%',
-          itemStyle: { color: '#409EFF', borderRadius: [4, 4, 0, 0] }
+          itemStyle: { color: '#2b6cb0', borderRadius: [4, 4, 0, 0] }
         }]
       })
     },
@@ -141,8 +151,8 @@ export default {
           type: 'line',
           data: list.map(d => d.amount),
           smooth: true,
-          areaStyle: { color: 'rgba(64,158,255,0.15)' },
-          itemStyle: { color: '#409EFF' }
+          areaStyle: { color: 'rgba(43,108,176,0.15)' },
+          itemStyle: { color: '#2b6cb0' }
         }]
       })
     },
@@ -151,8 +161,9 @@ export default {
       if (!chart) return
       const list = this.stats.purposeDistribution || []
       chart.setOption({
+        color: ['#2b6cb0', '#2f9e6e', '#c07f2e', '#2f8f9e', '#6b5bb5', '#a88523', '#c24a45'],
         tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-        legend: { bottom: 0 },
+        legend: { bottom: 0, type: 'scroll', itemWidth: 10, itemHeight: 10, textStyle: { color: '#5b6b7c', fontSize: 12 } },
         series: [{
           type: 'pie',
           radius: ['40%', '65%'],
@@ -161,7 +172,7 @@ export default {
           itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
           label: { formatter: '{b}\n{d}%' }
         }]
-      })
+      }, true)
     },
     renderScoreAvgBar() {
       const chart = this.safeChart('scoreAvgBar')
@@ -176,7 +187,7 @@ export default {
           type: 'bar',
           data: list.map(d => Number(d.avg).toFixed(2)),
           barWidth: '40%',
-          itemStyle: { color: '#67C23A', borderRadius: [4, 4, 0, 0] }
+          itemStyle: { color: '#2f9e6e', borderRadius: [4, 4, 0, 0] }
         }]
       })
     },
@@ -188,63 +199,92 @@ export default {
 </script>
 
 <style scoped>
-.dashboard-container {
-  padding: 4px;
+.data-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-primary-light);
+  border: 1px solid #cfe0f3;
+  color: var(--c-primary);
+  font-size: 12px;
+  font-weight: 600;
 }
-.card-row {
-  margin-bottom: 16px;
-}
+.card-row { margin-bottom: 16px; }
 .stat-card {
-  background: #fff;
-  border-radius: 6px;
-  padding: 20px;
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border-light);
+  border-top: 3px solid var(--c-primary);
+  border-radius: var(--r-panel);
+  padding: 16px 18px;
   display: flex;
   align-items: center;
-  border-top: 3px solid #409EFF;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--sh-1);
+  transition: box-shadow var(--t-fast), transform var(--t-fast);
 }
+.stat-card:hover { box-shadow: var(--sh-2); transform: translateY(-1px); }
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-btn);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  margin-right: 14px;
-}
-.stat-body {
-  flex: 1;
-}
-.stat-value {
   font-size: 22px;
-  font-weight: 600;
-  color: #303133;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+.stat-body { flex: 1; min-width: 0; }
+.stat-value {
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--c-text-1);
+  font-variant-numeric: tabular-nums;
 }
 .stat-label {
-  font-size: 13px;
-  color: #909399;
-  margin-top: 4px;
+  font-size: 12px;
+  color: var(--c-text-3);
+  margin-top: 3px;
 }
-.chart-row {
-  margin-bottom: 16px;
-}
+.chart-row { margin-bottom: 16px; }
 .chart-card {
-  background: #fff;
-  border-radius: 6px;
-  padding: 12px 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border-light);
+  border-radius: var(--r-panel);
+  padding: 13px 16px;
+  box-shadow: var(--sh-1);
 }
 .chart-title {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #303133;
+  color: var(--c-text-1);
   margin-bottom: 8px;
-  border-left: 3px solid #409EFF;
+  border-left: 3px solid var(--c-primary);
   padding-left: 8px;
+  line-height: 1.2;
 }
 .chart-box {
   width: 100%;
   height: 280px;
+}
+.chart-hint {
+  margin-left: 8px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--c-text-4);
+}
+@media (max-width: 768px) {
+  .dashboard-container ::v-deep .el-col {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+  .card-row { margin-bottom: 12px; }
+  .stat-card { padding: 12px 14px; }
+  .stat-value { font-size: 20px; }
+  .chart-box { height: 240px; }
 }
 </style>

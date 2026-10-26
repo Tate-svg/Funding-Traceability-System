@@ -29,6 +29,13 @@ jwt:
   secret: funding-traceability-secret-key-2024-very-long
   expire: 86400000
 
+# 资助凭证溯源核验二维码
+verify:
+  # 核验码 HMAC 签名密钥（生产环境应通过环境变量注入；变更后旧二维码全部失效）
+  secret: ${VERIFY_SECRET:funding-verify-secret-2024}
+  # 扫码后跳转的公开核验页地址（前端 hash 路由，末尾不带斜杠）
+  page-base-url: ${VERIFY_PAGE_BASE_URL:http://localhost:8081/#/verify}
+
 funding:
   review:
     # 大额复核阈值（元），审核通过后达到该金额自动进入复核候选池

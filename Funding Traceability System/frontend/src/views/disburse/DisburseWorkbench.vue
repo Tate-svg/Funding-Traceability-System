@@ -1,7 +1,37 @@
 <template>
   <div class="page-container">
-    <el-alert type="info" :closable="false" show-icon class="lock-tip"
-      title="申请资料已置灰锁定：拨付管理员仅可查看已审核通过的单据并执行发放，不可修改申请信息" />
+    <div class="page-header">
+      <div>
+        <div class="page-title">拨付工作台</div>
+        <div class="page-subtitle">仅显示已通过审核的单据，确认拨付后自动写入存证台账</div>
+      </div>
+      <div class="page-actions">
+        <span class="lock-pill"><i class="el-icon-lock"></i> 申请信息已锁定</span>
+      </div>
+    </div>
+
+    <div class="note-bar">
+      <i class="el-icon-info"></i>
+      <span>申请资料已置灰锁定：拨付管理员仅可查看已审核通过的单据并执行发放，不可修改申请信息</span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card kpi-card--warn">
+        <div class="kpi-label">待拨付单据</div>
+        <div class="kpi-value">{{ total }}</div>
+        <div class="kpi-hint">笔待执行发放</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">本页金额合计（元）</div>
+        <div class="kpi-value kpi-value--amount">{{ formatAmount(pageAmount) }}</div>
+        <div class="kpi-hint">当前页 {{ list.length }} 笔合计</div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-label">本页含凭证</div>
+        <div class="kpi-value">{{ voucherCount }}</div>
+        <div class="kpi-hint">笔已生成凭证号</div>
+      </div>
+    </div>
 
     <el-table v-loading="listLoading" :data="list" border stripe style="width:100%">
       <el-table-column type="index" label="序号" width="55" align="center" />
@@ -78,6 +108,15 @@ export default {
   created() {
     this.getList()
   },
+  computed: {
+    // 仅用于顶部统计展示，不改变任何拨付逻辑
+    pageAmount() {
+      return this.list.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    },
+    voucherCount() {
+      return this.list.filter(item => !!item.voucherNo).length
+    }
+  },
   methods: {
     formatAmount(val) {
       if (val === undefined || val === null) return '0.00'
@@ -119,12 +158,24 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.lock-tip { margin-bottom:16px; }
-.amount-text { font-weight:600; color:#303133; }
-.voucher-text { font-size:12px; color:#606266; }
-.hash-text { font-family:Consolas, monospace; font-size:12px; color:#909399; cursor:default; }
-.locked-text { color:#C0C4CC; font-style:italic; font-size:12px; }
-.empty-text { color:#C0C4CC; }
+.lock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-warning-light);
+  border: 1px solid #f2ddbe;
+  color: var(--c-warning);
+  font-size: 12px;
+  font-weight: 600;
+}
+.kpi-value--amount { font-size:20px; letter-spacing:0.3px; }
+.amount-text { font-weight:600; color:var(--c-text-1); font-variant-numeric:tabular-nums; }
+.voucher-text { font-size:12px; color:var(--c-text-2); }
+.hash-text { font-family:Consolas, monospace; font-size:12px; color:var(--c-text-3); cursor:default; }
+.locked-text { color:var(--c-text-4); font-style:italic; font-size:12px; }
+.empty-text { color:var(--c-text-4); }
 .pagination-bar { margin-top:16px; text-align:right; }
 </style>

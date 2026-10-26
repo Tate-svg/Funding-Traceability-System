@@ -1,13 +1,38 @@
 <template>
   <div class="page-container">
-    <div class="filter-bar">
-      <el-button icon="el-icon-refresh" @click="getList">刷新</el-button>
-      <div class="filter-actions">
-        <el-button v-permission="['AUDIT_ADMIN']" type="success" icon="el-icon-plus" @click="handleCreate">新增指标</el-button>
+    <div class="page-header">
+      <div>
+        <div class="page-title">评分指标</div>
+        <div class="page-subtitle">维护评分维度与权重，评分总分由系统按权重加权自动计算</div>
+      </div>
+      <div class="page-actions">
+        <el-button icon="el-icon-refresh" @click="getList">刷新</el-button>
+        <el-button v-permission="['AUDIT_ADMIN']" type="primary" icon="el-icon-plus" @click="handleCreate">新增指标</el-button>
       </div>
     </div>
 
-    <el-alert title="指标权重为百分比(0-100)，所有指标权重之和建议为 100；评分总分由系统按权重加权自动计算。" type="info" :closable="false" show-icon style="margin-bottom:12px" />
+    <div class="note-bar">
+      <i class="el-icon-info"></i>
+      <span>指标权重为百分比(0-100)，所有指标权重之和建议为 100；评分总分由系统按权重加权自动计算。</span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">指标数量</div>
+        <div class="kpi-value">{{ list.length }}</div>
+        <div class="kpi-hint">项评分维度</div>
+      </div>
+      <div class="kpi-card" :class="Number(totalWeight) === 100 ? 'kpi-card--success' : 'kpi-card--warn'">
+        <div class="kpi-label">合计权重</div>
+        <div class="kpi-value">{{ totalWeight }}%</div>
+        <div class="kpi-hint">{{ Number(totalWeight) === 100 ? '权重配置完整' : '尚未达到 100%' }}</div>
+      </div>
+      <div class="kpi-card" :class="Number(totalWeight) === 100 ? 'kpi-card--success' : 'kpi-card--danger'">
+        <div class="kpi-label">与 100% 的偏差</div>
+        <div class="kpi-value">{{ weightGap }}%</div>
+        <div class="kpi-hint">建议调整为 0%</div>
+      </div>
+    </div>
 
     <el-table v-loading="listLoading" :data="list" border stripe style="width:100%">
       <el-table-column type="index" label="序号" width="60" align="center" />
@@ -159,10 +184,7 @@ export default {
 </script>
 
 <style scoped>
-.page-container { background:#fff; padding:16px; border-radius:4px; }
-.filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
-.filter-actions { margin-left:auto; display:flex; gap:8px; }
-.danger-text { color:#F56C6C; }
+.danger-text { color:var(--c-danger); }
 .weight-cell { display:flex; align-items:center; justify-content:center; gap:8px; }
 .weight-progress { flex:1; min-width:60px; }
 .weight-value { width:44px; text-align:right; font-size:12px; color:var(--c-text-2); font-variant-numeric:tabular-nums; }

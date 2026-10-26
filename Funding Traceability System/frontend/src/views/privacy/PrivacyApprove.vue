@@ -1,5 +1,33 @@
 <template>
   <div class="page-container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">隐私调取审批</div>
+        <div class="page-subtitle">敏感字段调取需分级审批，全程留痕，到期自动失效</div>
+      </div>
+      <div class="page-actions">
+        <span class="grade-pill"><i class="el-icon-lock"></i> 分级审批 · 全程留痕</span>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">我的申请</div>
+        <div class="kpi-value">{{ mineList.length }}</div>
+        <div class="kpi-hint">条隐私调取申请</div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-label">已通过</div>
+        <div class="kpi-value">{{ approvedCount }}</div>
+        <div class="kpi-hint">条申请已获授权</div>
+      </div>
+      <div v-if="role === 'AUDIT_ADMIN' || role === 'SUPERVISOR'" class="kpi-card kpi-card--warn">
+        <div class="kpi-label">待我审批</div>
+        <div class="kpi-value">{{ todoList.length }}</div>
+        <div class="kpi-hint">{{ role === 'SUPERVISOR' ? '终审待办' : '初审待办' }}</div>
+      </div>
+    </div>
+
     <el-tabs v-model="activeTab" @tab-click="handleTabClick">
       <el-tab-pane label="我的申请" name="mine">
         <el-table v-loading="mineLoading" :data="mineList" border stripe style="width:100%">
@@ -41,7 +69,7 @@
           <el-table-column label="操作" width="140" align="center" fixed="right">
             <template slot-scope="{ row }">
               <div class="op-btns">
-                <el-button type="success" size="mini" @click="openApprove(row, 'APPROVE')">通过</el-button>
+                <el-button type="primary" size="mini" @click="openApprove(row, 'APPROVE')">通过</el-button>
                 <el-button type="danger" size="mini" @click="openApprove(row, 'REJECT')">驳回</el-button>
               </div>
             </template>
@@ -72,7 +100,7 @@
           <el-table-column label="操作" width="140" align="center" fixed="right">
             <template slot-scope="{ row }">
               <div class="op-btns">
-                <el-button type="success" size="mini" @click="openApprove(row, 'APPROVE')">通过</el-button>
+                <el-button type="primary" size="mini" @click="openApprove(row, 'APPROVE')">通过</el-button>
                 <el-button type="danger" size="mini" @click="openApprove(row, 'REJECT')">驳回</el-button>
               </div>
             </template>
@@ -93,7 +121,7 @@
       </el-form>
       <div slot="footer">
         <el-button @click="approveVisible = false">取 消</el-button>
-        <el-button :type="approveResult === 'APPROVE' ? 'success' : 'danger'" :loading="approveLoading" @click="submitApprove">确 定</el-button>
+        <el-button :type="approveResult === 'APPROVE' ? 'primary' : 'danger'" :loading="approveLoading" @click="submitApprove">确 定</el-button>
       </div>
     </el-dialog>
 
@@ -136,6 +164,10 @@ export default {
   computed: {
     role() {
       return this.$store.getters.role
+    },
+    // 仅用于顶部统计展示，不改变任何审批逻辑
+    approvedCount() {
+      return this.mineList.filter(item => item.status === 'APPROVED').length
     },
     approveTitle() {
       return this.approveResult === 'APPROVE' ? '通过申请' : '驳回申请'
@@ -214,10 +246,19 @@ export default {
 </script>
 
 <style scoped>
-.page-container {
-  background: #fff;
-  padding: 16px;
-  border-radius: 4px;
+/* 页头右侧合规标识 */
+.grade-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-primary-light);
+  border: 1px solid var(--c-primary-border);
+  color: var(--c-primary);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* 操作列按钮：水平居中、等距、不换行 */

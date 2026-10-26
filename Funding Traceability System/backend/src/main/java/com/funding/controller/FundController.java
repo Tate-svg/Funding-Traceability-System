@@ -6,6 +6,8 @@ import com.funding.common.RequirePermission;
 import com.funding.common.Result;
 import com.funding.entity.Fund;
 import com.funding.service.FundService;
+import com.funding.service.FundVerifyService;
+import com.funding.vo.FundQrCodeVO;
 import com.funding.vo.FundVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,9 @@ public class FundController {
 
     @Autowired
     private FundService fundService;
+
+    @Autowired
+    private FundVerifyService fundVerifyService;
 
     @GetMapping
     public Result<IPage<FundVO>> page(@RequestParam(defaultValue = "1") Integer page,
@@ -63,6 +68,16 @@ public class FundController {
     @GetMapping("/{id}")
     public Result<FundVO> getById(@PathVariable Long id) {
         return Result.success(fundService.getById(id));
+    }
+
+    /**
+     * 生成资助凭证溯源核验二维码（内部入口，需登录 + fund:view）
+     * 二维码内容为公开核验页地址，扫码不需要登录
+     */
+    @GetMapping("/{id}/qrcode")
+    @RequirePermission("fund:view")
+    public Result<FundQrCodeVO> qrcode(@PathVariable Long id) {
+        return Result.success(fundVerifyService.qrCode(id));
     }
 
     @PostMapping
