@@ -138,8 +138,8 @@ export default {
       return item.targetType === 'fund' || item.targetType === 'review_task'
     },
     timelineColor(targetType) {
-      const map = { fund: '#2b6cb0', review_task: '#c07f2e' }
-      return map[targetType] || '#7a8798'
+      const map = { fund: '#2b6cb0', review_task: '#8a5a10' }
+      return map[targetType] || '#66748a'
     },
     roleText(role) {
       const map = {
@@ -186,8 +186,8 @@ export default {
   padding: 0 12px;
   border-radius: var(--r-pill);
   background: var(--c-warning-light);
-  border: 1px solid #f2ddbe;
-  color: var(--c-warning);
+  border: 1px solid var(--c-warning-border);
+  color: var(--c-warning-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -225,8 +225,8 @@ export default {
   transform: translateX(2px);
 }
 .log-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.operation { font-weight:600; color:var(--c-text-1); font-size:13.5px; }
-.lock-icon { color:var(--c-warning); }
+.operation { font-weight:600; color:var(--c-text-1); font-size:14px; }
+.lock-icon { color:var(--c-warning-text); }
 .sealed-tag { cursor:pointer; }
 .log-meta { margin-top:6px; font-size:12px; color:var(--c-text-3); display:flex; gap:16px; flex-wrap:wrap; }
 .log-content { margin-top:6px; font-size:12.5px; color:var(--c-text-2); word-break:break-all; line-height:1.6; }

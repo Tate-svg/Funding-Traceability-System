@@ -19,6 +19,6 @@ export default {
   margin-top: 16px;
   text-align: center;
   font-size: 12px;
-  color: #909399;
+  color: var(--c-text-3);
 }
 </style>

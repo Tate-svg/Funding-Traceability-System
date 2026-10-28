@@ -292,8 +292,8 @@ export default {
 }
 .el-tag.status-tag--l2 {
   background: var(--c-warning-light);
-  border-color: #f2ddbe;
-  color: var(--c-warning);
+  border-color: var(--c-warning-border);
+  color: var(--c-warning-text);
 }
 .el-tag.status-tag--approved {
   background: var(--c-success);
@@ -302,18 +302,18 @@ export default {
 }
 .el-tag.status-tag--rejected {
   background: var(--c-danger-light);
-  border-color: #f0cfcd;
-  color: var(--c-danger);
+  border-color: var(--c-danger-border);
+  color: var(--c-danger-text);
 }
 
 /* 底部隐私提示：浅灰提示条 */
 .privacy-footer {
   margin-top: 16px;
-  padding: 10px 12px 10px 14px;
-  background: #f7f9fc;
+  padding: 8px 12px;
+  background: var(--c-bg-head);
   border: 1px solid var(--c-border-light);
-  border-left: 3px solid #dbe3ec;
-  border-radius: 4px;
+  border-left: 3px solid var(--c-border);
+  border-radius: var(--r-table);
 }
 .privacy-footer ::v-deep .compliance-footer {
   margin-top: 0;

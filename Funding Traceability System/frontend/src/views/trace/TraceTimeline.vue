@@ -54,19 +54,7 @@
 <script>
 import { listTimestamps, verifyTimestamps } from '@/api/trace'
 import EmptyState from '@/components/EmptyState.vue'
-
-const NODE_COLORS = {
-  SUBMIT: '#2b6cb0',
-  AUDIT_PASS: '#2f9e6e',
-  AUDIT_REJECT: '#c24a45',
-  REVIEW: '#c07f2e',
-  REVIEW_DRAW: '#9e6420',
-  DISBURSE: '#a88523',
-  VOUCHER_MODIFY: '#6b5bb5',
-  VISIT_RECORD: '#2f8f9e',
-  STUDENT_UPLOAD: '#22998c',
-  OTHER: '#7a8798'
-}
+import { NODE_COLORS } from '@/utils/traceNodeColors'
 
 export default {
   name: 'TraceTimeline',
@@ -169,8 +157,8 @@ export default {
 .node-serial { font-family: Consolas, monospace; font-size: 12px; color: var(--c-text-3); }
 .stamp-flag {
   display: inline-flex; align-items: center; gap: 4px;
-  color: var(--c-success); background: var(--c-success-light); border: 1px solid #cbe9dc;
-  font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: var(--r-table);
+  color: var(--c-success-text); background: var(--c-success-light); border: 1px solid var(--c-success-border);
+  font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: var(--r-table);
   margin-left: auto;
 }
 .node-meta { margin-top: 6px; font-size: 12px; color: var(--c-text-3); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -182,12 +170,12 @@ export default {
 .trace-node.op-del { border-left-color: var(--c-danger); }
 .op-flag {
   display: inline-flex; align-items: center; gap: 3px;
-  font-size: 11px; line-height: 18px; padding: 0 8px;
+  font-size: 12px; line-height: 18px; padding: 0 8px;
   border-radius: var(--r-table); border: 1px solid transparent;
 }
-.op-flag.op-add { color: var(--c-success); background: var(--c-success-light); border-color: #cbe9dc; }
-.op-flag.op-edit { color: var(--c-primary); background: var(--c-primary-light); border-color: #cfe0f3; }
-.op-flag.op-del { color: var(--c-danger); background: var(--c-danger-light); border-color: #f2d3d1; }
+.op-flag.op-add { color: var(--c-success-text); background: var(--c-success-light); border-color: var(--c-success-border); }
+.op-flag.op-edit { color: var(--c-primary); background: var(--c-primary-light); border-color: var(--c-primary-border); }
+.op-flag.op-del { color: var(--c-danger-text); background: var(--c-danger-light); border-color: var(--c-danger-border); }
 /* 时序异常保留红色边框与浅红底，覆盖操作色条 */
 .trace-node.is-anomaly { border-left-color: var(--c-danger); }
 

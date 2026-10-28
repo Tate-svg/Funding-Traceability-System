@@ -74,9 +74,9 @@ export default {
       const s = this.stats || {}
       return [
         { key: 'student', label: '学生总数', value: s.studentCount || 0, icon: 'el-icon-user', color: '#2b6cb0' },
-        { key: 'fundAmount', label: '资助总金额(元)', value: this.formatAmount(s.fundTotalAmount), icon: 'el-icon-money', color: '#2f9e6e' },
-        { key: 'fundCount', label: '资助次数', value: s.fundCount || 0, icon: 'el-icon-wallet', color: '#c07f2e' },
-        { key: 'visit', label: '回访次数', value: s.visitCount || 0, icon: 'el-icon-chat-line-round', color: '#2f8f9e' }
+        { key: 'fundAmount', label: '资助总金额(元)', value: this.formatAmount(s.fundTotalAmount), icon: 'el-icon-money', color: '#1f7d52' },
+        { key: 'fundCount', label: '资助次数', value: s.fundCount || 0, icon: 'el-icon-wallet', color: '#8a5a10' },
+        { key: 'visit', label: '回访次数', value: s.visitCount || 0, icon: 'el-icon-chat-line-round', color: '#257785' }
       ]
     }
   },
@@ -161,7 +161,7 @@ export default {
       if (!chart) return
       const list = this.stats.purposeDistribution || []
       chart.setOption({
-        color: ['#2b6cb0', '#2f9e6e', '#c07f2e', '#2f8f9e', '#6b5bb5', '#a88523', '#c24a45'],
+        color: ['#2b6cb0', '#1f7d52', '#a55e0e', '#257785', '#64748b', '#8a6b10', '#a83a36'],
         tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
         legend: { bottom: 0, type: 'scroll', itemWidth: 10, itemHeight: 10, textStyle: { color: '#5b6b7c', fontSize: 12 } },
         series: [{
@@ -207,7 +207,7 @@ export default {
   padding: 0 12px;
   border-radius: var(--r-pill);
   background: var(--c-primary-light);
-  border: 1px solid #cfe0f3;
+  border: 1px solid var(--c-primary-border);
   color: var(--c-primary);
   font-size: 12px;
   font-weight: 600;
@@ -238,7 +238,7 @@ export default {
 }
 .stat-body { flex: 1; min-width: 0; }
 .stat-value {
-  font-size: 23px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--c-text-1);
@@ -258,7 +258,7 @@ export default {
   box-shadow: var(--sh-1);
 }
 .chart-title {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--c-text-1);
   margin-bottom: 8px;
@@ -272,9 +272,9 @@ export default {
 }
 .chart-hint {
   margin-left: 8px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 400;
-  color: var(--c-text-4);
+  color: var(--c-text-3);
 }
 @media (max-width: 768px) {
   .dashboard-container ::v-deep .el-col {

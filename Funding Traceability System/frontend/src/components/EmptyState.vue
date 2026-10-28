@@ -59,26 +59,26 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 34px 16px 30px;
+  padding: 32px 16px;
   color: #c3cedb;
   user-select: none;
 }
 .empty-svg {
   width: 96px;
   height: 78px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   color: #c3cedb;
 }
 .empty-title {
   margin: 0;
   font-size: 13px;
-  color: #8e9bad;
+  color: var(--c-text-3);
   font-weight: 500;
 }
 .empty-desc {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #a9b4c2;
+  color: var(--c-text-3);
   line-height: 1.6;
   text-align: center;
   max-width: 320px;

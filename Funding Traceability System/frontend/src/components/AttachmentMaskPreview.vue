@@ -93,8 +93,9 @@ export default {
 
 <style scoped>
 .section-title {
-  font-size: 13px;
-  color: #606266;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--c-text-1);
   margin-bottom: 8px;
 }
 .hit-table-wrap {
@@ -103,9 +104,9 @@ export default {
 .rescan-tip {
   margin-top: 6px;
   font-size: 12px;
-  color: #F56C6C;
+  color: var(--c-danger-text);
 }
 ::v-deep .has-hit .el-textarea__inner {
-  border-color: #F56C6C;
+  border-color: var(--c-danger);
 }
 </style>

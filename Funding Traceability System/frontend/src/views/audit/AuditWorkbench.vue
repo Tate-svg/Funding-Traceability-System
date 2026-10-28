@@ -1,5 +1,16 @@
 <template>
   <div class="page-container">
+    <!-- 页头：与全站页面统一的标题层级 -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">审核工作台</div>
+        <div class="page-subtitle">待审申请按金额分流，审核动作实时写入时间戳存证</div>
+      </div>
+      <div class="page-actions">
+        <span class="wb-pill"><i class="el-icon-s-operation"></i> 双列分流队列</span>
+      </div>
+    </div>
+
     <!-- 顶部统计区：不对称栅格 + 差异化渐变 -->
     <div class="stat-row">
       <div class="stat-card stat-card--main">
@@ -373,6 +384,21 @@ export default {
 </script>
 
 <style scoped>
+/* 页头右侧标识 */
+.wb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-primary-light);
+  border: 1px solid var(--c-primary-border);
+  color: var(--c-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 /* ---------- 统计区：不对称栅格 ---------- */
 .stat-row {
   display: grid;
@@ -412,11 +438,13 @@ export default {
 }
 
 .stat-card--main {
-  background: linear-gradient(135deg, #1e4c7e 0%, #2b6cb0 55%, #4d8fcf 100%);
+  /* 渐变终点保持在主色附近，保证白字对比度 ≥ 4.5:1 */
+  background: linear-gradient(135deg, #1e4c7e 0%, #2b6cb0 55%, #2f6cb0 100%);
 }
 
 .stat-card--side {
-  background: linear-gradient(135deg, #17614c 0%, #2f9e6e 55%, #52bb92 100%);
+  /* 绿色卡终点压暗到 #2a815c，白字对比度约 4.5:1 */
+  background: linear-gradient(135deg, #17614c 0%, #22795a 55%, #2a815c 100%);
 }
 
 .stat-inner {
@@ -447,7 +475,7 @@ export default {
 
 .stat-label {
   font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.82);
+  color: #ffffff;
   letter-spacing: 0.2px;
   margin-bottom: 2px;
 }
@@ -469,13 +497,14 @@ export default {
 
 .stat-unit {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.68);
+  color: #ffffff;
+  font-weight: 400;
 }
 
 .stat-hint {
   margin-top: 2px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
 }
 
 /* 主卡：占比进度 */
@@ -491,7 +520,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: #ffffff;
   margin-bottom: 7px;
 }
 
@@ -531,7 +560,7 @@ export default {
   align-items: center;
   gap: 7px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
+  color: #ffffff;
 }
 
 .legend-item b {
@@ -584,7 +613,7 @@ export default {
 }
 
 .queue-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--c-text-1);
 }
@@ -606,13 +635,13 @@ export default {
 
 .queue-count--alert {
   background: var(--c-warning-light);
-  color: var(--c-warning);
+  color: var(--c-warning-text);
 }
 
 .queue-sub {
   margin-left: auto;
   font-size: 12px;
-  color: var(--c-text-4);
+  color: var(--c-text-3);
 }
 
 .queue-card {
@@ -649,8 +678,8 @@ export default {
   padding: 2px 10px;
   border-radius: var(--r-pill);
   background: var(--c-warning-light);
-  border: 1px solid #f2ddbe;
-  color: var(--c-warning);
+  border: 1px solid var(--c-warning-border);
+  color: var(--c-warning-text);
   font-size: 13px;
   font-weight: 700;
   line-height: 1.5;
@@ -665,7 +694,7 @@ export default {
 }
 
 .qc-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--c-text-1);
 }
@@ -688,7 +717,7 @@ export default {
 
 .qc-label {
   flex: 0 0 58px;
-  color: var(--c-text-4);
+  color: var(--c-text-3);
 }
 
 .qc-value {
@@ -714,17 +743,17 @@ export default {
 }
 
 .btn-reject:hover {
-  color: var(--c-danger);
-  border-color: #e6b4b1;
+  color: var(--c-danger-text);
+  border-color: var(--c-danger-border);
   background: var(--c-danger-light);
 }
 
 .queue-empty {
-  padding: 26px 0;
+  padding: 24px 0;
   margin-bottom: 10px;
   text-align: center;
   font-size: 12.5px;
-  color: var(--c-text-4);
+  color: var(--c-text-3);
   background: var(--c-bg-page);
   border-radius: var(--r-table);
 }

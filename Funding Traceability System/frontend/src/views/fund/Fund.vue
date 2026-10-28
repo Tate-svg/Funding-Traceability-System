@@ -322,7 +322,7 @@ export default {
 }
 .purpose-chip:hover { border-color:var(--c-primary-border); color:var(--c-primary); background:var(--c-primary-light); }
 .purpose-chip.is-active { border-color:var(--c-primary); background:var(--c-primary); color:#fff; }
-.danger-text { color:var(--c-danger); }
+.danger-text { color:var(--c-danger-text); }
 .kpi-value--amount { font-size:20px; letter-spacing:0.3px; }
 .amount-cell { display:inline-block; font-size:15px; font-weight:700; color:var(--c-text-1); letter-spacing:0.2px; font-variant-numeric:tabular-nums; }
 .voucher-text {
@@ -333,6 +333,6 @@ export default {
   transition:color var(--t-fast);
 }
 .voucher-text:hover { text-decoration:underline; color:var(--c-primary-hover); }
-.empty-text { color:var(--c-text-4); }
-.locked-text { color:var(--c-text-4); font-style:italic; }
+.empty-text { color:var(--c-text-3); }
+.locked-text { color:var(--c-text-3); font-style:italic; }
 </style>

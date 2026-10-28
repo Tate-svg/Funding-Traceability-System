@@ -357,12 +357,12 @@ export default {
       return 'score-fail'
     },
     scoreLevelColor(val) {
-      if (val === undefined || val === null || val === '') return '#9aa6b5'
+      if (val === undefined || val === null || val === '') return '#c3cedb'
       const n = Number(val)
-      if (n >= 90) return '#2f9e6e'
+      if (n >= 90) return '#1f7d52'
       if (n >= 75) return '#2b6cb0'
-      if (n >= 60) return '#c07f2e'
-      return '#c24a45'
+      if (n >= 60) return '#8a5a10'
+      return '#a83a36'
     },
     // 领域内总分为加权百分制，后端未返回满分字段，此处固定按满分 100 计算进度
     scorePercent(val) {
@@ -377,17 +377,17 @@ export default {
 
 <style scoped>
 .pagination-bar { margin-top:16px; text-align:right; }
-.danger-text { color:var(--c-danger); }
-.score-total { display:inline-block; font-size:21px; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }
-.score-excellent { color:var(--c-success); }
+.danger-text { color:var(--c-danger-text); }
+.score-total { display:inline-block; font-size:22px; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }
+.score-excellent { color:var(--c-success-text); }
 .score-good { color:var(--c-primary); }
-.score-qualified { color:var(--c-warning); }
-.score-fail { color:var(--c-danger); }
-.score-muted { color:var(--c-text-4); }
+.score-qualified { color:var(--c-warning-text); }
+.score-fail { color:var(--c-danger-text); }
+.score-muted { color:var(--c-text-3); }
 .score-progress { width:100px; margin:12px auto 0; }
-.score-progress ::v-deep .el-progress-bar__outer { background-color:#e3eaf3; border-radius:5px; }
+.score-progress ::v-deep .el-progress-bar__outer { background-color:var(--c-border-light); border-radius:5px; }
 .score-progress ::v-deep .el-progress-bar__inner { border-radius:5px; }
-.score-items-title { font-size:14px; font-weight:600; color:var(--c-text-1); margin:10px 0 8px; border-left:3px solid var(--c-primary); padding-left:8px; }
+.score-items-title { font-size:15px; font-weight:600; color:var(--c-text-1); margin:10px 0 8px; border-left:3px solid var(--c-primary); padding-left:8px; }
 .tip-text { font-size:12px; color:var(--c-text-3); margin-left:8px; }
 .empty-tip { color:var(--c-text-3); font-size:13px; text-align:center; padding:12px 0; }
 /* 桌面端操作列按钮单行排列 */

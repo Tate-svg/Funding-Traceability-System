@@ -534,21 +534,21 @@ export default {
 </script>
 
 <style scoped>
-/* 顶部隐私提示栏：浅蓝底 + 左侧主色条 */
+/* 顶部隐私提示栏：浅蓝底 + 左侧主色条（令牌见 theme.css） */
 .page-container .privacy-tip-bar {
-  background: #eaf2fb;
-  border: 1px solid #cfe0f3;
-  border-left: 3px solid #2b6cb0;
-  border-radius: 8px;
-  color: #2b6cb0;
-  font-size: 12px;
+  background: var(--c-info-light);
+  border: 1px solid var(--c-info-border);
+  border-left: 3px solid var(--c-info);
+  border-radius: var(--r-panel);
+  color: var(--c-info-text);
+  font-size: 12.5px;
   line-height: 1.6;
   padding: 8px 12px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   gap: 6px;
 }
 .page-container .privacy-tip-bar ::v-deep i {
-  color: #2b6cb0;
+  color: var(--c-info-text);
   font-size: 14px;
 }
 .pagination-bar {
@@ -556,11 +556,11 @@ export default {
   text-align: right;
 }
 .danger-text {
-  color: var(--c-danger) !important;
+  color: var(--c-danger-text) !important;
 }
 .danger-text:hover,
 .danger-text:focus {
-  color: var(--c-danger) !important;
+  color: var(--c-danger-text) !important;
   background: var(--c-danger-light) !important;
 }
 /* 次级文字按钮：隐私调取 / 材料 */

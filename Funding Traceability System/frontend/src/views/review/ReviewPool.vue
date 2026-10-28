@@ -239,22 +239,22 @@ export default {
   padding: 0 12px;
   border-radius: var(--r-pill);
   background: var(--c-warning-light);
-  border: 1px solid #f2ddbe;
-  color: var(--c-warning);
+  border: 1px solid var(--c-warning-border);
+  color: var(--c-warning-text);
   font-size: 12px;
   font-weight: 600;
 }
 .kpi-value--amount { font-size:20px; letter-spacing:0.3px; }
 .draw-card { margin-bottom:16px; }
 .draw-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.draw-header > span:first-child { font-size:13.5px; }
+.draw-header > span:first-child { font-size:15px; }
 .draw-tip { font-weight:400; font-size:12px; color:var(--c-text-3); }
 .draw-form { margin-bottom:-6px; }
-.range-sep { margin:0 6px; color:var(--c-text-4); }
+.range-sep { margin:0 6px; color:var(--c-text-3); }
 .draw-result { margin-top:10px; }
 .view-batch { padding:0 0 0 8px; }
 .amount-text { font-weight:600; color:var(--c-text-1); font-variant-numeric:tabular-nums; }
-.done-text { color:var(--c-text-4); font-size:12px; cursor:default; }
+.done-text { color:var(--c-text-3); font-size:12px; cursor:default; }
 .pagination-bar { margin-top:16px; text-align:right; }
 .review-desc { margin-bottom:16px; }
 .review-form { margin-bottom:8px; }
