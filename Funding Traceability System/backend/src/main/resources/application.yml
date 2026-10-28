@@ -34,7 +34,11 @@ verify:
   # 核验码 HMAC 签名密钥（生产环境应通过环境变量注入；变更后旧二维码全部失效）
   secret: ${VERIFY_SECRET:funding-verify-secret-2024}
   # 扫码后跳转的公开核验页地址（前端 hash 路由，末尾不带斜杠）
-  page-base-url: ${VERIFY_PAGE_BASE_URL:http://localhost:8081/#/verify}
+  # 留空则自动解析：优先反向代理头 / 当前访问来源，localhost 访问时回退到本机局域网 IP，
+  # 保证二维码可被其他设备扫描打开；公网部署时用 VERIFY_PAGE_BASE_URL 指定域名
+  page-base-url: "${VERIFY_PAGE_BASE_URL:}"
+  # 自动兜底使用的前端端口（本机局域网 IP + 该端口）
+  page-port: ${VERIFY_PAGE_PORT:8081}
 
 funding:
   review:

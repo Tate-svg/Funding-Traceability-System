@@ -4,6 +4,7 @@ import com.funding.common.BusinessException;
 import com.funding.common.UserContext;
 import com.funding.common.UserInfo;
 import com.funding.common.VerifyCodeService;
+import com.funding.common.VerifyPageUrlResolver;
 import com.funding.entity.Fund;
 import com.funding.entity.TimestampRecord;
 import com.funding.mapper.FundMapper;
@@ -52,8 +53,8 @@ public class FundVerifyServiceImpl implements FundVerifyService {
     @Autowired
     private VerifyCodeService verifyCodeService;
 
-    @Value("${verify.page-base-url:http://localhost:8081/#/verify}")
-    private String pageBaseUrl;
+    @Autowired
+    private VerifyPageUrlResolver verifyPageUrlResolver;
 
     @Value("${funding.review.threshold:5000}")
     private BigDecimal reviewThreshold;
@@ -72,7 +73,8 @@ public class FundVerifyServiceImpl implements FundVerifyService {
         }
 
         String code = verifyCodeService.encode(fundId);
-        String verifyUrl = pageBaseUrl + "/" + code;
+        // 核验页地址按当前访问来源动态解析，避免写死 localhost 导致其他设备扫码打不开
+        String verifyUrl = verifyPageUrlResolver.resolve() + "/" + code;
 
         FundQrCodeVO vo = new FundQrCodeVO();
         vo.setFundId(fund.getId());
