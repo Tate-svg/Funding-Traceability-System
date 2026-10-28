@@ -133,7 +133,19 @@ import { downloadFile } from '@/utils/download'
 import EmptyState from '@/components/EmptyState.vue'
 import AuditWatermark from '@/components/AuditWatermark.vue'
 
-import { NODE_COLORS } from '@/utils/traceNodeColors'
+// 业务节点差异化色卡（统一到全站设计令牌色系，降低饱和度）
+const NODE_COLORS = {
+  SUBMIT: '#2b6cb0',        // 提交申请 蓝
+  AUDIT_PASS: '#2f9e6e',    // 审核通过 绿
+  AUDIT_REJECT: '#c24a45',  // 审核驳回 红
+  REVIEW: '#c07f2e',        // 复核确认 橙
+  REVIEW_DRAW: '#9e6420',   // 大额抽检 深橙
+  DISBURSE: '#a88523',      // 资金拨付 金
+  VOUCHER_MODIFY: '#6b5bb5',// 凭证修改 紫
+  VISIT_RECORD: '#2f8f9e',  // 回访录入 青
+  STUDENT_UPLOAD: '#22998c',// 资料上传 蓝绿
+  OTHER: '#7a8798'          // 其他 灰
+}
 
 export default {
   name: 'TraceLedger',
@@ -302,7 +314,7 @@ export default {
   color:#fff; padding:10px 6px; gap:4px;
 }
 .ts-serial { font-size:18px; font-weight:700; font-family:Consolas, monospace; }
-.ts-time { font-size:12px; color:#fff; text-align:center; line-height:1.5; }
+.ts-time { font-size:11px; opacity:.92; text-align:center; line-height:1.5; }
 
 .card-body { flex:1; padding:10px 16px; min-width:0; }
 .card-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -313,24 +325,25 @@ export default {
 .card-meta .hash-text { display:inline-flex; align-items:center; gap:4px; }
 .stamp-flag {
   display:inline-flex; align-items:center; gap:4px;
-  color:var(--c-success-text); background:var(--c-success-light); border:1px solid var(--c-success-border);
-  font-size:12px; line-height:18px; padding:0 8px; border-radius:var(--r-tag);
+  color:var(--c-success); background:var(--c-success-light); border:1px solid #cbe9dc;
+  font-size:11px; line-height:18px; padding:0 8px; border-radius:var(--r-tag);
 }
-.anomaly-reason { margin-top:6px; font-size:12px; color:var(--c-danger-text); }
-.danger-text { color:var(--c-danger-text); }
+.anomaly-reason { margin-top:6px; font-size:12px; color:var(--c-danger); }
+.danger-text { color:var(--c-danger); }
 .verify-stats { margin-top:12px; display:flex; gap:24px; font-size:13px; color:var(--c-text-2); }
 
 /* 节点色卡左边框与徽章同色（仅作兜底，实际由下方操作类型色条覆盖） */
 .node-submit { border-left-color:#2b6cb0; }
-.node-audit_pass { border-left-color:#1f7d52; }
-.node-audit_reject { border-left-color:#a83a36; }
-.node-review { border-left-color:#a55e0e; }
-.node-review_draw { border-left-color:#7b4a12; }
-.node-disburse { border-left-color:#8a6b10; }
-.node-voucher_modify { border-left-color:#64748b; }
-.node-visit_record { border-left-color:#257785; }
-.node-student_upload { border-left-color:#187a70; }
-.node-other { border-left-color:#66748a; }
+.node-audit_pass { border-left-color:#2f9e6e; }
+.node-audit_reject { border-left-color:#c24a45; }
+.node-review { border-left-color:#c07f2e; }
+.node-review_draw { border-left-color:#9e6420; }
+.node-disburse { border-left-color:#a88523; }
+.node-voucher_modify { border-left-color:#6b5bb5; }
+.node-visit_record { border-left-color:#2f8f9e; }
+.node-student_upload { border-left-color:#22998c; }
+.node-other { border-left-color:#7a8798; }
+
 /* 左侧色条按操作类型区分：新增绿 / 修改蓝 / 删除红 */
 .ledger-card.op-add { border-left-color:var(--c-success); --op-color:var(--c-success); }
 .ledger-card.op-edit { border-left-color:var(--c-primary); --op-color:var(--c-primary); }
@@ -342,12 +355,12 @@ export default {
 }
 .op-flag {
   display:inline-flex; align-items:center; gap:3px;
-  font-size:12px; line-height:18px; padding:0 8px;
+  font-size:11px; line-height:18px; padding:0 8px;
   border-radius:var(--r-tag); border:1px solid transparent;
 }
-.op-flag.op-add { color:var(--c-success-text); background:var(--c-success-light); border-color:var(--c-success-border); }
+.op-flag.op-add { color:var(--c-success); background:var(--c-success-light); border-color:#cbe9dc; }
 .op-flag.op-edit { color:var(--c-primary); background:var(--c-primary-light); border-color:var(--c-primary-border); }
-.op-flag.op-del { color:var(--c-danger-text); background:var(--c-danger-light); border-color:var(--c-danger-border); }
+.op-flag.op-del { color:var(--c-danger); background:var(--c-danger-light); border-color:#f2d3d1; }
 /* 时序异常保留红色边框与浅红底，覆盖操作色条 */
 .ledger-card.is-anomaly { border-left-color:var(--c-danger); }
 

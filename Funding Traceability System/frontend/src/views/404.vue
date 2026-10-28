@@ -25,22 +25,17 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: var(--c-bg-page);
+  background: #f0f2f5;
 }
 .content {
   text-align: center;
-  padding: 24px;
 }
 .code {
-  font-size: 72px;
-  font-weight: 700;
-  line-height: 1.1;
+  font-size: 90px;
   color: var(--c-primary);
-  margin: 0 0 12px;
-  font-variant-numeric: tabular-nums;
+  margin: 0 0 10px;
 }
 .desc {
-  font-size: 14px;
   color: var(--c-text-3);
   margin-bottom: 24px;
 }

@@ -1,19 +1,21 @@
 package com.funding.common;
 
-import com.funding.entity.Fund;
-import com.funding.entity.Student;
-import com.funding.entity.TimestampRecord;
-import com.funding.entity.Visit;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.funding.entity.*;
 import com.funding.mapper.FundMapper;
 import com.funding.mapper.StudentMapper;
 import com.funding.mapper.TimestampRecordMapper;
 import com.funding.mapper.VisitMapper;
+import com.funding.service.SensitiveViewSessionService;
 import com.funding.service.TimestampService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -88,5 +90,26 @@ public class SeedTimestampRunner implements ApplicationRunner {
                     (String) s[4], (String) s[5], (String) s[6], time);
         }
         log.info("存量数据可信时间戳补盖完成，共 {} 条", stamps.size());
+    }
+    @Autowired
+    private SensitiveViewSessionService sensitiveViewSessionService;
+
+    /**
+     * cron = "0 0 3 * * *" → 每天凌晨3点执行（低峰期，不影响业务）
+     */
+    @Async // ✅异步执行，独立线程，不阻塞主线程
+    @Scheduled(cron = "0 0 3 * * *")
+    @Transactional
+    public void cleanExpiredSensitiveSession(){
+        log.info("=====开始批量清理过期敏感会话=====");
+
+        // 查询条件：isValid = 0（已经关闭/失效的会话）
+        LambdaQueryWrapper<SensitiveViewSession> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SensitiveViewSession::getIsValid,0);
+
+        // 批量删除
+        boolean removeResult = sensitiveViewSessionService.remove(wrapper);
+
+        log.info("过期会话清理完成，执行结果：{}",removeResult);
     }
 }

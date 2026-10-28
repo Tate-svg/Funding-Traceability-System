@@ -22,18 +22,17 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--c-info-light);
-  border: 1px solid var(--c-info-border);
-  border-left: 3px solid var(--c-info);
-  color: var(--c-info-text);
-  font-size: 12.5px;
-  line-height: 1.6;
-  padding: 8px 12px;
-  border-radius: var(--r-panel);
+  background: #ECF5FF;
+  border-left: 4px solid #409EFF;
+  color: #606266;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 6px 10px;
+  border-radius: 2px;
   margin-bottom: 12px;
 }
 .privacy-tip-bar i {
-  color: var(--c-info-text);
+  color: #409EFF;
   font-size: 14px;
 }
 </style>

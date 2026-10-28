@@ -144,7 +144,7 @@ export default {
       const n = Number(val || 0)
       if (n >= 30) return '#1e4c7e'
       if (n >= 15) return '#2b6cb0'
-      return '#5c8fc4'
+      return '#7fa9d6'
     },
     handleCreate() {
       this.dialogType = 'create'
@@ -184,7 +184,7 @@ export default {
 </script>
 
 <style scoped>
-.danger-text { color:var(--c-danger-text); }
+.danger-text { color:var(--c-danger); }
 .weight-cell { display:flex; align-items:center; justify-content:center; gap:8px; }
 .weight-progress { flex:1; min-width:60px; }
 .weight-value { width:44px; text-align:right; font-size:12px; color:var(--c-text-2); font-variant-numeric:tabular-nums; }
@@ -201,6 +201,6 @@ export default {
 .footer-label { color:var(--c-text-2); font-weight:600; }
 .footer-value { color:var(--c-primary); font-size:18px; font-weight:700; font-variant-numeric:tabular-nums; }
 .footer-hint { font-size:12px; margin-left:4px; }
-.footer-hint--warn { color:var(--c-warning-text); }
-.footer-hint--ok { color:var(--c-success-text); }
+.footer-hint--warn { color:var(--c-warning); }
+.footer-hint--ok { color:var(--c-success); }
 </style>

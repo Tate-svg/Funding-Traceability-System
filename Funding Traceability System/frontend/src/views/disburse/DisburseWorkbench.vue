@@ -166,8 +166,8 @@ export default {
   padding: 0 12px;
   border-radius: var(--r-pill);
   background: var(--c-warning-light);
-  border: 1px solid var(--c-warning-border);
-  color: var(--c-warning-text);
+  border: 1px solid #f2ddbe;
+  color: var(--c-warning);
   font-size: 12px;
   font-weight: 600;
 }
@@ -175,7 +175,7 @@ export default {
 .amount-text { font-weight:600; color:var(--c-text-1); font-variant-numeric:tabular-nums; }
 .voucher-text { font-size:12px; color:var(--c-text-2); }
 .hash-text { font-family:Consolas, monospace; font-size:12px; color:var(--c-text-3); cursor:default; }
-.locked-text { color: var(--c-text-3); font-style: italic; font-size: 12px; }
-.empty-text { color: var(--c-text-3); }
+.locked-text { color:var(--c-text-4); font-style:italic; font-size:12px; }
+.empty-text { color:var(--c-text-4); }
 .pagination-bar { margin-top:16px; text-align:right; }
 </style>

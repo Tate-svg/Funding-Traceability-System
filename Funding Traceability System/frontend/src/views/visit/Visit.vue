@@ -416,8 +416,8 @@ export default {
 
 <style scoped>
 .pagination-bar { margin-top:16px; text-align:right; }
-.danger-text { color:var(--c-danger-text); }
-.muted-text { color: var(--c-text-3); }
+.danger-text { color:var(--c-danger); }
+.muted-text { color:var(--c-text-4); }
 .voucher-tag { display:inline-flex; align-items:center; max-width:100%; }
 .voucher-tag i { margin-right:4px; }
 .voucher-tag span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-family:'SFMono-Regular', Consolas, Menlo, monospace; }
@@ -436,5 +436,5 @@ export default {
 .el-table .action-primary { font-weight:600; }
 .el-table .el-button--text.action-secondary { color:var(--c-text-3); }
 .el-table .el-button--text.action-secondary:hover { color:var(--c-text-2); background-color:var(--c-bg-head); }
-.mask-tip { margin:0 0 8px 100px; font-size:12px; color:var(--c-warning-text); line-height:1.5; }
+.mask-tip { margin:0 0 8px 100px; font-size:12px; color:var(--c-warning); line-height:1.5; }
 </style>

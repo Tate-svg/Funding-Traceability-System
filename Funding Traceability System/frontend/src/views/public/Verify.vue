@@ -93,17 +93,7 @@
         <section class="live-bar">
           <span class="live-dot"></span>
           <span class="live-text">数据与业务单据实时联动</span>
-          <span
-            class="live-refresh"
-            role="button"
-            tabindex="0"
-            aria-label="刷新核验结果"
-            :aria-disabled="refreshing ? 'true' : 'false'"
-            :disabled="refreshing"
-            @click="load(true)"
-            @keydown.enter.prevent="load(true)"
-            @keydown.space.prevent="load(true)"
-          >
+          <span class="live-refresh" :disabled="refreshing" @click="load(true)">
             <i class="el-icon-refresh" :class="{ spinning: refreshing }"></i> {{ refreshing ? '刷新中' : '刷新' }}
           </span>
         </section>
@@ -215,7 +205,7 @@ export default {
 .verify-page {
   min-height: 100vh;
   padding: 0 16px 40px;
-  background: linear-gradient(180deg, var(--c-primary-light) 0%, var(--c-bg-page) 220px);
+  background: linear-gradient(180deg, #eaf2fb 0%, var(--c-bg-page) 220px);
 }
 .verify-top {
   max-width: 720px;
@@ -246,7 +236,7 @@ export default {
   box-shadow: 0 2px 6px rgba(43, 108, 176, 0.28);
 }
 .brand-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--c-text-1);
   line-height: 1.3;
@@ -260,9 +250,9 @@ export default {
   flex: none;
   padding: 3px 10px;
   border-radius: var(--r-pill);
-  background: var(--c-primary-light);
+  background: rgba(43, 108, 176, 0.1);
   color: var(--c-primary);
-  font-size: 12px;
+  font-size: 11px;
   border: 1px solid var(--c-primary-border);
 }
 .verify-main {
@@ -277,11 +267,11 @@ export default {
   padding: 18px;
   margin-bottom: 12px;
 }
-/* 状态色由 tone-* 变量驱动：--tone 用于色块/描边，--tone-text 用于文字（浅底达标） */
-.tone-primary { --tone: var(--c-primary); --tone-text: var(--c-primary); --tone-light: var(--c-primary-light); }
-.tone-success { --tone: var(--c-success); --tone-text: var(--c-success-text); --tone-light: var(--c-success-light); }
-.tone-warning { --tone: var(--c-warning); --tone-text: var(--c-warning-text); --tone-light: var(--c-warning-light); }
-.tone-danger { --tone: var(--c-danger); --tone-text: var(--c-danger-text); --tone-light: var(--c-danger-light); }
+/* 状态色由 tone-* 变量驱动 */
+.tone-primary { --tone: var(--c-primary); --tone-light: var(--c-primary-light); }
+.tone-success { --tone: var(--c-success); --tone-light: var(--c-success-light); }
+.tone-warning { --tone: var(--c-warning); --tone-light: var(--c-warning-light); }
+.tone-danger { --tone: var(--c-danger); --tone-light: var(--c-danger-light); }
 
 .hero-top {
   display: flex;
@@ -296,21 +286,21 @@ export default {
   padding: 3px 9px;
   border-radius: var(--r-pill);
   background: var(--tone-light);
-  color: var(--tone-text);
-  font-size: 12px;
+  color: var(--tone);
+  font-size: 11px;
   font-weight: 600;
 }
 .hero-time {
-  font-size: 12px;
-  color: var(--c-text-3);
+  font-size: 11px;
+  color: var(--c-text-4);
   font-variant-numeric: tabular-nums;
 }
 .hero-status {
   margin: 12px 0 2px;
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1.3;
   font-weight: 700;
-  color: var(--tone-text);
+  color: var(--tone);
   letter-spacing: 0.5px;
 }
 .hero-checks {
@@ -331,9 +321,9 @@ export default {
   font-size: 12px;
 }
 .check-chip.is-done {
-  border-color: var(--c-success-border);
+  border-color: rgba(47, 158, 110, 0.28);
   background: var(--c-success-light);
-  color: var(--c-success-text);
+  color: var(--c-success);
 }
 .hero-grid {
   display: grid;
@@ -354,7 +344,7 @@ export default {
   flex: none;
 }
 .hero-value {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--c-text-1);
   text-align: right;
@@ -367,7 +357,7 @@ export default {
 .hero-value.amount {
   font-size: 20px;
   font-weight: 700;
-  color: var(--tone-text);
+  color: var(--tone);
   font-variant-numeric: tabular-nums;
 }
 
@@ -379,13 +369,13 @@ export default {
   margin-bottom: 6px;
 }
 .panel-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--c-text-1);
 }
 .panel-desc {
-  font-size: 12px;
-  color: var(--c-text-3);
+  font-size: 11px;
+  color: var(--c-text-4);
 }
 .timeline {
   list-style: none;
@@ -420,20 +410,20 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   background: var(--c-bg-head);
   border: 2px solid var(--c-border);
-  color: var(--c-text-3);
+  color: var(--c-text-4);
 }
 .state-done .tl-dot {
-  background: var(--c-success-text);
-  border-color: var(--c-success-text);
+  background: var(--c-success);
+  border-color: var(--c-success);
   color: #fff;
 }
 .state-skipped .tl-dot {
   border-style: dashed;
   background: #fff;
-  color: var(--c-text-3);
+  color: var(--c-text-4);
 }
 .tl-body {
   min-width: 0;
@@ -451,11 +441,11 @@ export default {
   color: var(--c-text-1);
 }
 .tl-state {
-  font-size: 12px;
-  color: var(--c-text-3);
+  font-size: 11px;
+  color: var(--c-text-4);
 }
 .state-done .tl-state {
-  color: var(--c-success-text);
+  color: var(--c-success);
 }
 .tl-time {
   margin-top: 3px;
@@ -466,7 +456,7 @@ export default {
 }
 .state-pending .tl-time,
 .state-skipped .tl-time {
-  color: var(--c-text-3);
+  color: var(--c-text-4);
 }
 
 .live-bar {
@@ -501,19 +491,9 @@ export default {
   color: var(--c-primary);
   cursor: pointer;
   user-select: none;
-  padding: 2px 4px;
-  border-radius: var(--r-tag);
-  transition: background-color var(--t-fast);
-}
-.live-refresh:hover {
-  background: var(--c-primary-light);
-}
-.live-refresh:focus-visible {
-  outline: 2px solid var(--c-primary);
-  outline-offset: 2px;
 }
 .live-refresh[disabled] {
-  color: var(--c-text-3);
+  color: var(--c-text-4);
   cursor: default;
 }
 .spinning {
@@ -542,14 +522,14 @@ export default {
   margin: 0 0 4px;
 }
 .foot-dim {
-  color: var(--c-text-3);
+  color: var(--c-text-4);
 }
 
 .loading-panel .bone {
   height: 12px;
   border-radius: 6px;
   margin-bottom: 12px;
-  background: linear-gradient(90deg, var(--c-border-light) 25%, var(--c-bg-head) 37%, var(--c-border-light) 63%);
+  background: linear-gradient(90deg, #eef2f7 25%, #f7f9fc 37%, #eef2f7 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 }
@@ -591,20 +571,20 @@ export default {
 .error-hint {
   margin: 16px 0 0;
   font-size: 12px;
-  color: var(--c-text-3);
+  color: var(--c-text-4);
 }
 
 @media (min-width: 640px) {
   .verify-page { padding: 0 24px 56px; }
   .verify-top { padding: 26px 0 18px; }
   .panel { padding: 24px 26px; margin-bottom: 14px; }
-  .hero-status { font-size: 30px; }
+  .hero-status { font-size: 28px; }
   .hero-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
   .hero-item { flex-direction: column; align-items: flex-start; gap: 4px; }
   .hero-value { text-align: left; }
-  .hero-value.amount { font-size: 22px; }
+  .hero-value.amount { font-size: 24px; }
   .tl-item { padding: 12px 0; }
-  .tl-name { font-size: 15px; }
+  .tl-name { font-size: 14px; }
   .tl-time { font-size: 12.5px; }
 }
 </style>

@@ -328,33 +328,33 @@ export default {
 
 <style scoped>
 .pagination-bar { margin-top:16px; text-align:right; }
-.danger-text { color: var(--c-danger-text) !important; }
+.danger-text { color: var(--c-danger) !important; }
 .danger-text:hover,
-.danger-text:focus { color: var(--c-danger-text) !important; background: var(--c-danger-light) !important; }
+.danger-text:focus { color: var(--c-danger) !important; background: var(--c-danger-light) !important; }
 /* 次级文字按钮：联系方式调取 */
 .el-button--text.link-secondary { color: var(--c-text-3) !important; }
 .el-button--text.link-secondary:hover,
 .el-button--text.link-secondary:focus { color: var(--c-primary) !important; background: var(--c-primary-light); }
-/* 角色标签配色：监事蓝 / 拨付橙 / 资助绿 / 审核红（全部走令牌） */
+/* 角色标签配色：监事蓝 / 拨付橙 / 资助绿 / 审核红 */
 .el-tag.role-tag--supervisor {
-  background: var(--c-primary-light);
-  border-color: var(--c-primary-border);
-  color: var(--c-primary);
+  background: #eaf2fb;
+  border-color: #cfe0f3;
+  color: #2b6cb0;
 }
 .el-tag.role-tag--disburse {
-  background: var(--c-warning-light);
-  border-color: var(--c-warning-border);
-  color: var(--c-warning-text);
+  background: #fcf4e8;
+  border-color: #f2ddbe;
+  color: #c07f2e;
 }
 .el-tag.role-tag--sponsor {
-  background: var(--c-success-light);
-  border-color: var(--c-success-border);
-  color: var(--c-success-text);
+  background: #eaf6f0;
+  border-color: #c8e8d8;
+  color: #2f9e6e;
 }
 .el-tag.role-tag--audit {
-  background: var(--c-danger-light);
-  border-color: var(--c-danger-border);
-  color: var(--c-danger-text);
+  background: #fbedec;
+  border-color: #f0cfcd;
+  color: #c24a45;
 }
 /* 桌面端操作列按钮单行排列 */
 @media (min-width: 769px) {

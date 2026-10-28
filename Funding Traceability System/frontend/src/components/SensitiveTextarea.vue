@@ -83,16 +83,16 @@ export default {
   width: 100%;
 }
 .sensitive-textarea ::v-deep .has-hit .el-textarea__inner {
-  border-color: var(--c-danger);
+  border-color: #F56C6C;
 }
 .hit-panel {
-  margin-top: 8px;
-  padding: 8px 10px;
-  background: var(--c-danger-light);
-  border: 1px solid var(--c-danger-border);
-  border-radius: var(--r-table);
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: #FEF0F0;
+  border: 1px solid #FDE2E2;
+  border-radius: 4px;
   font-size: 12px;
-  color: var(--c-danger-text);
+  color: #F56C6C;
 }
 .hit-title {
   display: flex;
@@ -102,21 +102,21 @@ export default {
 .mask-btn {
   margin-left: auto;
   padding: 0;
-  color: var(--c-primary);
+  color: #409EFF;
 }
 .hit-item {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-top: 4px;
-  color: var(--c-text-2);
+  color: #606266;
 }
 .hit-raw {
-  color: var(--c-danger-text);
+  color: #F56C6C;
   word-break: break-all;
 }
 .hit-masked {
-  color: var(--c-success-text);
+  color: #67C23A;
   word-break: break-all;
 }
 </style>

@@ -3,29 +3,15 @@
     <!-- 顶部导航 -->
     <el-header class="app-header">
       <div class="header-left">
-        <i
-          class="el-icon-s-fold hamburger"
-          role="button"
-          tabindex="0"
-          aria-label="展开或收起侧边栏"
-          @click="sidebarOpen = !sidebarOpen"
-          @keydown.enter.prevent="sidebarOpen = !sidebarOpen"
-          @keydown.space.prevent="sidebarOpen = !sidebarOpen"
-        ></i>
+        <i class="el-icon-s-fold hamburger" @click="sidebarOpen = !sidebarOpen"></i>
         <i class="el-icon-school logo-icon"></i>
         <span class="system-title">助学帮扶管理系统</span>
       </div>
       <div class="header-right">
         <span class="user-name">{{ realName || username }}</span>
         <el-tag :type="roleTagType" size="small" class="role-tag">{{ roleText }}</el-tag>
-        <el-dropdown ref="userMenu" @command="handleCommand">
-          <span
-            class="el-dropdown-link"
-            role="button"
-            tabindex="0"
-            aria-label="账号菜单"
-            @keydown.enter.prevent="$refs.userMenu && $refs.userMenu.handleClick()"
-          >
+        <el-dropdown @command="handleCommand">
+          <span class="el-dropdown-link">
             <i class="el-icon-arrow-down"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
@@ -43,9 +29,9 @@
         <el-menu
           :default-active="activeMenu"
           router
-          background-color="#1f2e3f"
-          text-color="#b6c2d1"
-          active-text-color="#ffffff"
+          background-color="#304156"
+          text-color="#bfcbd9"
+          active-text-color="#409EFF"
           @select="onMenuSelect"
         >
           <template v-for="route in menuRoutes">
@@ -171,7 +157,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* 背景由 theme.css 的 .app-header 渐变令牌控制，这里不再写死色值 */
+  background-color: #2b3a4d;
   color: #fff;
   height: 60px;
   line-height: 60px;
@@ -182,14 +168,14 @@ export default {
   align-items: center;
 }
 .logo-icon {
-  font-size: 20px;
-  color: #7fb2e5;
+  font-size: 22px;
+  color: #409EFF;
   margin-right: 10px;
 }
 .system-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
 }
 .header-right {
   display: flex;
@@ -197,7 +183,7 @@ export default {
 }
 .user-name {
   margin-right: 10px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .role-tag {
   margin-right: 14px;
@@ -205,20 +191,13 @@ export default {
 .el-dropdown-link {
   color: #fff;
   cursor: pointer;
-  font-size: 13px;
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 6px;
-  border-radius: var(--r-btn);
-}
-.el-dropdown-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+  font-size: 14px;
 }
 .main-container {
   height: calc(100vh - 60px);
 }
 .app-sidebar {
-  background-color: var(--c-navy-900);
+  background-color: #304156;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -226,7 +205,7 @@ export default {
   border-right: none;
 }
 .app-main {
-  background-color: var(--c-bg-page);
+  background-color: #f0f2f5;
   padding: 16px;
   overflow-y: auto;
 }
@@ -260,11 +239,6 @@ export default {
     margin-right: 3vw;
     cursor: pointer;
     padding: 6px;
-  }
-  .hamburger:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-    border-radius: 4px;
   }
   .logo-icon {
     font-size: 18px;
@@ -310,12 +284,12 @@ export default {
   .mobile-tip {
     display: flex;
     align-items: center;
-    background: var(--c-info-light);
-    border: 1px solid var(--c-info-border);
-    color: var(--c-info-text);
-    border-radius: var(--r-panel);
+    background: #ecf5ff;
+    border: 1px solid #d9ecff;
+    color: #409eff;
+    border-radius: 4px;
     padding: 8px 10px;
-    font-size: 12.5px;
+    font-size: 12px;
     margin-bottom: 2vw;
   }
   .mobile-tip span {

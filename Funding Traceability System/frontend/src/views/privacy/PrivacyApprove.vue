@@ -46,9 +46,27 @@
             <template slot-scope="{ row }">{{ row.expireTime || '—' }}</template>
           </el-table-column>
           <el-table-column prop="createTime" label="申请时间" min-width="150" />
+          <el-table-column label="操作" width="120" align="center">
+            <template slot-scope="scope">
+              <div class="op-btns">
+                <el-button type="primary" size="small" @click="openMaskDetail($store.state.user.adminId, scope.row.id)">查看敏感详情</el-button>
+              </div>
+            </template>
+          </el-table-column>
           <template slot="empty">
             <EmptyState type="todo" title="暂无隐私调取申请" desc="提交隐私调取申请后，审批进度会在这里展示" />
           </template>
+          <el-dialog v-model="maskDialogVisible" title="敏感详情" width="600px" :close-on-click-modal="false">
+            <div>
+              <el-switch v-model="maskToggle" @change="handleMaskToggle" active-text="开启二次遮挡" inactive-text="关闭二次遮挡"/>
+              <p v-if="countdown > 0">会话剩余 {{countdown}} 分钟，超时自动关闭</p >
+              <p>敏感数据：{{sensitiveData}}</p >
+            </div>
+            <template #footer>
+              <el-button @click="resetCountdown">延长会话</el-button>
+              <el-button @click="maskDialogVisible = false">关闭</el-button>
+            </template>
+          </el-dialog>
         </el-table>
       </el-tab-pane>
 
@@ -129,6 +147,20 @@
       <ComplianceFooter />
     </div>
   </div>
+  <!-- ✅ 新增：脱敏详情弹窗 -->
+  <el-dialog v-model="showMaskModal" title="脱敏详情">
+    <div style="margin-bottom:12px;">
+      <span>二次隐私遮挡：</span>
+      <el-switch
+        v-model="isSecondMask"
+        @change="toggleMaskSwitch"
+        active-text="开启"
+        inactive-text="关闭"
+      />
+    </div>
+    <div>银行卡号：{{ sensitiveInfo.bankCard }}</div>
+    <div>家庭住址：{{ sensitiveInfo.address }}</div>
+  </el-dialog>
 </template>
 
 <script>
@@ -159,6 +191,11 @@ export default {
       approveResult: 'APPROVE',
       approveRemark: '',
       currentRow: null
+      showMaskModal: false,
+      isSecondMask: true,
+      sessionKey: "",
+      sensitiveInfo: {},
+      timerId: null,
     }
   },
   computed: {
@@ -225,6 +262,59 @@ export default {
         this.loadTodo()
       }
     },
+    async openMaskDetail(adminId, targetId){
+      this.showMaskModal = true;
+      const resSession = await this.$axios.post("/api/privacy/mask/createViewSession",{
+        adminId: adminId,
+        targetId: targetId
+      })
+      this.sessionKey = resSession.data.sessionKey
+
+      const resStatus = await this.$axios.get("/api/privacy/mask/getMaskStatus",{
+        params:{ adminId: adminId }
+      })
+      this.isSecondMask = resStatus.data.isSecondMask
+
+      await this.fetchSensitiveDetail()
+      this.startAutoCloseTimer()
+    },
+    async fetchSensitiveDetail(){
+      const res = await this.$axios.get("/api/privacy/mask/getSensitiveDetail",{
+        params:{
+          sessionKey: this.sessionKey,
+          adminId: adminId,
+          targetId: targetId
+        }
+      })
+      this.sensitiveInfo = res.data
+    },
+    async toggleMaskSwitch(val){
+      await this.$axios.post("/api/privacy/mask/switchMask",{
+        adminId: adminId,
+        isSecondMask: val
+      })
+      await this.fetchSensitiveDetail()
+    },
+    startAutoCloseTimer(){
+      if(this.timerId){
+        clearTimeout(this.timerId)
+      }
+      this.timerId = setTimeout(async ()=>{
+        alert("查看会话超时，敏感信息已自动收起！")
+        this.closeMaskModal()
+      }, 15 * 60 * 1000)
+    },
+    async closeMaskModal(){
+      this.showMaskModal = false
+      if(this.timerId){
+        clearTimeout(this.timerId)
+        this.timerId = null
+      }
+      await this.$axios.post("/api/privacy/mask/closeSession",{
+        sessionKey: this.sessionKey
+      })
+    }
+
     openApprove(row, result) {
       this.currentRow = row
       this.approveResult = result
@@ -241,6 +331,7 @@ export default {
         this.approveLoading = false
       })
     }
+
   }
 }
 </script>
@@ -292,8 +383,8 @@ export default {
 }
 .el-tag.status-tag--l2 {
   background: var(--c-warning-light);
-  border-color: var(--c-warning-border);
-  color: var(--c-warning-text);
+  border-color: #f2ddbe;
+  color: var(--c-warning);
 }
 .el-tag.status-tag--approved {
   background: var(--c-success);
@@ -302,18 +393,18 @@ export default {
 }
 .el-tag.status-tag--rejected {
   background: var(--c-danger-light);
-  border-color: var(--c-danger-border);
-  color: var(--c-danger-text);
+  border-color: #f0cfcd;
+  color: var(--c-danger);
 }
 
 /* 底部隐私提示：浅灰提示条 */
 .privacy-footer {
   margin-top: 16px;
-  padding: 8px 12px;
-  background: var(--c-bg-head);
+  padding: 10px 12px 10px 14px;
+  background: #f7f9fc;
   border: 1px solid var(--c-border-light);
-  border-left: 3px solid var(--c-border);
-  border-radius: var(--r-table);
+  border-left: 3px solid #dbe3ec;
+  border-radius: 4px;
 }
 .privacy-footer ::v-deep .compliance-footer {
   margin-top: 0;

@@ -287,12 +287,12 @@ export default {
 .steps-card { margin-bottom:16px; }
 .info-card { margin-bottom:16px; }
 .card-title { font-weight:600; display:flex; align-items:center; gap:10px; color:var(--c-text-1); }
-.card-subtitle { font-weight:400; font-size:12px; color:var(--c-warning-text); }
+.card-subtitle { font-weight:400; font-size:12px; color:var(--c-warning); }
 .amount-text { font-weight:700; color:var(--c-text-1); font-variant-numeric:tabular-nums; }
 .big-tag { margin-left:8px; }
 .voucher-text { font-size:13px; color:var(--c-text-2); }
 .hash-text { font-family:Consolas, monospace; font-size:12px; color:var(--c-text-3); cursor:default; }
-.masked-text { color:var(--c-text-3); }
+.masked-text { color:var(--c-text-4); }
 .qr-card { margin-bottom:16px; }
 .qr-body { display:flex; gap:20px; align-items:center; }
 .qr-img-wrap {
@@ -302,7 +302,7 @@ export default {
   background:var(--c-bg-head);
 }
 .qr-img { width:100%; height:100%; object-fit:contain; display:block; }
-.qr-placeholder { display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--c-text-3); font-size:12px; }
+.qr-placeholder { display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--c-text-4); font-size:12px; }
 .qr-side { flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; }
 .qr-row { display:flex; align-items:center; gap:12px; font-size:13px; }
 .qr-label { width:64px; flex:none; color:var(--c-text-3); font-size:12px; }
@@ -312,7 +312,7 @@ export default {
 .qr-url:hover { text-decoration:underline; }
 .qr-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:2px; }
 .qr-actions .el-button + .el-button { margin-left:0; }
-.qr-tip { margin:0; font-size:12px; line-height:1.6; color:var(--c-text-3); }
+.qr-tip { margin:0; font-size:12px; line-height:1.6; color:var(--c-text-4); }
 .log-card-wrap { margin-bottom:16px; }
 .visit-card { margin-bottom:16px; }
 @media (max-width: 768px) {
