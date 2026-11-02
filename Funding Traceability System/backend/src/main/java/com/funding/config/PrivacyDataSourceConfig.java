@@ -6,6 +6,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,10 @@ import javax.sql.DataSource;
 @Configuration
 @MapperScan(basePackages = "com.funding.privacymapper", sqlSessionFactoryRef = "privacySqlSessionFactory")
 public class PrivacyDataSourceConfig {
+
+    /** 是否把 SQL 打印到标准输出；压测/性能测试 profile 可关闭，避免日志成为瓶颈 */
+    @Value("${funding.mybatis.stdout-sql-log:true}")
+    private boolean stdoutSqlLog;
 
     @Bean
     @ConfigurationProperties("spring.datasource.privacy")
@@ -37,7 +42,9 @@ public class PrivacyDataSourceConfig {
         com.baomidou.mybatisplus.core.MybatisConfiguration cfg =
                 new com.baomidou.mybatisplus.core.MybatisConfiguration();
         cfg.setMapUnderscoreToCamelCase(true);
-        cfg.setLogImpl(StdOutImpl.class);
+        if (stdoutSqlLog) {
+            cfg.setLogImpl(StdOutImpl.class);
+        }
         bean.setConfiguration(cfg);
         bean.setPlugins(interceptor);
         return bean.getObject();

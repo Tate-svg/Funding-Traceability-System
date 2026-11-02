@@ -1,0 +1,480 @@
+﻿node.exe : (node:27744) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+所在位置 行:16 字符: 1
++ & node $nm run 'docs\testing\postman\Funding-Traceability.postman_col ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:27744) [D...ts.F_OK instead:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-deprecation ...` to show where the warning was created)
+newman
+
+助学帮扶资金溯源系统-接口测试集合
+
+□ 00-前置：登录获取Token
+└ 00-01 登录-资助人 sponsor
+  POST http://localhost:8090/api/auth/login [200 OK, 482B, 25ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回 Token
+
+└ 00-02 登录-资助人 sponsor2
+  POST http://localhost:8090/api/auth/login [200 OK, 484B, 4ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回 Token
+
+└ 00-03 登录-审核管理员 audit_admin2
+  POST http://localhost:8090/api/auth/login [200 OK, 494B, 3ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回 Token
+
+└ 00-04 登录-监事 supervisor2
+  POST http://localhost:8090/api/auth/login [200 OK, 492B, 3ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回 Token
+
+└ 00-05 登录-拨付管理员 disburse_admin
+  POST http://localhost:8090/api/auth/login [200 OK, 501B, 3ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回 Token
+
+└ 00-06 登录-审核管理员 audit_admin（含直接核验权限）
+  POST http://localhost:8090/api/auth/login [200 OK, 493B, 3ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回 Token
+
+□ 01-功能测试
+└ 01-01 当前登录用户信息
+  GET http://localhost:8090/api/auth/info [200 OK, 435B, 7ms]
+  √  HTTP 200
+  √  业务码 200
+  √  用户名为 sponsor
+  √  返回角色 SPONSOR
+  √  不返回密码
+
+└ 01-02 资助流水分页查询（资助人数据隔离）
+  GET http://localhost:8090/api/funds?page=1&size=10 [200 OK, 4.01kB, 104ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回分页记录
+  √  存在资助记录
+  √  仅返回本人资助单
+
+└ 01-03 资助单详情
+  GET http://localhost:8090/api/funds/1 [200 OK, 809B, 7ms]
+  √  HTTP 200
+  √  业务码 200
+  √  单据 ID 正确
+  √  状态为已拨付
+  √  凭证号存在
+
+└ 01-04 生成溯源核验二维码
+  GET http://localhost:8090/api/funds/1/qrcode [200 OK, 1kB, 11ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回核验码
+  √  返回核验页地址
+  √  返回二维码图片
+
+└ 01-05 匿名扫码核验（公开接口免登录）
+  GET http://localhost:8090/api/public/verify?code=1.d9OXjUVvXec5lIaa [200 OK, 922B, 4ms]
+  √  HTTP 200
+  √  业务码 200
+  √  业务单号正确
+  √  金额为 2000
+  √  返回四个审批节点
+  √  状态实时联动为已拨付
+
+└ 01-06 提交隐私明文调取申请
+  POST http://localhost:8090/api/privacy/access/apply [200 OK, 297B, 19ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-07 我的调取申请列表（提取申请单 ID）
+  GET http://localhost:8090/api/privacy/access/mine [200 OK, 621B, 12ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回申请列表
+  √  最新申请为待初审
+  √  申请人为当前资助人
+
+└ 01-08 未审批时仅返回脱敏视图
+  GET http://localhost:8090/api/privacy/profile/STU-a1b2c3d4e5f6 [200 OK, 420B, 6ms]
+  √  HTTP 200
+  √  业务码 200
+  √  标记为脱敏数据
+  √  仅见脱敏姓名
+  √  不返回手机号
+  √  不返回身份证号
+
+└ 01-09 审核管理员待办包含该申请（初审）
+  GET http://localhost:8090/api/privacy/access/todo [200 OK, 621B, 6ms]
+  √  HTTP 200
+  √  业务码 200
+  √  待办中包含新申请
+  √  状态为待初审
+
+└ 01-10 初审通过（第一级审批）
+  POST http://localhost:8090/api/privacy/access/7511/approve [200 OK, 297B, 24ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-11 【核心】初审通过后资助人仍不可见明文
+  GET http://localhost:8090/api/privacy/profile/STU-a1b2c3d4e5f6 [200 OK, 420B, 6ms]
+  √  HTTP 200
+  √  业务码 200
+  √  仍为脱敏视图
+  √  仍未返回手机号
+  √  仍未返回身份证号
+
+└ 01-12 审核管理员持直接核验权限可留痕核验（设计允许）
+  GET http://localhost:8090/api/privacy/profile/STU-a1b2c3d4e5f6 [200 OK, 567B, 25ms]
+  √  HTTP 200
+  √  业务码 200
+  √  直接核验标记为明文
+  √  标记为直接查看（已留痕）
+  √  返回真实姓名
+
+└ 01-13 监事终审待办包含该申请（终审）
+  GET http://localhost:8090/api/privacy/access/todo [200 OK, 645B, 4ms]
+  √  HTTP 200
+  √  业务码 200
+  √  待办中包含新申请
+  √  状态为待终审
+
+└ 01-14 终审通过（第二级审批）
+  POST http://localhost:8090/api/privacy/access/7511/approve [200 OK, 297B, 16ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-15 终审通过后资助人可见申请范围内的明文
+  GET http://localhost:8090/api/privacy/profile/STU-a1b2c3d4e5f6 [200 OK, 428B, 8ms]
+  √  HTTP 200
+  √  业务码 200
+  √  标记为明文数据
+  √  返回真实姓名
+  √  返回手机号
+  √  未申请字段不返回
+
+└ 01-16 开启敏感字段二次遮挡
+  POST http://localhost:8090/api/privacy/mask/switchMask?isSecondMask=true [200 OK, 307B, 31ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-17 创建限时查看会话
+  POST http://localhost:8090/api/privacy/mask/createViewSession?targetId=7511 [200 OK, 365B, 479ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回会话凭证
+  √  有效期为 15 分钟
+
+└ 01-18 查看敏感详情（二次遮挡生效）
+  GET http://localhost:8090/api/privacy/mask/getSensitiveDetail?sessionKey=10f4da6f-3bf1-4cca-beed-386303d850fa&targetId=7511 [200 OK, 504B, 23ms]
+  √  HTTP 200
+  √  业务码 200
+  √  审批状态为已终审通过
+  √  二次遮挡已开启
+  √  手机号二次打码
+
+└ 01-19 关闭限时查看会话
+  POST http://localhost:8090/api/privacy/mask/closeSession?sessionKey=10f4da6f-3bf1-4cca-beed-386303d850fa [200 OK, 310B, 15ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-20 已关闭会话不可再查看敏感详情
+  GET http://localhost:8090/api/privacy/mask/getSensitiveDetail?sessionKey=10f4da6f-3bf1-4cca-beed-386303d850fa&targetId=7511 [200 OK, 332B, 4ms]
+  √  会话失效返回 401
+
+└ 01-21 新增资助申请
+  POST http://localhost:8090/api/funds [200 OK, 297B, 35ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-22 按关键字检索新增单据（提取单据 ID）
+  GET http://localhost:8090/api/funds?keyword=PostmanAutoTestFund [200 OK, 886B, 16ms]
+  √  HTTP 200
+  √  业务码 200
+  √  检索到新增单据
+
+└ 01-23 删除待审核测试单据
+  DELETE http://localhost:8090/api/funds/9 [200 OK, 297B, 15ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-24 审核小额资助单（800 元，直接审核通过）
+  POST http://localhost:8090/api/funds/8/audit [200 OK, 297B, 17ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-25 审核通过后自动生成凭证号
+  GET http://localhost:8090/api/funds/8 [200 OK, 893B, 4ms]
+  √  HTTP 200
+  √  业务码 200
+  √  状态为已审核
+  √  凭证号格式正确
+
+└ 01-26 拨付管理员确认拨付
+  POST http://localhost:8090/api/funds/8/disburse [200 OK, 297B, 16ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 01-27 拨付后状态实时联动
+  GET http://localhost:8090/api/funds/8 [200 OK, 916B, 3ms]
+  √  HTTP 200
+  √  业务码 200
+  √  状态为已拨付
+  √  拨付时间已写入
+
+└ 01-28 用户管理列表（有权限角色）
+  GET http://localhost:8090/api/users?page=1&size=20 [200 OK, 1.49kB, 15ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回用户列表
+
+□ 02-权限测试
+└ 02-01 未携带 Token 访问受保护接口
+  GET http://localhost:8090/api/funds [200 OK, 327B, 3ms]
+  √  拦截为 401
+
+└ 02-02 Token 签名被篡改
+  GET http://localhost:8090/api/auth/info [200 OK, 327B, 3ms]
+  √  拦截为 401
+
+└ 02-03 资助人无新增资助单权限（垂直越权）
+  POST http://localhost:8090/api/funds [200 OK, 316B, 3ms]
+  √  拦截为 403
+
+└ 02-04 资助人无审核权限
+  GET http://localhost:8090/api/funds/pending-audit [200 OK, 316B, 3ms]
+  √  拦截为 403
+
+└ 02-05 资助人无导出权限
+  GET http://localhost:8090/api/funds/export [200 OK, 316B, 2ms]
+  √  拦截为 403
+
+└ 02-06 资助人无用户管理权限
+  GET http://localhost:8090/api/users [200 OK, 316B, 2ms]
+  √  拦截为 403
+
+└ 02-07 拨付管理员无审核权限
+  GET http://localhost:8090/api/funds/pending-audit [200 OK, 316B, 2ms]
+  √  拦截为 403
+
+└ 02-08 拨付管理员无新增资金权限
+  POST http://localhost:8090/api/funds [200 OK, 316B, 3ms]
+  √  拦截为 403
+
+└ 02-09 资助人发起调取申请（权限用例数据准备）
+  POST http://localhost:8090/api/privacy/access/apply [200 OK, 297B, 23ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 02-10 提取权限用例申请单 ID
+  GET http://localhost:8090/api/privacy/access/mine [200 OK, 993B, 4ms]
+  √  HTTP 200
+  √  业务码 200
+  √  最新申请为待初审
+
+└ 02-11 资助人无隐私审批权限（越权审批本人申请）
+  POST http://localhost:8090/api/privacy/access/7512/approve [200 OK, 316B, 2ms]
+  √  拦截为 403
+
+└ 02-12 监事越级初审（缺少 privacy:approve:l1）
+  POST http://localhost:8090/api/privacy/access/7512/approve [200 OK, 317B, 6ms]
+  √  拦截为 403
+
+└ 02-13 审核管理员完成初审
+  POST http://localhost:8090/api/privacy/access/7512/approve [200 OK, 297B, 16ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 02-14 审核管理员越级终审（缺少 privacy:approve:l2）
+  POST http://localhost:8090/api/privacy/access/7512/approve [200 OK, 317B, 4ms]
+  √  拦截为 403
+
+└ 02-15 申请人本人创建查看会话
+  POST http://localhost:8090/api/privacy/mask/createViewSession?targetId=7512 [200 OK, 365B, 12ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 02-16 资助人2发起调取申请（横向越权数据准备）
+  POST http://localhost:8090/api/privacy/access/apply [200 OK, 297B, 13ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 02-17 资助人2我的申请只包含本人数据
+  GET http://localhost:8090/api/privacy/access/mine [200 OK, 598B, 3ms]
+  √  HTTP 200
+  √  业务码 200
+  √  仅返回本人申请
+
+└ 02-18 横向越权：打开他人申请单查看会话
+  POST http://localhost:8090/api/privacy/mask/createViewSession?targetId=7513 [200 OK, 302B, 4ms]
+  √  拦截为 403
+
+└ 02-19 横向越权：查看他人申请单敏感详情
+  GET http://localhost:8090/api/privacy/mask/getSensitiveDetail?sessionKey=c880e754-10cc-4013-9ec3-fd2a56f94df8&targetId=7513 [200 OK, 302B, 8ms]
+  √  拦截为 403
+
+└ 02-20 横向越权：资助人访问他人资助单
+  GET http://localhost:8090/api/funds/8 [200 OK, 302B, 4ms]
+  √  拦截为 403
+
+└ 02-21 横向越权：资助人2访问他人资助单
+  GET http://localhost:8090/api/funds/1 [200 OK, 302B, 3ms]
+  √  拦截为 403
+
+└ 02-22 资助人2访问本人资助单（正向对照）
+  GET http://localhost:8090/api/funds/8 [200 OK, 916B, 3ms]
+  √  HTTP 200
+  √  业务码 200
+  √  返回本人单据
+
+└ 02-23 横向越权：为他人单据生成核验二维码
+  GET http://localhost:8090/api/funds/1/qrcode [200 OK, 302B, 3ms]
+  √  拦截为 403
+
+└ 02-24 审核管理员无拨付权限
+  POST http://localhost:8090/api/funds/8/disburse [200 OK, 316B, 2ms]
+  √  拦截为 403
+
+└ 02-25 监事无资金审核权限
+  GET http://localhost:8090/api/funds/pending-audit [200 OK, 316B, 2ms]
+  √  拦截为 403
+
+└ 02-26 拨付管理员无隐私调取申请权限
+  POST http://localhost:8090/api/privacy/access/apply [200 OK, 316B, 2ms]
+  √  拦截为 403
+
+└ 02-27 审核管理员（持直接核验权限）打开待终审申请会话
+  POST http://localhost:8090/api/privacy/mask/createViewSession?targetId=7512 [200 OK, 365B, 12ms]
+  √  HTTP 200
+  √  业务码 200
+
+└ 02-28 【核心】待终审申请详情强制脱敏（直接核验权限不得绕过终审）
+  GET http://localhost:8090/api/privacy/mask/getSensitiveDetail?sessionKey=ed4e7be3-b008-4d35-8292-3270830ba38d&targetId=7512 [200 OK, 517B, 20ms]
+  √  HTTP 200
+  √  业务码 200
+  √  审批未终审通过
+  √  仍为脱敏视图
+  √  不返回手机号
+
+□ 03-安全测试
+└ 03-01 SQL 注入：登录用户名
+  POST http://localhost:8090/api/auth/login [200 OK, 305B, 3ms]
+  √  登录失败（业务码非 200）
+  √  未签发 Token
+
+└ 03-02 错误密码登录
+  POST http://localhost:8090/api/auth/login [200 OK, 302B, 3ms]
+  √  登录失败
+
+└ 03-03 SQL 注入：流水查询关键字
+  GET http://localhost:8090/api/funds?keyword=%27%20OR%201%3D1%20-- [200 OK, 435B, 8ms]
+  √  HTTP 200
+  √  业务码 200
+  √  注入串按普通文本处理，无匹配记录
+
+└ 03-04 SQL 注入：状态过滤参数
+  GET http://localhost:8090/api/funds?status=%27%20OR%201%3D1 [200 OK, 435B, 5ms]
+  √  HTTP 200
+  √  业务码 200
+  √  注入串按普通文本处理，无匹配记录
+
+└ 03-05 XSS 注入：调取理由
+  POST http://localhost:8090/api/privacy/access/apply [200 OK, 297B, 15ms]
+  √  HTTP 200
+  √  业务码 200
+  √  响应不回显脚本内容
+
+└ 03-06 非法字段范围（字段白名单校验）
+  POST http://localhost:8090/api/privacy/access/apply [200 OK, 317B, 4ms]
+  √  拒绝非法字段
+
+└ 03-07 空调取理由（必填校验）
+  POST http://localhost:8090/api/privacy/access/apply [200 OK, 311B, 5ms]
+  √  拒绝空理由
+
+└ 03-08 未知虚拟 ID（不泄露是否存在）
+  GET http://localhost:8090/api/privacy/profile/STU-NOT-EXIST [200 OK, 322B, 5ms]
+  √  返回 404
+
+└ 03-09 非法路径参数类型（异常信息脱敏检查）
+  GET http://localhost:8090/api/funds/abc [200 OK, 471B, 7ms]
+  √  请求未成功
+  √  未返回堆栈信息
+
+└ 03-10 二维码签名被篡改
+  GET http://localhost:8090/api/public/verify?code=1.AAAAAAAAAAAAAAAA [200 OK, 435B, 1ms]
+  √  核验码无效
+
+└ 03-11 二维码枚举（无签名裸 ID）
+  GET http://localhost:8090/api/public/verify?code=999999 [200 OK, 435B, 2ms]
+  √  核验码无效
+
+└ 03-12 二维码参数 SQL 注入
+  GET http://localhost:8090/api/public/verify?code=1%27%20OR%20%271%27%3D%271 [200 OK, 435B, 2ms]
+  √  核验码无效
+
+└ 03-13 公开核验接口最小化返回（隐私红线）
+  GET http://localhost:8090/api/public/verify?code=1.d9OXjUVvXec5lIaa [200 OK, 922B, 3ms]
+  √  HTTP 200
+  √  业务码 200
+  √  仅返回公开字段
+  √  不包含学生/资助人姓名字段
+  √  不泄露手机号
+  √  不泄露身份证号
+
+└ 03-14 JWT Payload 篡改角色（签名校验）
+  ┌
+  │ `Using "btoa" is deprecated. Use "require('btoa')" ins
+  │ tead.`
+  └
+  GET http://localhost:8090/api/users [200 OK, 327B, 2ms]
+  √  签名校验失败返回 401
+
+└ 03-15 缺少 Bearer 前缀的 Token
+  GET http://localhost:8090/api/auth/info [200 OK, 327B, 2ms]
+  √  拦截为 401
+
+└ 03-16 伪造会话凭证查看敏感详情
+  GET http://localhost:8090/api/privacy/mask/getSensitiveDetail?sessionKey=fake-session-key&targetId=7512 [200 OK, 332B, 3ms]
+  √  会话校验失败返回 401
+
+└ 03-17 超长关键字查询（参数边界）
+  GET http://localhost:8090/api/funds?keyword=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA [200 OK, 435B, 7ms]
+  √  HTTP 200
+  √  业务码 200
+  √  超长关键字返回空结果而非报错
+
+└ 03-18 无审批单时敏感字段不泄露
+  GET http://localhost:8090/api/privacy/profile/STU-a1b2c3d4e5f6 [200 OK, 420B, 5ms]
+  √  HTTP 200
+  √  业务码 200
+  √  强制脱敏
+  √  不返回手机号
+  √  不返回身份证号
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                80 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                80 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 2 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │               201 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 5.7s                                       │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 18.85kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 15ms [min: 1ms, max: 479ms, s.d.: 53ms] │
+└────────────────────────────────────────────────────────────────┘

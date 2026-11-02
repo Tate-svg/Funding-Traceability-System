@@ -1,0 +1,2447 @@
+{
+  "info": {
+    "_postman_id": "6f1a2b3c-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+    "name": "助学帮扶资金溯源系统-接口测试集合",
+    "description": "接口测试集合，分 功能测试 / 权限测试 / 安全测试 三类。\n运行环境：独立测试库 funding_test（后端 --spring.profiles.active=test，端口 8090）。\n批量执行：newman run Funding-Traceability.postman_collection.json -e Funding-Traceability.postman_environment.json\n分目录执行：加 --folder \"02-权限测试\" 即可只跑权限用例。\n集合内 00 目录先自动登录并提取 6 类角色 Token，后续用例全部复用，无需手工填 Token。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00-前置：登录获取Token",
+      "item": [
+        {
+          "name": "00-01 登录-资助人 sponsor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{sponsorUser}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "资助人账号登录，Token 写入环境变量 sponsorToken，供后续用例复用"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回 Token\", () => pm.expect(body.data.token).to.be.a(\"string\").and.not.empty);",
+                  "pm.environment.set(\"sponsorToken\", body.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00-02 登录-资助人 sponsor2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{sponsor2User}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "第二个资助人账号，用于横向越权（IDOR）验证"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回 Token\", () => pm.expect(body.data.token).to.be.a(\"string\").and.not.empty);",
+                  "pm.environment.set(\"sponsor2Token\", body.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00-03 登录-审核管理员 audit_admin2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{auditorUser}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回 Token\", () => pm.expect(body.data.token).to.be.a(\"string\").and.not.empty);",
+                  "pm.environment.set(\"auditorToken\", body.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00-04 登录-监事 supervisor2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{supervisorUser}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回 Token\", () => pm.expect(body.data.token).to.be.a(\"string\").and.not.empty);",
+                  "pm.environment.set(\"supervisorToken\", body.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00-05 登录-拨付管理员 disburse_admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{disburseUser}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回 Token\", () => pm.expect(body.data.token).to.be.a(\"string\").and.not.empty);",
+                  "pm.environment.set(\"disburseToken\", body.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "00-06 登录-审核管理员 audit_admin（含直接核验权限）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{directAuditorUser}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回 Token\", () => pm.expect(body.data.token).to.be.a(\"string\").and.not.empty);",
+                  "pm.environment.set(\"directAuditorToken\", body.data.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01-功能测试",
+      "item": [
+        {
+          "name": "01-01 当前登录用户信息",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/info"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"用户名为 sponsor\", () => pm.expect(body.data.username).to.eql(\"sponsor\"));",
+                  "pm.test(\"返回角色 SPONSOR\", () => pm.expect(body.data.role).to.eql(\"SPONSOR\"));",
+                  "pm.test(\"不返回密码\", () => pm.expect(body.data.password).to.be.null);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-02 资助流水分页查询（资助人数据隔离）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds?page=1&size=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回分页记录\", () => pm.expect(body.data.records).to.be.an(\"array\"));",
+                  "pm.test(\"存在资助记录\", () => pm.expect(body.data.total).to.be.above(0));",
+                  "pm.test(\"仅返回本人资助单\", () => pm.expect(body.data.records.every(r => r.sponsorId === 2)).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-03 资助单详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"单据 ID 正确\", () => pm.expect(body.data.id).to.eql(1));",
+                  "pm.test(\"状态为已拨付\", () => pm.expect(body.data.status).to.eql(\"DISBURSED\"));",
+                  "pm.test(\"凭证号存在\", () => pm.expect(body.data.voucherNo).to.be.a(\"string\").and.not.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-04 生成溯源核验二维码",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/1/qrcode"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回核验码\", () => pm.expect(body.data.verifyCode).to.match(/^\\d+\\.[A-Za-z0-9_-]{10,}$/));",
+                  "pm.test(\"返回核验页地址\", () => pm.expect(body.data.verifyUrl).to.include(\"verify\"));",
+                  "pm.test(\"返回二维码图片\", () => pm.expect(body.data.qrImage).to.include(\"data:image/png;base64,\"));",
+                  "pm.environment.set(\"verifyCode\", body.data.verifyCode);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-05 匿名扫码核验（公开接口免登录）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/public/verify?code={{verifyCode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"业务单号正确\", () => pm.expect(body.data.businessNo).to.eql(\"Voucher-20240301-0001\"));",
+                  "pm.test(\"金额为 2000\", () => pm.expect(body.data.amount).to.eql(2000));",
+                  "pm.test(\"返回四个审批节点\", () => pm.expect(body.data.nodes).to.be.an(\"array\").with.lengthOf(4));",
+                  "pm.test(\"状态实时联动为已拨付\", () => pm.expect(body.data.status).to.eql(\"DISBURSED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-06 提交隐私明文调取申请",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/apply",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"virtualId\":\"{{virtualId}}\",\"fieldScope\":\"name,phone\",\"reason\":\"功能测试：核验资助对象联系方式\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-07 我的调取申请列表（提取申请单 ID）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/mine"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const list = body.data;",
+                  "pm.test(\"返回申请列表\", () => pm.expect(list).to.be.an(\"array\").and.not.empty);",
+                  "pm.test(\"最新申请为待初审\", () => pm.expect(list[0].status).to.eql(\"PENDING_L1\"));",
+                  "pm.test(\"申请人为当前资助人\", () => pm.expect(list[0].applicantId).to.eql(2));",
+                  "pm.environment.set(\"applyId\", String(list[0].id));",
+                  "pm.environment.set(\"applyVirtualId\", list[0].virtualId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-08 未审批时仅返回脱敏视图",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/profile/{{applyVirtualId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const d = body.data;",
+                  "pm.test(\"标记为脱敏数据\", () => pm.expect(d.masked).to.eql(true));",
+                  "pm.test(\"仅见脱敏姓名\", () => pm.expect(d.maskName).to.eql(\"李**\"));",
+                  "pm.test(\"不返回手机号\", () => pm.expect(d.phone == null).to.eql(true));",
+                  "pm.test(\"不返回身份证号\", () => pm.expect(d.idCard == null).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-09 审核管理员待办包含该申请（初审）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/todo"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const list = body.data;",
+                  "const target = list.find(i => String(i.id) === pm.environment.get(\"applyId\"));",
+                  "pm.test(\"待办中包含新申请\", () => pm.expect(target).to.be.ok);",
+                  "pm.test(\"状态为待初审\", () => pm.expect(target.status).to.eql(\"PENDING_L1\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-10 初审通过（第一级审批）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/{{applyId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"result\":\"APPROVE\",\"remark\":\"初审通过\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-11 【核心】初审通过后资助人仍不可见明文",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/profile/{{applyVirtualId}}",
+            "description": "两级审批核心校验：初审只推进到 PENDING_L2，资助人不得查看明文"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const d = body.data;",
+                  "pm.test(\"仍为脱敏视图\", () => pm.expect(d.masked).to.eql(true));",
+                  "pm.test(\"仍未返回手机号\", () => pm.expect(d.phone == null).to.eql(true));",
+                  "pm.test(\"仍未返回身份证号\", () => pm.expect(d.idCard == null).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-12 审核管理员持直接核验权限可留痕核验（设计允许）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{directAuditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/profile/{{applyVirtualId}}",
+            "description": "AUDIT_ADMIN 持 privacy:view:direct，档案核验职责允许直接查看明文且写入调取留痕；注意与「打开具体申请单」接口的强制脱敏区分（见 02-28）"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const d = body.data;",
+                  "pm.test(\"直接核验标记为明文\", () => pm.expect(d.masked).to.eql(false));",
+                  "pm.test(\"标记为直接查看（已留痕）\", () => pm.expect(d.directView).to.eql(true));",
+                  "pm.test(\"返回真实姓名\", () => pm.expect(d.name).to.eql(\"李明\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-13 监事终审待办包含该申请（终审）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{supervisorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/todo"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const list = body.data;",
+                  "const target = list.find(i => String(i.id) === pm.environment.get(\"applyId\"));",
+                  "pm.test(\"待办中包含新申请\", () => pm.expect(target).to.be.ok);",
+                  "pm.test(\"状态为待终审\", () => pm.expect(target.status).to.eql(\"PENDING_L2\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-14 终审通过（第二级审批）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{supervisorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/{{applyId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"result\":\"APPROVE\",\"remark\":\"终审通过\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-15 终审通过后资助人可见申请范围内的明文",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/profile/{{applyVirtualId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const d = body.data;",
+                  "pm.test(\"标记为明文数据\", () => pm.expect(d.masked).to.eql(false));",
+                  "pm.test(\"返回真实姓名\", () => pm.expect(d.name).to.eql(\"李明\"));",
+                  "pm.test(\"返回手机号\", () => pm.expect(d.phone).to.eql(\"13800000011\"));",
+                  "pm.test(\"未申请字段不返回\", () => pm.expect(d.idCard == null).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-16 开启敏感字段二次遮挡",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/switchMask?isSecondMask=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-17 创建限时查看会话",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/createViewSession?targetId={{applyId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回会话凭证\", () => pm.expect(body.data.sessionKey).to.be.a(\"string\").and.not.empty);",
+                  "pm.test(\"有效期为 15 分钟\", () => pm.expect(body.data.expireMinutes).to.eql(15));",
+                  "pm.environment.set(\"sessionKey\", body.data.sessionKey);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-18 查看敏感详情（二次遮挡生效）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/getSensitiveDetail?sessionKey={{sessionKey}}&targetId={{applyId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const d = body.data;",
+                  "pm.test(\"审批状态为已终审通过\", () => pm.expect(d.approved).to.eql(true));",
+                  "pm.test(\"二次遮挡已开启\", () => pm.expect(d.secondMask).to.eql(true));",
+                  "pm.test(\"手机号二次打码\", () => pm.expect(d.phone).to.match(/^\\d{3}\\*{4}\\d{2}$/));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-19 关闭限时查看会话",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/closeSession?sessionKey={{sessionKey}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-20 已关闭会话不可再查看敏感详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/getSensitiveDetail?sessionKey={{sessionKey}}&targetId={{applyId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"会话失效返回 401\", () => pm.expect(pm.response.json().code).to.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-21 新增资助申请",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"studentId\":1,\"sponsorId\":2,\"amount\":900,\"fundDate\":\"2026-10-20\",\"purpose\":\"PostmanAutoTestFund\",\"remark\":\"接口自动化测试单据\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-22 按关键字检索新增单据（提取单据 ID）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds?keyword=PostmanAutoTestFund"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const records = body.data.records;",
+                  "const target = records.find(r => r.purpose === \"PostmanAutoTestFund\");",
+                  "pm.test(\"检索到新增单据\", () => pm.expect(target).to.be.ok);",
+                  "pm.environment.set(\"newFundId\", String(target.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-23 删除待审核测试单据",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/{{newFundId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-24 审核小额资助单（800 元，直接审核通过）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/8/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"result\":\"PASS\",\"remark\":\"资料齐全，同意资助\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-25 审核通过后自动生成凭证号",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/8"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"状态为已审核\", () => pm.expect(body.data.status).to.eql(\"AUDITED\"));",
+                  "pm.test(\"凭证号格式正确\", () => pm.expect(body.data.voucherNo).to.match(/^Voucher-\\d{8}-0001$/));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-26 拨付管理员确认拨付",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{disburseToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/8/disburse"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-27 拨付后状态实时联动",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/8"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"状态为已拨付\", () => pm.expect(body.data.status).to.eql(\"DISBURSED\"));",
+                  "pm.test(\"拨付时间已写入\", () => pm.expect(body.data.disburseTime).to.be.a(\"string\").and.not.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "01-28 用户管理列表（有权限角色）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users?page=1&size=20"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回用户列表\", () => pm.expect(body.data.total).to.be.at.least(7));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02-权限测试",
+      "item": [
+        {
+          "name": "02-01 未携带 Token 访问受保护接口",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/funds"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 401\", () => pm.expect(pm.response.json().code).to.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-02 Token 签名被篡改",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}x"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/info"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 401\", () => pm.expect(pm.response.json().code).to.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-03 资助人无新增资助单权限（垂直越权）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"studentId\":1,\"sponsorId\":2,\"amount\":100,\"fundDate\":\"2026-10-20\",\"purpose\":\"越权测试\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-04 资助人无审核权限",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/pending-audit"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-05 资助人无导出权限",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/export"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-06 资助人无用户管理权限",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-07 拨付管理员无审核权限",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{disburseToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/pending-audit"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-08 拨付管理员无新增资金权限",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{disburseToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"studentId\":1,\"sponsorId\":2,\"amount\":100,\"fundDate\":\"2026-10-20\",\"purpose\":\"越权测试\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-09 资助人发起调取申请（权限用例数据准备）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/apply",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"virtualId\":\"{{virtualId}}\",\"fieldScope\":\"name\",\"reason\":\"权限测试：越权审批校验\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-10 提取权限用例申请单 ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/mine"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const list = body.data;",
+                  "pm.test(\"最新申请为待初审\", () => pm.expect(list[0].status).to.eql(\"PENDING_L1\"));",
+                  "pm.environment.set(\"permApplyId\", String(list[0].id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-11 资助人无隐私审批权限（越权审批本人申请）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/{{permApplyId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"result\":\"APPROVE\",\"remark\":\"越权自审\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-12 监事越级初审（缺少 privacy:approve:l1）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{supervisorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/{{permApplyId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"result\":\"APPROVE\",\"remark\":\"越级初审\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-13 审核管理员完成初审",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/{{permApplyId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"result\":\"APPROVE\",\"remark\":\"初审通过\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-14 审核管理员越级终审（缺少 privacy:approve:l2）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/{{permApplyId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"result\":\"APPROVE\",\"remark\":\"越级终审\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-15 申请人本人创建查看会话",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/createViewSession?targetId={{permApplyId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.environment.set(\"permSessionKey\", body.data.sessionKey);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-16 资助人2发起调取申请（横向越权数据准备）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsor2Token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/apply",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"virtualId\":\"{{virtualId}}\",\"fieldScope\":\"name\",\"reason\":\"权限测试：横向越权\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-17 资助人2我的申请只包含本人数据",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsor2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/mine"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const list = body.data;",
+                  "pm.test(\"仅返回本人申请\", () => pm.expect(list.every(i => i.applicantId === 7)).to.eql(true));",
+                  "pm.environment.set(\"otherApplyId\", String(list[0].id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-18 横向越权：打开他人申请单查看会话",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/createViewSession?targetId={{otherApplyId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-19 横向越权：查看他人申请单敏感详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/getSensitiveDetail?sessionKey={{permSessionKey}}&targetId={{otherApplyId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-20 横向越权：资助人访问他人资助单",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/8"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-21 横向越权：资助人2访问他人资助单",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsor2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-22 资助人2访问本人资助单（正向对照）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsor2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/8"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"返回本人单据\", () => pm.expect(body.data.sponsorId).to.eql(7));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-23 横向越权：为他人单据生成核验二维码",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsor2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/1/qrcode"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-24 审核管理员无拨付权限",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/8/disburse"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-25 监事无资金审核权限",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{supervisorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/pending-audit"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-26 拨付管理员无隐私调取申请权限",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{disburseToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/apply",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"virtualId\":\"{{virtualId}}\",\"fieldScope\":\"name\",\"reason\":\"越权调取\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 403\", () => pm.expect(pm.response.json().code).to.eql(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-27 审核管理员（持直接核验权限）打开待终审申请会话",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{directAuditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/createViewSession?targetId={{permApplyId}}",
+            "description": "审批人可打开申请单，但不代表可提前查看明文"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.environment.set(\"auditorSessionKey\", body.data.sessionKey);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02-28 【核心】待终审申请详情强制脱敏（直接核验权限不得绕过终审）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{directAuditorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/getSensitiveDetail?sessionKey={{auditorSessionKey}}&targetId={{permApplyId}}",
+            "description": "回归校验：申请单仅初审通过（PENDING_L2）时，即使持 privacy:view:direct 也只能看到脱敏视图"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const d = body.data;",
+                  "pm.test(\"审批未终审通过\", () => pm.expect(d.approved).to.eql(false));",
+                  "pm.test(\"仍为脱敏视图\", () => pm.expect(d.masked).to.eql(true));",
+                  "pm.test(\"不返回手机号\", () => pm.expect(d.phone == null).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03-安全测试",
+      "item": [
+        {
+          "name": "03-01 SQL 注入：登录用户名",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"' OR '1'='1' --\",\"password\":\"x\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "注入串不应被当作 SQL 执行，登录必须失败"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test(\"登录失败（业务码非 200）\", () => pm.expect(body.code).to.not.eql(200));",
+                  "pm.test(\"未签发 Token\", () => pm.expect(body.data).to.be.null);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-02 错误密码登录",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{sponsorUser}}\",\"password\":\"wrong-password\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test(\"登录失败\", () => pm.expect(body.code).to.not.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-03 SQL 注入：流水查询关键字",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds?keyword=%27%20OR%201%3D1%20--"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"注入串按普通文本处理，无匹配记录\", () => pm.expect(body.data.records).to.be.an(\"array\").and.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-04 SQL 注入：状态过滤参数",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds?status=%27%20OR%201%3D1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"注入串按普通文本处理，无匹配记录\", () => pm.expect(body.data.records).to.be.an(\"array\").and.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-05 XSS 注入：调取理由",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/apply",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"virtualId\":\"{{virtualId}}\",\"fieldScope\":\"name\",\"reason\":\"<script>alert('xss')</script>\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"响应不回显脚本内容\", () => pm.expect(pm.response.text()).to.not.include(\"<script>\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-06 非法字段范围（字段白名单校验）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/apply",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"virtualId\":\"{{virtualId}}\",\"fieldScope\":\"password\",\"reason\":\"非法字段测试\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拒绝非法字段\", () => pm.expect(pm.response.json().code).to.eql(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-07 空调取理由（必填校验）",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/access/apply",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"virtualId\":\"{{virtualId}}\",\"fieldScope\":\"name\",\"reason\":\"   \"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拒绝空理由\", () => pm.expect(pm.response.json().code).to.eql(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-08 未知虚拟 ID（不泄露是否存在）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/profile/STU-NOT-EXIST"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"返回 404\", () => pm.expect(pm.response.json().code).to.eql(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-09 非法路径参数类型（异常信息脱敏检查）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds/abc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test(\"请求未成功\", () => pm.expect(body.code).to.not.eql(200));",
+                  "pm.test(\"未返回堆栈信息\", () => pm.expect(pm.response.text()).to.not.include(\"at com.funding\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-10 二维码签名被篡改",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/public/verify?code=1.AAAAAAAAAAAAAAAA"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"核验码无效\", () => pm.expect(pm.response.json().code).to.eql(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-11 二维码枚举（无签名裸 ID）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/public/verify?code=999999"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"核验码无效\", () => pm.expect(pm.response.json().code).to.eql(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-12 二维码参数 SQL 注入",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/public/verify?code=1%27%20OR%20%271%27%3D%271"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"核验码无效\", () => pm.expect(pm.response.json().code).to.eql(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-13 公开核验接口最小化返回（隐私红线）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/public/verify?code={{verifyCode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const d = body.data;",
+                  "const allowed = [\"businessNo\",\"amount\",\"status\",\"statusText\",\"auditCompleted\",\"disburseCompleted\",\"nodes\",\"verifyTime\"];",
+                  "pm.test(\"仅返回公开字段\", () => pm.expect(Object.keys(d).filter(k => !allowed.includes(k))).to.be.empty);",
+                  "pm.test(\"不包含学生/资助人姓名字段\", () => pm.expect(pm.response.text()).to.not.include(\"studentName\"));",
+                  "pm.test(\"不泄露手机号\", () => pm.expect(pm.response.text()).to.not.match(/1[3-9]\\d{9}/));",
+                  "pm.test(\"不泄露身份证号\", () => pm.expect(pm.response.text()).to.not.match(/\\d{17}[\\dXx]/));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-14 JWT Payload 篡改角色（签名校验）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tamperedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const token = pm.environment.get(\"sponsorToken\").split(\".\");",
+                  "const payload = btoa(JSON.stringify({userId: 2, username: \"sponsor\", role: \"AUDIT_ADMIN\"}))",
+                  "  .replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "pm.variables.set(\"tamperedToken\", token[0] + \".\" + payload + \".\" + token[2]);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"签名校验失败返回 401\", () => pm.expect(pm.response.json().code).to.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-15 缺少 Bearer 前缀的 Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/info"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"拦截为 401\", () => pm.expect(pm.response.json().code).to.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-16 伪造会话凭证查看敏感详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/mask/getSensitiveDetail?sessionKey=fake-session-key&targetId={{permApplyId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"会话校验失败返回 401\", () => pm.expect(pm.response.json().code).to.eql(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-17 超长关键字查询（参数边界）",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/funds?keyword={{longKeyword}}"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set(\"longKeyword\", \"A\".repeat(5000));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "pm.test(\"超长关键字返回空结果而非报错\", () => pm.expect(body.data.records).to.be.an(\"array\").and.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03-18 无审批单时敏感字段不泄露",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{sponsor2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/privacy/profile/{{virtualId}}",
+            "description": "sponsor2 全程未获得审批，只能看到脱敏视图"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"业务码 200\", () => pm.expect(body.code).to.eql(200));",
+                  "const d = body.data;",
+                  "pm.test(\"强制脱敏\", () => pm.expect(d.masked).to.eql(true));",
+                  "pm.test(\"不返回手机号\", () => pm.expect(d.phone == null).to.eql(true));",
+                  "pm.test(\"不返回身份证号\", () => pm.expect(d.idCard == null).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

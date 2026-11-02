@@ -1,0 +1,13 @@
+﻿WARN StatusConsoleListener The use of package scanning to locate plugins is deprecated and will be removed in a future release
+WARN StatusConsoleListener The use of package scanning to locate plugins is deprecated and will be removed in a future release
+WARN StatusConsoleListener The use of package scanning to locate plugins is deprecated and will be removed in a future release
+WARN StatusConsoleListener The use of package scanning to locate plugins is deprecated and will be removed in a future release
+Creating summariser <summary>
+Created the tree successfully using docs\testing\jmeter\Funding-Traceability-Performance.jmx
+Starting standalone test @ 2026 Nov 2 14:03:31 CST (1793599411977)
+Waiting for possible Shutdown/StopTestNow/HeapDump/ThreadDump message on port 4445
+summary +      1 in 00:00:01 =    1.9/s Avg:    33 Min:    33 Max:    33 Err:     0 (0.00%) Active: 1 Started: 1 Finished: 0
+summary +      1 in 00:00:11 =    0.1/s Avg:    22 Min:    22 Max:    22 Err:     0 (0.00%) Active: 0 Started: 500 Finished: 500
+summary =      2 in 00:00:11 =    0.2/s Avg:    27 Min:    22 Max:    33 Err:     0 (0.00%)
+Tidying up ...    @ 2026 Nov 2 14:03:43 CST (1793599423295)
+... end of run

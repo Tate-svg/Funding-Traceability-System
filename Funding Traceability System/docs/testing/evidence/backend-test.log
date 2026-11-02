@@ -1,0 +1,315 @@
+2026-11-02 13:25:55.309  INFO 5308 --- [main] com.funding.FundingApplication           : Starting FundingApplication v1.0.0 using Java 21.0.6 on DESKTOP-JP644NR with PID 5308 (D:\Funding Traceability System\Funding Traceability System\backend\target\funding-traceability-1.0.0.jar started by wang in D:\Funding Traceability System\Funding Traceability System\backend)
+2026-11-02 13:25:55.313  INFO 5308 --- [main] com.funding.FundingApplication           : The following 1 profile is active: "test"
+2026-11-02 13:25:56.976  INFO 5308 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-02 13:25:56.976  INFO 5308 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
+2026-11-02 13:25:57.055  INFO 5308 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-11-02 13:25:57.664  INFO 5308 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-02 13:25:57.845  INFO 5308 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-02 13:25:57.877  INFO 5308 --- [main] com.funding.common.PermissionHolder      : 权限点加载完成: 4 个角色
+2026-11-02 13:25:59.481  INFO 5308 --- [main] com.funding.FundingApplication           : Started FundingApplication in 4.75 seconds (JVM running for 5.116)
+2026-11-02 13:25:59.753  INFO 5308 --- [main] com.funding.common.SeedTimestampRunner   : 存量数据可信时间戳补盖完成，共 25 条
+2026-11-02 13:26:10.122  INFO 5308 --- [http-nio-8090-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-11-02 13:32:59.524  INFO 5308 --- [http-nio-8090-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-11-02 13:32:59.531  INFO 5308 --- [http-nio-8090-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-11-02 13:32:59.842  WARN 5308 --- [http-nio-8090-exec-5] c.b.m.c.t.support.ReflectLambdaMeta      : Unable to make field private final java.lang.Class java.lang.invoke.SerializedLambda.capturingClass accessible: module java.base does not "opens java.lang.invoke" to unnamed module @79698539
+2026-11-02 13:33:01.341  WARN 5308 --- [http-nio-8090-exec-19] com.funding.common.JwtInterceptor        : Token解析失败: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
+2026-11-02 13:33:01.405  WARN 5308 --- [http-nio-8090-exec-20] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:create uri=/api/funds
+2026-11-02 13:33:01.481  WARN 5308 --- [http-nio-8090-exec-2] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 13:33:01.544  WARN 5308 --- [http-nio-8090-exec-4] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:export uri=/api/funds/export
+2026-11-02 13:33:01.610  WARN 5308 --- [http-nio-8090-exec-1] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=user:manage uri=/api/users
+2026-11-02 13:33:01.678  WARN 5308 --- [http-nio-8090-exec-3] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 13:33:01.735  WARN 5308 --- [http-nio-8090-exec-5] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=fund:create uri=/api/funds
+2026-11-02 13:33:01.952  WARN 5308 --- [http-nio-8090-exec-8] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=privacy:approve:l1,privacy:approve:l2 uri=/api/privacy/access/2/approve
+2026-11-02 13:33:02.020  WARN 5308 --- [http-nio-8090-exec-9] c.funding.common.GlobalExceptionHandler  : 业务异常: 当前角色无初审权限
+2026-11-02 13:33:02.166  WARN 5308 --- [http-nio-8090-exec-11] c.funding.common.GlobalExceptionHandler  : 业务异常: 当前角色无终审权限
+2026-11-02 13:33:02.613  WARN 5308 --- [http-nio-8090-exec-17] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 13:33:02.679  WARN 5308 --- [http-nio-8090-exec-18] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 13:33:02.812  WARN 5308 --- [http-nio-8090-exec-20] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 13:33:02.885  WARN 5308 --- [http-nio-8090-exec-2] com.funding.common.RoleInterceptor       : 越权拦截: user=audit_admin2 role=AUDIT_ADMIN 所需权限=fund:disburse uri=/api/funds/8/disburse
+2026-11-02 13:33:02.962  WARN 5308 --- [http-nio-8090-exec-4] com.funding.common.RoleInterceptor       : 越权拦截: user=supervisor2 role=SUPERVISOR 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 13:33:03.030  WARN 5308 --- [http-nio-8090-exec-1] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=privacy:apply uri=/api/privacy/access/apply
+2026-11-02 13:33:03.095  WARN 5308 --- [http-nio-8090-exec-3] c.funding.common.GlobalExceptionHandler  : 业务异常: 用户不存在
+2026-11-02 13:33:03.169  WARN 5308 --- [http-nio-8090-exec-5] c.funding.common.GlobalExceptionHandler  : 业务异常: 密码错误
+2026-11-02 13:33:03.552  WARN 5308 --- [http-nio-8090-exec-10] c.funding.common.GlobalExceptionHandler  : 业务异常: 请填写调取理由
+2026-11-02 13:33:03.624  WARN 5308 --- [http-nio-8090-exec-11] c.funding.common.GlobalExceptionHandler  : 业务异常: 虚拟ID对应的学生不存在
+2026-11-02 13:33:03.670 ERROR 5308 --- [http-nio-8090-exec-12] c.funding.common.GlobalExceptionHandler  : 服务器错误
+
+org.springframework.web.method.annotation.MethodArgumentTypeMismatchException: Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; nested exception is java.lang.NumberFormatException: For input string: "abc"
+	at org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.resolveArgument(AbstractNamedValueMethodArgumentResolver.java:133) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.HandlerMethodArgumentResolverComposite.resolveArgument(HandlerMethodArgumentResolverComposite.java:122) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.InvocableHandlerMethod.getMethodArgumentValues(InvocableHandlerMethod.java:179) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:146) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:895) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:808) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1072) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:965) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:898) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:529) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:623) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:209) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) ~[tomcat-embed-websocket-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:168) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:481) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:130) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:390) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:928) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1794) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+Caused by: java.lang.NumberFormatException: For input string: "abc"
+	at java.base/java.lang.NumberFormatException.forInputString(NumberFormatException.java:67) ~[na:na]
+	at java.base/java.lang.Long.parseLong(Long.java:709) ~[na:na]
+	at java.base/java.lang.Long.valueOf(Long.java:1157) ~[na:na]
+	at org.springframework.util.NumberUtils.parseNumber(NumberUtils.java:214) ~[spring-core-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.propertyeditors.CustomNumberEditor.setAsText(CustomNumberEditor.java:115) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.doConvertTextValue(TypeConverterDelegate.java:429) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.doConvertValue(TypeConverterDelegate.java:402) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.convertIfNecessary(TypeConverterDelegate.java:155) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterSupport.convertIfNecessary(TypeConverterSupport.java:73) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterSupport.convertIfNecessary(TypeConverterSupport.java:53) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.validation.DataBinder.convertIfNecessary(DataBinder.java:729) ~[spring-context-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.resolveArgument(AbstractNamedValueMethodArgumentResolver.java:125) ~[spring-web-5.3.31.jar!/:5.3.31]
+	... 47 common frames omitted
+
+2026-11-02 13:33:04.006  WARN 5308 --- [http-nio-8090-exec-17] com.funding.common.JwtInterceptor        : Token解析失败: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
+2026-11-02 13:34:53.937  INFO 10996 --- [main] com.funding.FundingApplication           : Starting FundingApplication v1.0.0 using Java 21.0.6 on DESKTOP-JP644NR with PID 10996 (D:\Funding Traceability System\Funding Traceability System\backend\target\funding-traceability-1.0.0.jar started by wang in D:\Funding Traceability System\Funding Traceability System\backend)
+2026-11-02 13:34:53.939  INFO 10996 --- [main] com.funding.FundingApplication           : The following 1 profile is active: "test"
+2026-11-02 13:34:55.268  INFO 10996 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-02 13:34:55.268  INFO 10996 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
+2026-11-02 13:34:55.333  INFO 10996 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-11-02 13:34:55.737  INFO 10996 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-02 13:34:55.855  INFO 10996 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-02 13:34:55.881  INFO 10996 --- [main] com.funding.common.PermissionHolder      : 权限点加载完成: 4 个角色
+2026-11-02 13:34:57.115  INFO 10996 --- [main] com.funding.FundingApplication           : Started FundingApplication in 3.624 seconds (JVM running for 3.964)
+2026-11-02 13:34:57.354  INFO 10996 --- [main] com.funding.common.SeedTimestampRunner   : 存量数据可信时间戳补盖完成，共 26 条
+2026-11-02 13:35:07.255  INFO 10996 --- [http-nio-8090-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-11-02 13:35:15.746  INFO 10996 --- [http-nio-8090-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-11-02 13:35:15.750  INFO 10996 --- [http-nio-8090-exec-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-11-02 13:35:16.084  WARN 10996 --- [http-nio-8090-exec-5] c.b.m.c.t.support.ReflectLambdaMeta      : Unable to make field private final java.lang.Class java.lang.invoke.SerializedLambda.capturingClass accessible: module java.base does not "opens java.lang.invoke" to unnamed module @79698539
+2026-11-02 13:35:17.538  WARN 10996 --- [http-nio-8090-exec-19] com.funding.common.JwtInterceptor        : Token解析失败: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
+2026-11-02 13:35:17.616  WARN 10996 --- [http-nio-8090-exec-16] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:create uri=/api/funds
+2026-11-02 13:35:17.697  WARN 10996 --- [http-nio-8090-exec-1] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 13:35:17.775  WARN 10996 --- [http-nio-8090-exec-2] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:export uri=/api/funds/export
+2026-11-02 13:35:17.845  WARN 10996 --- [http-nio-8090-exec-3] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=user:manage uri=/api/users
+2026-11-02 13:35:17.920  WARN 10996 --- [http-nio-8090-exec-4] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 13:35:18.013  WARN 10996 --- [http-nio-8090-exec-5] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=fund:create uri=/api/funds
+2026-11-02 13:35:18.237  WARN 10996 --- [http-nio-8090-exec-8] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=privacy:approve:l1,privacy:approve:l2 uri=/api/privacy/access/2/approve
+2026-11-02 13:35:18.318  WARN 10996 --- [http-nio-8090-exec-9] c.funding.common.GlobalExceptionHandler  : 业务异常: 当前角色无初审权限
+2026-11-02 13:35:18.500  WARN 10996 --- [http-nio-8090-exec-11] c.funding.common.GlobalExceptionHandler  : 业务异常: 当前角色无终审权限
+2026-11-02 13:35:18.995  WARN 10996 --- [http-nio-8090-exec-17] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 13:35:19.078  WARN 10996 --- [http-nio-8090-exec-18] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 13:35:19.229  WARN 10996 --- [http-nio-8090-exec-16] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 13:35:19.287  WARN 10996 --- [http-nio-8090-exec-1] com.funding.common.RoleInterceptor       : 越权拦截: user=audit_admin2 role=AUDIT_ADMIN 所需权限=fund:disburse uri=/api/funds/8/disburse
+2026-11-02 13:35:19.366  WARN 10996 --- [http-nio-8090-exec-2] com.funding.common.RoleInterceptor       : 越权拦截: user=supervisor2 role=SUPERVISOR 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 13:35:19.442  WARN 10996 --- [http-nio-8090-exec-3] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=privacy:apply uri=/api/privacy/access/apply
+2026-11-02 13:35:19.718  WARN 10996 --- [http-nio-8090-exec-6] c.funding.common.GlobalExceptionHandler  : 业务异常: 用户不存在
+2026-11-02 13:35:19.797  WARN 10996 --- [http-nio-8090-exec-7] c.funding.common.GlobalExceptionHandler  : 业务异常: 密码错误
+2026-11-02 13:35:20.117  WARN 10996 --- [http-nio-8090-exec-11] c.funding.common.GlobalExceptionHandler  : 业务异常: 调取字段范围不合法
+2026-11-02 13:35:20.203  WARN 10996 --- [http-nio-8090-exec-12] c.funding.common.GlobalExceptionHandler  : 业务异常: 请填写调取理由
+2026-11-02 13:35:20.268  WARN 10996 --- [http-nio-8090-exec-13] c.funding.common.GlobalExceptionHandler  : 业务异常: 虚拟ID对应的学生不存在
+2026-11-02 13:35:20.330 ERROR 10996 --- [http-nio-8090-exec-14] c.funding.common.GlobalExceptionHandler  : 服务器错误
+
+org.springframework.web.method.annotation.MethodArgumentTypeMismatchException: Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; nested exception is java.lang.NumberFormatException: For input string: "abc"
+	at org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.resolveArgument(AbstractNamedValueMethodArgumentResolver.java:133) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.HandlerMethodArgumentResolverComposite.resolveArgument(HandlerMethodArgumentResolverComposite.java:122) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.InvocableHandlerMethod.getMethodArgumentValues(InvocableHandlerMethod.java:179) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:146) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:895) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:808) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1072) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:965) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:898) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:529) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:623) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:209) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) ~[tomcat-embed-websocket-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:168) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:481) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:130) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:390) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:928) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1794) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+Caused by: java.lang.NumberFormatException: For input string: "abc"
+	at java.base/java.lang.NumberFormatException.forInputString(NumberFormatException.java:67) ~[na:na]
+	at java.base/java.lang.Long.parseLong(Long.java:709) ~[na:na]
+	at java.base/java.lang.Long.valueOf(Long.java:1157) ~[na:na]
+	at org.springframework.util.NumberUtils.parseNumber(NumberUtils.java:214) ~[spring-core-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.propertyeditors.CustomNumberEditor.setAsText(CustomNumberEditor.java:115) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.doConvertTextValue(TypeConverterDelegate.java:429) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.doConvertValue(TypeConverterDelegate.java:402) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.convertIfNecessary(TypeConverterDelegate.java:155) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterSupport.convertIfNecessary(TypeConverterSupport.java:73) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterSupport.convertIfNecessary(TypeConverterSupport.java:53) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.validation.DataBinder.convertIfNecessary(DataBinder.java:729) ~[spring-context-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.resolveArgument(AbstractNamedValueMethodArgumentResolver.java:125) ~[spring-web-5.3.31.jar!/:5.3.31]
+	... 47 common frames omitted
+
+2026-11-02 13:35:20.666  WARN 10996 --- [http-nio-8090-exec-19] com.funding.common.JwtInterceptor        : Token解析失败: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
+2026-11-02 13:55:08.124  INFO 7212 --- [main] com.funding.FundingApplication           : Starting FundingApplication v1.0.0 using Java 21.0.6 on DESKTOP-JP644NR with PID 7212 (D:\Funding Traceability System\Funding Traceability System\backend\target\funding-traceability-1.0.0.jar started by wang in D:\Funding Traceability System\Funding Traceability System\backend)
+2026-11-02 13:55:08.127  INFO 7212 --- [main] com.funding.FundingApplication           : The following 1 profile is active: "test"
+2026-11-02 13:55:09.558  INFO 7212 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-02 13:55:09.558  INFO 7212 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
+2026-11-02 13:55:09.625  INFO 7212 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-11-02 13:55:10.117  INFO 7212 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-02 13:55:10.242  INFO 7212 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-02 13:55:10.268  INFO 7212 --- [main] com.funding.common.PermissionHolder      : 权限点加载完成: 4 个角色
+2026-11-02 13:55:11.593  INFO 7212 --- [main] com.funding.FundingApplication           : Started FundingApplication in 3.945 seconds (JVM running for 4.308)
+2026-11-02 13:55:11.802  INFO 7212 --- [http-nio-8090-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-11-02 13:55:11.918  INFO 7212 --- [main] com.funding.common.SeedTimestampRunner   : 存量数据可信时间戳补盖完成，共 26 条
+2026-11-02 14:00:18.624  INFO 3524 --- [main] com.funding.FundingApplication           : Starting FundingApplication v1.0.0 using Java 21.0.6 on DESKTOP-JP644NR with PID 3524 (D:\Funding Traceability System\Funding Traceability System\backend\target\funding-traceability-1.0.0.jar started by wang in D:\Funding Traceability System\Funding Traceability System\backend)
+2026-11-02 14:00:18.626  INFO 3524 --- [main] com.funding.FundingApplication           : The following 1 profile is active: "test"
+2026-11-02 14:00:20.311  INFO 3524 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-02 14:00:20.311  INFO 3524 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
+2026-11-02 14:00:20.391  INFO 3524 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-11-02 14:00:20.951  INFO 3524 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-02 14:00:21.085  INFO 3524 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-02 14:00:21.116  INFO 3524 --- [main] com.funding.common.PermissionHolder      : 权限点加载完成: 4 个角色
+2026-11-02 14:00:22.704  INFO 3524 --- [main] com.funding.FundingApplication           : Started FundingApplication in 4.561 seconds (JVM running for 4.913)
+2026-11-02 14:00:29.886  INFO 3524 --- [http-nio-8090-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-11-02 14:06:01.892  INFO 3524 --- [http-nio-8090-exec-492] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-11-02 14:06:01.899  INFO 3524 --- [http-nio-8090-exec-492] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-11-02 14:06:02.174  WARN 3524 --- [http-nio-8090-exec-272] c.b.m.c.t.support.ReflectLambdaMeta      : Unable to make field private final java.lang.Class java.lang.invoke.SerializedLambda.capturingClass accessible: module java.base does not "opens java.lang.invoke" to unnamed module @79698539
+2026-11-02 14:06:03.582  WARN 3524 --- [http-nio-8090-exec-353] com.funding.common.JwtInterceptor        : Token解析失败: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
+2026-11-02 14:06:03.652  WARN 3524 --- [http-nio-8090-exec-256] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:create uri=/api/funds
+2026-11-02 14:06:03.708  WARN 3524 --- [http-nio-8090-exec-492] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 14:06:03.759  WARN 3524 --- [http-nio-8090-exec-465] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=fund:export uri=/api/funds/export
+2026-11-02 14:06:03.804  WARN 3524 --- [http-nio-8090-exec-297] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=user:manage uri=/api/users
+2026-11-02 14:06:03.855  WARN 3524 --- [http-nio-8090-exec-453] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 14:06:03.908  WARN 3524 --- [http-nio-8090-exec-272] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=fund:create uri=/api/funds
+2026-11-02 14:06:04.095  WARN 3524 --- [http-nio-8090-exec-430] com.funding.common.RoleInterceptor       : 越权拦截: user=sponsor role=SPONSOR 所需权限=privacy:approve:l1,privacy:approve:l2 uri=/api/privacy/access/7512/approve
+2026-11-02 14:06:04.134  WARN 3524 --- [http-nio-8090-exec-394] c.funding.common.GlobalExceptionHandler  : 业务异常: 当前角色无初审权限
+2026-11-02 14:06:04.280  WARN 3524 --- [http-nio-8090-exec-232] c.funding.common.GlobalExceptionHandler  : 业务异常: 当前角色无终审权限
+2026-11-02 14:06:04.665  WARN 3524 --- [http-nio-8090-exec-417] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 14:06:04.737  WARN 3524 --- [http-nio-8090-exec-242] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 14:06:04.869  WARN 3524 --- [http-nio-8090-exec-256] c.funding.common.GlobalExceptionHandler  : 业务异常: 权限不足
+2026-11-02 14:06:04.929  WARN 3524 --- [http-nio-8090-exec-492] com.funding.common.RoleInterceptor       : 越权拦截: user=audit_admin2 role=AUDIT_ADMIN 所需权限=fund:disburse uri=/api/funds/8/disburse
+2026-11-02 14:06:04.995  WARN 3524 --- [http-nio-8090-exec-465] com.funding.common.RoleInterceptor       : 越权拦截: user=supervisor2 role=SUPERVISOR 所需权限=fund:audit uri=/api/funds/pending-audit
+2026-11-02 14:06:05.066  WARN 3524 --- [http-nio-8090-exec-297] com.funding.common.RoleInterceptor       : 越权拦截: user=disburse_admin role=DISBURSE_ADMIN 所需权限=privacy:apply uri=/api/privacy/access/apply
+2026-11-02 14:06:05.302  WARN 3524 --- [http-nio-8090-exec-261] c.funding.common.GlobalExceptionHandler  : 业务异常: 用户不存在
+2026-11-02 14:06:05.362  WARN 3524 --- [http-nio-8090-exec-306] c.funding.common.GlobalExceptionHandler  : 业务异常: 密码错误
+2026-11-02 14:06:05.624  WARN 3524 --- [http-nio-8090-exec-232] c.funding.common.GlobalExceptionHandler  : 业务异常: 调取字段范围不合法
+2026-11-02 14:06:05.664  WARN 3524 --- [http-nio-8090-exec-285] c.funding.common.GlobalExceptionHandler  : 业务异常: 请填写调取理由
+2026-11-02 14:06:05.725  WARN 3524 --- [http-nio-8090-exec-217] c.funding.common.GlobalExceptionHandler  : 业务异常: 虚拟ID对应的学生不存在
+2026-11-02 14:06:05.802 ERROR 3524 --- [http-nio-8090-exec-21] c.funding.common.GlobalExceptionHandler  : 服务器错误
+
+org.springframework.web.method.annotation.MethodArgumentTypeMismatchException: Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; nested exception is java.lang.NumberFormatException: For input string: "abc"
+	at org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.resolveArgument(AbstractNamedValueMethodArgumentResolver.java:133) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.HandlerMethodArgumentResolverComposite.resolveArgument(HandlerMethodArgumentResolverComposite.java:122) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.InvocableHandlerMethod.getMethodArgumentValues(InvocableHandlerMethod.java:179) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:146) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:895) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:808) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1072) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:965) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:898) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:529) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883) ~[spring-webmvc-5.3.31.jar!/:5.3.31]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:623) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:209) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) ~[tomcat-embed-websocket-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.31.jar!/:5.3.31]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:168) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:481) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:130) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:390) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:928) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1794) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61) ~[tomcat-embed-core-9.0.83.jar!/:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+Caused by: java.lang.NumberFormatException: For input string: "abc"
+	at java.base/java.lang.NumberFormatException.forInputString(NumberFormatException.java:67) ~[na:na]
+	at java.base/java.lang.Long.parseLong(Long.java:709) ~[na:na]
+	at java.base/java.lang.Long.valueOf(Long.java:1157) ~[na:na]
+	at org.springframework.util.NumberUtils.parseNumber(NumberUtils.java:214) ~[spring-core-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.propertyeditors.CustomNumberEditor.setAsText(CustomNumberEditor.java:115) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.doConvertTextValue(TypeConverterDelegate.java:429) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.doConvertValue(TypeConverterDelegate.java:402) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterDelegate.convertIfNecessary(TypeConverterDelegate.java:155) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterSupport.convertIfNecessary(TypeConverterSupport.java:73) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.beans.TypeConverterSupport.convertIfNecessary(TypeConverterSupport.java:53) ~[spring-beans-5.3.31.jar!/:5.3.31]
+	at org.springframework.validation.DataBinder.convertIfNecessary(DataBinder.java:729) ~[spring-context-5.3.31.jar!/:5.3.31]
+	at org.springframework.web.method.annotation.AbstractNamedValueMethodArgumentResolver.resolveArgument(AbstractNamedValueMethodArgumentResolver.java:125) ~[spring-web-5.3.31.jar!/:5.3.31]
+	... 47 common frames omitted
+
+2026-11-02 14:06:06.059  WARN 3524 --- [http-nio-8090-exec-353] com.funding.common.JwtInterceptor        : Token解析失败: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.

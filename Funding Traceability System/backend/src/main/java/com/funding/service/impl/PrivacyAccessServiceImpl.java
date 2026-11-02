@@ -231,13 +231,7 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
                 return result;
             }
             // 无有效审批：仅返回业务库脱敏视图
-            result.put("masked", true);
-            result.put("virtualId", student.getVirtualId());
-            result.put("maskName", student.getMaskName());
-            result.put("school", student.getSchool());
-            result.put("grade", student.getGrade());
-            result.put("gender", student.getGender());
-            return result;
+            return maskedProfile(virtualId);
         }
 
         // 有有效审批：按申请范围解密返回，并全程留痕
@@ -287,6 +281,39 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
     }
 
     /**
+     * 仅返回脱敏视图：不判权、不解密、不写调取日志
+     * 供审批单未终审通过时强制脱敏使用（含持有 privacy:view:direct 的角色）
+     */
+    @Override
+    public Map<String, Object> maskedProfile(String virtualId) {
+        Map<String, Object> result = new HashMap<>();
+        if (virtualId != null && virtualId.startsWith(USER_PREFIX)) {
+            Long uid = parseUserId(virtualId);
+            com.funding.entity.SysUser target = sysUserMapper.selectById(uid);
+            if (target == null) {
+                throw new BusinessException(404, "对应的用户不存在");
+            }
+            result.put("masked", true);
+            result.put("virtualId", virtualId);
+            result.put("realName", target.getRealName());
+            result.put("sponsorPhone", com.funding.util.MaskingEngine.maskOf("PHONE", target.getPhone()));
+            return result;
+        }
+        Student student = studentMapper.selectOne(
+                new QueryWrapper<Student>().eq("virtual_id", virtualId));
+        if (student == null) {
+            throw new BusinessException(404, "虚拟ID对应的学生不存在");
+        }
+        result.put("masked", true);
+        result.put("virtualId", student.getVirtualId());
+        result.put("maskName", student.getMaskName());
+        result.put("school", student.getSchool());
+        result.put("grade", student.getGrade());
+        result.put("gender", student.getGender());
+        return result;
+    }
+
+    /**
      * 资助人联系方式调取：无有效审批返回脱敏视图，有审批返回明文并留痕
      */
     private Map<String, Object> userProfile(String virtualId) {
@@ -308,11 +335,7 @@ public class PrivacyAccessServiceImpl implements PrivacyAccessService {
         Map<String, Object> result = new HashMap<>();
         if (valid == null) {
             // 无有效审批：姓名可见，联系方式打码
-            result.put("masked", true);
-            result.put("virtualId", virtualId);
-            result.put("realName", target.getRealName());
-            result.put("sponsorPhone", com.funding.util.MaskingEngine.maskOf("PHONE", target.getPhone()));
-            return result;
+            return maskedProfile(virtualId);
         }
 
         // 调取留痕：谁/何时/哪位用户/哪些字段/关联申请单

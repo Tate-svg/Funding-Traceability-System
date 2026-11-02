@@ -1,0 +1,50 @@
+# ============================================================
+# 软件测试专用配置（profile: test）
+# 启动方式：java -jar target/funding-traceability-1.0.0.jar --spring.profiles.active=test
+# 说明：
+#   1. 仅连接独立测试库 funding_test / funding_privacy_test，禁止连接演示库 funding_db / funding_privacy
+#   2. 端口 8090，避免与本地演示服务 8080 冲突
+#   3. 关闭 MyBatis SQL 控制台打印，避免压测时日志 I/O 成为性能瓶颈
+# ============================================================
+server:
+  port: 8090
+  tomcat:
+    threads:
+      # 500 并发压测时适当放大工作线程与排队上限
+      max: 300
+      min-spare: 20
+    accept-count: 200
+
+spring:
+  datasource:
+    business:
+      jdbc-url: ${TEST_DB_URL:jdbc:mysql://localhost:3306/funding_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+      username: ${DB_USERNAME:root}
+      password: ${DB_PASSWORD:123456}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      # 压测并发连接池
+      maximum-pool-size: 60
+      minimum-idle: 10
+      connection-timeout: 30000
+    privacy:
+      jdbc-url: ${TEST_PRIVACY_DB_URL:jdbc:mysql://localhost:3306/funding_privacy_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+      username: ${DB_USERNAME:root}
+      password: ${DB_PASSWORD:123456}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      maximum-pool-size: 30
+      minimum-idle: 5
+      connection-timeout: 30000
+
+funding:
+  mybatis:
+    # 测试环境关闭 SQL 输出（默认 true 时打印到控制台）
+    stdout-sql-log: false
+
+logging:
+  file:
+    # 后端运行日志交付物（相对 backend 工作目录）
+    name: logs/backend-test.log
+  level:
+    com.funding: info
+    org.springframework: warn
+    org.mybatis: warn

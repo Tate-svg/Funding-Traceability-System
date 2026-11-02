@@ -1,5 +1,6 @@
 package com.funding.controller;
 
+import com.funding.common.PermissionHolder;
 import com.funding.common.Result;
 import com.funding.common.SensitiveMaskUtil;
 import com.funding.common.UserContext;
@@ -12,6 +13,7 @@ import com.funding.service.SensitiveViewSessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,6 +40,9 @@ public class PrivacyMaskController {
 
     @Autowired
     private PrivacyAccessService privacyAccessService;
+
+    @Autowired
+    private PermissionHolder permissionHolder;
 
     //1. 获取管理员当前二次遮挡状态
     @GetMapping("/getMaskStatus")
@@ -71,6 +76,14 @@ public class PrivacyMaskController {
         if (current == null) {
             return Result.unauthorized();
         }
+        PrivacyAccessApply apply = applyMapper.selectById(targetId);
+        if (apply == null) {
+            return Result.error(404, "未找到对应的调取申请单");
+        }
+        // 仅申请人本人或具备审批权限的角色可打开该申请单详情
+        if (!canOpenApply(current, apply.getApplicantId())) {
+            return Result.forbidden();
+        }
         String sessionKey = sessionService.createSession(current, targetId);
         Map<String, Object> map = new HashMap<>();
         map.put("sessionKey", sessionKey);
@@ -94,8 +107,17 @@ public class PrivacyMaskController {
         if (apply == null) {
             return Result.error(404, "未找到对应的调取申请单");
         }
-        // 复用既有隐私调取服务：无有效审批时返回脱敏视图，有授权时返回明文并写调取日志
-        Map<String, Object> profile = privacyAccessService.profile(apply.getVirtualId());
+        if (!canOpenApply(current, apply.getApplicantId())) {
+            return Result.forbidden();
+        }
+        // 明文前置条件：该申请单本身已终审通过且未过期（初审通过、待终审一律脱敏）
+        boolean approved = PrivacyAccessApply.STATUS_APPROVED.equals(apply.getStatus())
+                && apply.getExpireTime() != null
+                && apply.getExpireTime().isAfter(LocalDateTime.now());
+        // 未终审通过：强制走脱敏视图，即使当前角色持有 privacy:view:direct
+        Map<String, Object> profile = approved
+                ? privacyAccessService.profile(apply.getVirtualId())
+                : privacyAccessService.maskedProfile(apply.getVirtualId());
 
         Boolean secondMask = configService.getMaskStatus(current);
         Map<String, Object> data = new LinkedHashMap<>(profile);
@@ -111,8 +133,13 @@ public class PrivacyMaskController {
         }
         data.put("secondMask", secondMask);
         data.put("applyId", apply.getId());
+        data.put("applyStatus", apply.getStatus());
+        data.put("approved", approved);
         data.put("virtualId", apply.getVirtualId());
         data.put("expireMinutes", sessionService.getExpireMin());
+        if (approved) {
+            data.put("expireTime", apply.getExpireTime());
+        }
         return Result.success(data);
     }
 
@@ -130,5 +157,18 @@ public class PrivacyMaskController {
             return user.getUserId();
         }
         return adminId;
+    }
+
+    /** 申请单可见范围：申请人本人，或持有隐私审批权限的角色 */
+    private boolean canOpenApply(Long current, Long applicantId) {
+        if (current != null && current.equals(applicantId)) {
+            return true;
+        }
+        UserInfo user = UserContext.get();
+        if (user == null) {
+            return false;
+        }
+        return permissionHolder.hasPermission(user.getRole(),
+                new String[]{"privacy:approve:l1", "privacy:approve:l2"});
     }
 }

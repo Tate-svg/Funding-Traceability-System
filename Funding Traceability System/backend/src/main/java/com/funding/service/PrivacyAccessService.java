@@ -27,4 +27,10 @@ public interface PrivacyAccessService {
      * 返回 Map 含 masked 标记
      */
     Map<String, Object> profile(String virtualId);
+
+    /**
+     * 仅返回脱敏视图（不判权、不解密、不写调取日志）
+     * 用于审批未终审通过时强制脱敏，即使查看人拥有 privacy:view:direct
+     */
+    Map<String, Object> maskedProfile(String virtualId);
 }
