@@ -180,14 +180,6 @@
           <span class="apply-tip">提交后须经初审、终审两级审批</span>
         </el-form-item>
       </el-form>
-      <el-alert
-        v-else
-        class="privacy-form"
-        type="success"
-        :closable="false"
-        title="您具有档案核验直接查看权，点击下方「查看明文」即可调取，调取行为将全程留痕"
-        show-icon
-      />
 
       <el-divider />
 
@@ -203,9 +195,10 @@
           />
           <template v-else>
             <el-alert
+              v-if="!profile.directView"
               type="success"
               :closable="false"
-              :title="profile.directView ? '直接查看（审核管理员档案核验权，已全程留痕）' : ('审批单 #' + profile.applyId + '，明文可见至 ' + profile.expireTime)"
+              :title="'审批单 #' + profile.applyId + '，明文可见至 ' + profile.expireTime"
               show-icon
               style="margin-bottom:12px"
             />
@@ -256,8 +249,6 @@
       :hits="previewData.hits"
       @confirmed="onAttachmentConfirmed"
     />
-
-    <ComplianceFooter />
   </div>
 </template>
 
@@ -268,14 +259,13 @@ import { applyPrivacyAccess, getPrivacyProfile } from '@/api/privacy'
 import { uploadAttachment, listAttachments } from '@/api/attachment'
 import { downloadFile } from '@/utils/download'
 import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
-import ComplianceFooter from '@/components/ComplianceFooter.vue'
 import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
 import AttachmentMaskPreview from '@/components/AttachmentMaskPreview.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'Student',
-  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea, AttachmentMaskPreview, EmptyState },
+  components: { PrivacyTipBar, SensitiveTextarea, AttachmentMaskPreview, EmptyState },
   data() {
     return {
       list: [],

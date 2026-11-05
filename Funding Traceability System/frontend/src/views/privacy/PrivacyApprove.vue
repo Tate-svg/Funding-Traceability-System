@@ -189,10 +189,6 @@
         <el-button @click="closeMaskDialog">关 闭</el-button>
       </div>
     </el-dialog>
-
-    <div class="privacy-footer">
-      <ComplianceFooter />
-    </div>
   </div>
 </template>
 
@@ -207,7 +203,6 @@ import {
   getSensitiveDetail,
   closeViewSession
 } from '@/api/privacy'
-import ComplianceFooter from '@/components/ComplianceFooter.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
 const FIELD_NAMES = {
@@ -235,7 +230,7 @@ const DETAIL_FIELDS = [
 
 export default {
   name: 'PrivacyApprove',
-  components: { ComplianceFooter, EmptyState },
+  components: { EmptyState },
   data() {
     return {
       activeTab: 'mine',
@@ -634,22 +629,5 @@ export default {
   font-size: 12px;
   line-height: 1.6;
   color: var(--c-text-3);
-}
-
-/* 底部隐私提示：浅灰提示条 */
-.privacy-footer {
-  margin-top: 16px;
-  padding: 8px 12px;
-  background: var(--c-bg-head);
-  border: 1px solid var(--c-border-light);
-  border-left: 3px solid var(--c-border);
-  border-radius: var(--r-table);
-}
-.privacy-footer ::v-deep .compliance-footer {
-  margin-top: 0;
-  text-align: left;
-  color: var(--c-text-3);
-  font-size: 12px;
-  line-height: 1.6;
 }
 </style>

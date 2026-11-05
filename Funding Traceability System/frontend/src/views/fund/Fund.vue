@@ -137,8 +137,6 @@
         <el-button type="primary" :loading="submitLoading" :disabled="purposeBlock || remarkBlock" @click="submitForm">确 定</el-button>
       </div>
     </el-dialog>
-
-    <ComplianceFooter />
   </div>
 </template>
 
@@ -148,13 +146,12 @@ import { studentOptions } from '@/api/student'
 import { userOptions } from '@/api/user'
 import { downloadFile } from '@/utils/download'
 import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
-import ComplianceFooter from '@/components/ComplianceFooter.vue'
 import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'Fund',
-  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea, EmptyState },
+  components: { PrivacyTipBar, SensitiveTextarea, EmptyState },
   data() {
     return {
       list: [],

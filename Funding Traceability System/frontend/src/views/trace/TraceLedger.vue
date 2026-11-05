@@ -77,13 +77,15 @@
               <span class="op-flag" :class="'op-' + opType(item)">
                 <i :class="opIcon(item)"></i> {{ opLabel(item) }}
               </span>
-              <el-tooltip :content="item.tsHash || '暂无哈希'" placement="top">
-                <span class="hash-text"><i class="el-icon-lock"></i> {{ shortHash(item.tsHash) }}</span>
-              </el-tooltip>
-              <span class="stamp-flag"><i class="el-icon-circle-check"></i> 可信存证</span>
             </div>
             <div v-if="item.anomaly === 1" class="anomaly-reason">
               <i class="el-icon-warning-outline"></i> {{ item.anomalyReason }}
+            </div>
+            <div class="card-foot">
+              <span class="stamp-flag"><i class="el-icon-circle-check"></i> 可信存证</span>
+              <el-tooltip :content="item.tsHash || '暂无哈希'" placement="top">
+                <span class="hash-text"><i class="el-icon-lock"></i> {{ shortHash(item.tsHash) }}</span>
+              </el-tooltip>
             </div>
           </div>
         </div>
@@ -310,7 +312,15 @@ export default {
 .biz-text { font-weight:600; color:var(--c-text-1); font-size:13px; }
 .card-summary { margin-top:6px; font-size:13px; color:var(--c-text-2); word-break:break-all; }
 .card-meta { margin-top:6px; font-size:12px; color:var(--c-text-3); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-.card-meta .hash-text { display:inline-flex; align-items:center; gap:4px; }
+/* 哈希存证编号 + 可信存证：置于卡片右下角，右对齐（可信存证在前、编号在后） */
+.card-foot {
+  display:flex; align-items:center; justify-content:flex-end; gap:12px;
+  margin-top:4px;
+}
+.hash-text {
+  display:inline-flex; align-items:center; gap:4px;
+  font-family:Consolas, monospace; font-size:12px; color:var(--c-text-3);
+}
 .stamp-flag {
   display:inline-flex; align-items:center; gap:4px;
   color:var(--c-success-text); background:var(--c-success-light); border:1px solid var(--c-success-border);
@@ -340,10 +350,12 @@ export default {
   content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
   background:var(--op-color,#cfd8e3); z-index:2; pointer-events:none;
 }
+/* 操作标签（新增/修改/删除）：仅隐藏显示，visibility 保留原有占位宽度，不产生布局位移 */
 .op-flag {
   display:inline-flex; align-items:center; gap:3px;
   font-size:12px; line-height:18px; padding:0 8px;
   border-radius:var(--r-tag); border:1px solid transparent;
+  visibility:hidden;
 }
 .op-flag.op-add { color:var(--c-success-text); background:var(--c-success-light); border-color:var(--c-success-border); }
 .op-flag.op-edit { color:var(--c-primary); background:var(--c-primary-light); border-color:var(--c-primary-border); }

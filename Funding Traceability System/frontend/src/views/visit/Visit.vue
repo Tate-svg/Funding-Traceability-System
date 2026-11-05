@@ -186,8 +186,6 @@
         <el-button type="primary" :loading="submitLoading" :disabled="contentBlock || situationBlock || problemBlock" @click="submitForm">确 定</el-button>
       </div>
     </el-dialog>
-
-    <ComplianceFooter />
   </div>
 </template>
 
@@ -198,13 +196,12 @@ import { userOptions } from '@/api/user'
 import { listFunds } from '@/api/fund'
 import { downloadFile } from '@/utils/download'
 import PrivacyTipBar from '@/components/PrivacyTipBar.vue'
-import ComplianceFooter from '@/components/ComplianceFooter.vue'
 import SensitiveTextarea from '@/components/SensitiveTextarea.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
 export default {
   name: 'Visit',
-  components: { PrivacyTipBar, ComplianceFooter, SensitiveTextarea, EmptyState },
+  components: { PrivacyTipBar, SensitiveTextarea, EmptyState },
   data() {
     return {
       list: [],
