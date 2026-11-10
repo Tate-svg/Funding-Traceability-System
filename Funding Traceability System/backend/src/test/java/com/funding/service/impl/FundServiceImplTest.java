@@ -53,6 +53,9 @@ class FundServiceImplTest {
     private FundMapper fundMapper;
 
     @Mock
+    private com.funding.mapper.ScoreMapper scoreMapper;
+
+    @Mock
     private TimestampService timestampService;
 
     @Mock

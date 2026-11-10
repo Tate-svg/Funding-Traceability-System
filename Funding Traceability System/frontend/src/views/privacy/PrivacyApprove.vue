@@ -156,11 +156,12 @@
       :visible.sync="maskVisible"
       width="560px"
       :close-on-click-modal="false"
-      @closed="handleMaskClosed"
+      @close="handleDialogClose"
     >
-      <div v-loading="maskLoading" class="mask-dialog">
+      <div v-loading="maskLoading" class="mask-dialog" tabindex="0"
+        @mousemove="recordActivity" @pointerdown="recordActivity" @keydown="recordActivity" @wheel.passive="recordActivity" @touchstart.passive="recordActivity">
         <div class="mask-session">
-          <span class="mask-chip"><i class="el-icon-time"></i> 会话剩余 {{ countdownText }}</span>
+          <span class="mask-chip"><i class="el-icon-time"></i> 空闲剩余 {{ countdownText }}</span>
           <span class="mask-chip" :class="detail.masked ? 'mask-chip--masked' : 'mask-chip--plain'">
             <i :class="detail.masked ? 'el-icon-lock' : 'el-icon-unlock'"></i>
             {{ detail.masked ? '脱敏视图' : '授权明文' }}
@@ -182,7 +183,7 @@
         </p>
         <p class="mask-foot-tip">
           <i class="el-icon-warning-outline"></i>
-          会话到期将自动关闭，每次查看均写入隐私调取日志。
+          默认15分钟无操作后关闭；在本弹窗内操作可续期，仍受最长会话时限和审批有效期约束。
         </p>
       </div>
       <div slot="footer">
@@ -201,9 +202,11 @@ import {
   switchMask,
   createViewSession,
   getSensitiveDetail,
+  touchViewSession,
   closeViewSession
 } from '@/api/privacy'
 import EmptyState from '@/components/EmptyState.vue'
+import { createSensitiveIdleSession } from '@/utils/sensitiveIdleSession'
 
 const FIELD_NAMES = {
   name: '姓名',
@@ -214,6 +217,7 @@ const FIELD_NAMES = {
 }
 
 // 敏感详情展示字段（按后端返回的键位映射）
+
 const DETAIL_FIELDS = [
   { key: 'name', label: '姓名' },
   { key: 'idCard', label: '身份证号', mono: true },
@@ -252,6 +256,8 @@ export default {
       sessionKey: '',
       remainingSeconds: 0,
       countdownTimer: null,
+      idleGuard: null,
+      viewGeneration: 0,
       detail: {}
     }
   },
@@ -282,14 +288,15 @@ export default {
   created() {
     this.loadMine()
     this.loadMaskStatus()
+    document.addEventListener('visibilitychange', this.checkViewSession)
     // 预载待办数量用于 Tab 红色未读角标
     if (this.role === 'AUDIT_ADMIN' || this.role === 'SUPERVISOR') {
       this.loadTodo()
     }
   },
   beforeDestroy() {
-    this.stopCountdown()
-    this.releaseSession()
+    this.closeMaskDialog()
+    document.removeEventListener('visibilitychange', this.checkViewSession)
   },
   methods: {
     scopeText(scope) {
@@ -373,56 +380,78 @@ export default {
     },
     /* ---------- 敏感详情（限时会话） ---------- */
     openMaskDetail(row) {
-      this.detail = {}
-      this.sessionKey = ''
+      this.closeMaskDialog()
+      const generation = this.viewGeneration
       this.maskVisible = true
       this.maskLoading = true
+      let idleSeconds = 15 * 60
+      let detailRequestedAt
       createViewSession(row.id).then(data => {
-        this.sessionKey = (data && data.sessionKey) || ''
-        this.remainingSeconds = ((data && data.expireMinutes) || 15) * 60
+        if (generation !== this.viewGeneration || !this.maskVisible) {
+          if (data && data.sessionKey) closeViewSession(data.sessionKey).catch(() => {})
+          return null
+        }
+        this.sessionKey = data.sessionKey
+        idleSeconds = (data.expireMinutes || 15) * 60
+        detailRequestedAt = Date.now()
         return getSensitiveDetail(this.sessionKey, row.id)
       }).then(data => {
-        this.detail = data || {}
-        this.startCountdown()
+        if (!data || generation !== this.viewGeneration || !this.maskVisible) return
+        this.detail = data
+        const key = this.sessionKey
+        this.idleGuard = createSensitiveIdleSession({
+          idleSeconds,
+          initialRequestAt: detailRequestedAt,
+          remainingSeconds: data.remainingSeconds,
+          absoluteSecondsRemaining: data.absoluteSecondsRemaining,
+          renew: () => touchViewSession(key, row.id).then(response => {
+            if (data.approved && !response.approved) throw new Error('Approval changed')
+            return response
+          }),
+          onTick: seconds => { this.remainingSeconds = seconds },
+          onExpire: () => {
+            this.$message.warning('查看会话已到期或失效，敏感详情已关闭')
+            this.closeMaskDialog()
+          }
+        })
+        this.checkViewSession()
+        if (this.maskVisible) this.countdownTimer = setInterval(this.checkViewSession, 1000)
       }).catch(() => {
-        this.maskVisible = false
+        if (generation === this.viewGeneration) this.closeMaskDialog()
       }).finally(() => {
-        this.maskLoading = false
+        if (generation === this.viewGeneration) this.maskLoading = false
       })
     },
-    startCountdown() {
-      this.stopCountdown()
-      this.countdownTimer = setInterval(() => {
-        if (this.remainingSeconds <= 1) {
-          this.remainingSeconds = 0
-          this.stopCountdown()
-          this.$message.warning('查看会话已到期，敏感详情已自动关闭')
-          this.closeMaskDialog()
-          return
-        }
-        this.remainingSeconds -= 1
-      }, 1000)
+    recordActivity(event) {
+      // 脚本派发的DOM事件不视为用户操作。
+      if (event && event.isTrusted && this.idleGuard) this.idleGuard.activity()
+    },
+    checkViewSession() {
+      if (this.idleGuard) this.idleGuard.check()
     },
     stopCountdown() {
-      if (this.countdownTimer) {
-        clearInterval(this.countdownTimer)
-        this.countdownTimer = null
-      }
+      if (this.countdownTimer) clearInterval(this.countdownTimer)
+      this.countdownTimer = null
+      if (this.idleGuard) this.idleGuard.stop()
+      this.idleGuard = null
     },
     releaseSession() {
-      if (this.sessionKey) {
-        closeViewSession(this.sessionKey).catch(() => {})
-        this.sessionKey = ''
-      }
+      const key = this.sessionKey
+      this.sessionKey = ''
+      if (key) closeViewSession(key).catch(() => {})
     },
     closeMaskDialog() {
-      this.maskVisible = false
-    },
-    handleMaskClosed() {
+      this.viewGeneration++
       this.stopCountdown()
       this.releaseSession()
+      // 立即销毁展示数据，不等弹窗淡出动画结束；晚到响应也不得重新填充。
       this.detail = {}
       this.remainingSeconds = 0
+      this.maskLoading = false
+      this.maskVisible = false
+    },
+    handleDialogClose() {
+      if (!this.maskVisible) this.closeMaskDialog()
     }
   }
 }

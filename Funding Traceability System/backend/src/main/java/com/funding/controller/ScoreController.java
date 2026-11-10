@@ -24,8 +24,9 @@ public class ScoreController {
     @GetMapping
     public Result<IPage<ScoreVO>> page(@RequestParam(defaultValue = "1") Integer page,
                                        @RequestParam(defaultValue = "10") Integer size,
-                                       @RequestParam(required = false) Long studentId) {
-        return Result.success(scoreService.page(page, size, studentId));
+                                       @RequestParam(required = false) Long studentId,
+                                       @RequestParam(required = false) Long fundId) {
+        return Result.success(scoreService.page(page, size, studentId, fundId));
     }
 
     @GetMapping("/export")
@@ -33,6 +34,14 @@ public class ScoreController {
     @OperationLog(value = "导出评分记录", type = "score")
     public void export(HttpServletResponse response) throws Exception {
         scoreService.export(response);
+    }
+
+    @GetMapping("/fund-options")
+    @RequirePermission("score:manage")
+    public Result<java.util.List<com.funding.vo.OptionVO>> fundOptions(@RequestParam Long studentId,
+                                                                    @RequestParam Long sponsorId,
+                                                                    @RequestParam(required = false) String keyword) {
+        return Result.success(scoreService.fundOptions(studentId, sponsorId, keyword));
     }
 
     @GetMapping("/{id}")

@@ -117,6 +117,8 @@
         <trace-timeline biz-type="fund" :biz-id="$route.params.id" />
       </el-card>
 
+      <fund-scores v-if="['AUDIT_ADMIN', 'SPONSOR'].includes($store.getters.role)" :fund-id="$route.params.id" />
+
       <!-- 关联回访凭证（脱敏后纳入全链路溯源台账） -->
       <el-card shadow="never" class="visit-card">
         <div slot="header" class="card-title">
@@ -152,12 +154,13 @@ import { listVisits, downloadVisitMaterial } from '@/api/visit'
 import { downloadFile } from '@/utils/download'
 import TraceTimeline from '@/views/trace/TraceTimeline.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import FundScores from '@/components/FundScores.vue'
 
 const BIG_THRESHOLD = 5000
 
 export default {
   name: 'FundDetail',
-  components: { TraceTimeline, EmptyState },
+  components: { TraceTimeline, EmptyState, FundScores },
   data() {
     return {
       detail: null,

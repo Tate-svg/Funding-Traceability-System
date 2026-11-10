@@ -33,6 +33,7 @@
       <el-select v-model="listQuery.studentId" placeholder="选择学生筛选" clearable filterable style="width:180px" @change="handleFilter">
         <el-option v-for="item in studentOptions" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
+      <el-input-number v-model="listQuery.fundId" :min="1" :precision="0" :controls="false" placeholder="按资助单ID筛选" style="width:170px" />
       <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
     </div>
@@ -41,6 +42,8 @@
       <el-table-column type="index" label="序号" width="55" align="center" />
       <el-table-column prop="studentName" label="学生" min-width="100" />
       <el-table-column prop="sponsorName" label="资助人" min-width="100" />
+      <el-table-column label="关联资助单" min-width="160"><template slot-scope="{ row }">{{ row.fundNo || '历史未关联' }}</template></el-table-column>
+      <el-table-column label="规则快照" min-width="130"><template slot-scope="{ row }">{{ row.ruleVersion ? row.ruleVersion.slice(0, 12) : '历史未留存' }}</template></el-table-column>
       <el-table-column prop="scoreDate" label="评分日期" min-width="110" />
       <el-table-column prop="totalScore" label="总分" min-width="120" align="center">
         <template slot-scope="{ row }">
@@ -56,11 +59,11 @@
       </el-table-column>
       <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
       <el-table-column prop="createTime" label="创建时间" min-width="150" />
-      <el-table-column v-if="isAdmin" label="操作" width="215" align="center" fixed="right" class-name="op-col">
+      <el-table-column label="操作" width="215" align="center" fixed="right" class-name="op-col">
         <template slot-scope="{ row }">
           <el-button type="text" icon="el-icon-view" @click="handleDetail(row)">详情</el-button>
-          <el-button type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
-          <el-button type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
+          <el-button v-if="isAdmin" type="text" icon="el-icon-edit" @click="handleUpdate(row)">编辑</el-button>
+          <el-button v-if="isAdmin" type="text" class="danger-text" icon="el-icon-delete" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
       <template slot="empty">
@@ -82,19 +85,19 @@
     </div>
 
     <!-- 新增/编辑弹窗 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="720px" :close-on-click-modal="false">
+    <el-dialog append-to-body :title="dialogTitle" :visible.sync="dialogVisible" width="720px" :close-on-click-modal="false">
       <el-form ref="dataForm" :model="form" :rules="rules" label-width="100px">
         <el-row :gutter="10">
           <el-col :span="12">
             <el-form-item label="学生" prop="studentId">
-              <el-select v-model="form.studentId" placeholder="请选择学生" filterable style="width:100%" @change="onStudentChange">
+              <el-select :disabled="dialogType === 'update'" v-model="form.studentId" placeholder="请选择学生" filterable style="width:100%" @change="onStudentChange">
                 <el-option v-for="item in studentOptions" :key="item.id" :label="item.name" :value="item.id" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="资助人" prop="sponsorId">
-              <el-select v-model="form.sponsorId" placeholder="请选择资助人" filterable style="width:100%" @change="onSponsorChange">
+              <el-select :disabled="dialogType === 'update'" v-model="form.sponsorId" placeholder="请选择资助人" filterable style="width:100%" @change="onSponsorChange">
                 <el-option v-for="item in sponsorOptions" :key="item.id" :label="item.realName" :value="item.id" />
               </el-select>
             </el-form-item>
@@ -103,16 +106,23 @@
         <el-row :gutter="10">
           <el-col :span="12">
             <el-form-item label="评分日期" prop="scoreDate">
-              <el-date-picker v-model="form.scoreDate" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="width:100%" />
+              <el-date-picker :disabled="legacyEditing" v-model="form.scoreDate" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="width:100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="总分预览">
               <el-tag type="success" size="medium">{{ liveTotal }}</el-tag>
-              <span class="tip-text">（权重加权，最终以服务端为准）</span>
+              <span class="tip-text">（所有指标必填，最终以服务端为准）</span>
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item label="关联资助单" prop="fundId">
+          <el-select v-model="form.fundId" filterable remote :remote-method="loadFundOptions" :loading="fundLoading" placeholder="先选学生及资助人；可搜凭证号或完整ID" style="width:100%">
+            <el-option v-for="item in fundOptions" :key="item.id" :label="item.name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-alert v-if="legacyEditing" title="历史规则未留存：保留原得分和日期，仅可补充资助单关联及备注。调整得分请新增评分。" type="warning" :closable="false" />
+        <el-alert v-else-if="dialogType === 'update'" title="编辑使用原评分规则快照，不套用当前指标及权重。" type="info" :closable="false" />
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="备注" />
         </el-form-item>
@@ -120,10 +130,10 @@
         <div class="score-items-title">评分指标</div>
         <el-table :data="form.details" border size="mini" style="width:100%">
           <el-table-column prop="itemName" label="指标名称" min-width="120" />
-          <el-table-column prop="weight" label="权重(%)" width="100" align="center" />
+          <el-table-column label="权重(%)" width="100" align="center"><template slot-scope="{ row }">{{ row.weight == null ? '未留存' : row.weight }}</template></el-table-column>
           <el-table-column label="得分(0-100)" width="180">
             <template slot-scope="{ row }">
-              <el-input-number v-model="row.itemScore" :min="0" :max="100" :step="1" :precision="0" controls-position="right" size="mini" style="width:100%" />
+              <el-input-number :disabled="legacyEditing" v-model="row.itemScore" :min="0" :max="100" :step="1" :precision="2" controls-position="right" size="mini" placeholder="请填写" style="width:100%" />
             </template>
           </el-table-column>
           <el-table-column label="加权得分" width="120" align="center">
@@ -139,17 +149,20 @@
     </el-dialog>
 
     <!-- 详情弹窗（只读） -->
-    <el-dialog title="评分详情" :visible.sync="detailVisible" width="680px">
+    <el-dialog append-to-body title="评分详情" :visible.sync="detailVisible" width="680px">
       <el-descriptions :column="2" border size="medium">
         <el-descriptions-item label="学生">{{ detail.studentName }}</el-descriptions-item>
         <el-descriptions-item label="资助人">{{ detail.sponsorName }}</el-descriptions-item>
         <el-descriptions-item label="评分日期">{{ detail.scoreDate }}</el-descriptions-item>
         <el-descriptions-item label="总分">{{ formatScore(detail.totalScore) }}</el-descriptions-item>
+        <el-descriptions-item label="关联资助单">{{ detail.fundNo || '历史未关联' }}</el-descriptions-item>
+        <el-descriptions-item label="规则留存时间">{{ detail.ruleCapturedAt || '未留存' }}</el-descriptions-item>
+        <el-descriptions-item label="规则标识" :span="2">{{ detail.ruleVersion || '历史规则未留存，权重无法还原' }}</el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{ detail.remark }}</el-descriptions-item>
       </el-descriptions>
       <el-table :data="detail.details" border size="small" style="width:100%; margin-top:12px">
         <el-table-column prop="itemName" label="指标名称" min-width="120" />
-        <el-table-column prop="weight" label="权重(%)" width="100" align="center" />
+        <el-table-column label="权重(%)" width="100" align="center"><template slot-scope="{ row }">{{ row.weight == null ? '未留存' : row.weight }}</template></el-table-column>
         <el-table-column prop="itemScore" label="得分" width="100" align="center" />
         <el-table-column label="加权得分" align="center">
           <template slot-scope="{ row }">{{ weighted(row) }}</template>
@@ -163,12 +176,13 @@
 </template>
 
 <script>
-import { listScores, getScore, addScore, updateScore, deleteScore, exportScores } from '@/api/score'
+import { listScores, getScore, addScore, updateScore, deleteScore, exportScores, scoreFundOptions } from '@/api/score'
 import { listScoreItems } from '@/api/scoreItem'
 import { studentOptions } from '@/api/student'
 import { userOptions } from '@/api/user'
 import { downloadFile } from '@/utils/download'
 import EmptyState from '@/components/EmptyState.vue'
+import { scoreValidationError, scorePreview } from '@/utils/scoreValidation'
 
 export default {
   name: 'Score',
@@ -178,7 +192,7 @@ export default {
       list: [],
       total: 0,
       listLoading: false,
-      listQuery: { page: 1, size: 10, studentId: undefined },
+      listQuery: { page: 1, size: 10, studentId: undefined, fundId: Number(this.$route.query.fundId) || undefined },
       dialogVisible: false,
       detailVisible: false,
       submitLoading: false,
@@ -187,9 +201,12 @@ export default {
       studentOptions: [],
       sponsorOptions: [],
       scoreItems: [],
+      fundOptions: [],
+      fundLoading: false,
       form: this.getEmptyForm(),
       detail: { details: [] },
       rules: {
+        fundId: [{ required: true, message: '请选择关联资助单', trigger: 'change' }],
         studentId: [{ required: true, message: '请选择学生', trigger: 'change' }],
         sponsorId: [{ required: true, message: '请选择资助人', trigger: 'change' }],
         scoreDate: [{ required: true, message: '请选择评分日期', trigger: 'change' }]
@@ -198,12 +215,12 @@ export default {
   },
   computed: {
     isAdmin() { return this.$store.getters.role === 'AUDIT_ADMIN' },
+    legacyEditing() { return this.dialogType === 'update' && !this.form.ruleVersion },
     dialogTitle() { return this.dialogType === 'create' ? '新增评分' : '编辑评分' },
     liveTotal() {
-      const sum = (this.form.details || []).reduce((s, d) => {
-        return s + Number(d.itemScore || 0) * Number(d.weight || 0) / 100
-      }, 0)
-      return sum.toFixed(2)
+      if (this.legacyEditing) return this.formatScore(this.form.totalScore)
+      const total = scorePreview(this.form.details)
+      return total === null ? '待完整填写' : total
     },
     // 以下三项仅用于顶部统计展示，不改变任何评分逻辑
     pageAvgScore() {
@@ -223,7 +240,7 @@ export default {
   },
   methods: {
     getEmptyForm() {
-      return { id: null, studentId: undefined, studentName: '', sponsorId: undefined, sponsorName: '', scoreDate: '', remark: '', details: [] }
+      return { fundId: undefined, ruleVersion: null, ruleCapturedAt: null, id: null, studentId: undefined, studentName: '', sponsorId: undefined, sponsorName: '', scoreDate: '', remark: '', details: [] }
     },
     getList() {
       this.listLoading = true
@@ -239,7 +256,20 @@ export default {
     loadScoreItems() {
       listScoreItems().then(data => { this.scoreItems = data || [] }).catch(() => {})
     },
-    // 根据当前指标初始化 details
+    loadFundOptions(keyword = '') {
+      const studentId = this.form.studentId
+      const sponsorId = this.form.sponsorId
+      if (!studentId || !sponsorId) { this.fundOptions = []; return }
+      this.fundLoading = true
+      scoreFundOptions({ studentId, sponsorId, keyword }).then(data => {
+        if (studentId !== this.form.studentId || sponsorId !== this.form.sponsorId) return
+        this.fundOptions = data || []
+        if (this.form.fundId && !this.fundOptions.some(f => f.id === this.form.fundId)) {
+          this.fundOptions.unshift({ id: this.form.fundId, name: this.form.fundNo || ('资助单 #' + this.form.fundId) })
+        }
+      }).finally(() => { this.fundLoading = false })
+    },
+    // 新增按当前规则初始化；编辑直接使用服务端返回的历史快照。
     buildDetails(savedDetails) {
       const map = {}
       ;(savedDetails || []).forEach(d => { map[d.itemId] = d })
@@ -249,21 +279,25 @@ export default {
           itemId: it.id,
           itemName: it.name,
           weight: it.weight,
-          itemScore: saved ? Number(saved.itemScore || 0) : 0
+          itemScore: saved && saved.itemScore !== null && saved.itemScore !== undefined ? Number(saved.itemScore) : undefined
         }
       })
     },
     handleFilter() { this.listQuery.page = 1; this.getList() },
-    handleReset() { this.listQuery.studentId = undefined; this.listQuery.page = 1; this.getList() },
+    handleReset() { this.listQuery.fundId = undefined; this.listQuery.studentId = undefined; this.listQuery.page = 1; this.getList() },
     handleSizeChange(size) { this.listQuery.size = size; this.listQuery.page = 1; this.getList() },
     handleCurrentChange(page) { this.listQuery.page = page; this.getList() },
     onStudentChange(val) {
       const t = this.studentOptions.find(s => s.id === val)
       this.form.studentName = t ? t.name : ''
+      this.form.fundId = undefined
+      this.loadFundOptions()
     },
     onSponsorChange(val) {
       const t = this.sponsorOptions.find(s => s.id === val)
-      this.form.sponsorName = t ? t.realName : ''
+      this.form.sponsorName = t ? t.name : ''
+      this.form.fundId = undefined
+      this.loadFundOptions()
     },
     handleCreate() {
       if (!this.scoreItems.length) {
@@ -272,20 +306,17 @@ export default {
       }
       this.dialogType = 'create'
       this.form = this.getEmptyForm()
+      this.fundOptions = []
       this.form.details = this.buildDetails([])
       this.dialogVisible = true
       this.$nextTick(() => { this.$refs.dataForm && this.$refs.dataForm.clearValidate() })
     },
     handleUpdate(row) {
-      if (!this.scoreItems.length) {
-        this.$message.warning('暂无评分指标，无法编辑评分')
-        return
-      }
       this.dialogType = 'update'
       getScore(row.id).then(data => {
         this.form = Object.assign(this.getEmptyForm(), data || {})
-        // 用当前指标重建 details，回填已保存的得分
-        this.form.details = this.buildDetails(data && data.details)
+        this.form.details = ((data && data.details) || []).map(d => ({ ...d, itemScore: d.itemScore == null ? undefined : Number(d.itemScore) }))
+        this.loadFundOptions()
         this.dialogVisible = true
         this.$nextTick(() => { this.$refs.dataForm && this.$refs.dataForm.clearValidate() })
       })
@@ -301,18 +332,19 @@ export default {
       this.$refs.dataForm.validate(valid => {
         if (!valid) return
         // 校验每项得分
-        const invalid = this.form.details.some(d => d.itemScore === null || d.itemScore === undefined || d.itemScore < 0 || d.itemScore > 100)
-        if (invalid) {
-          this.$message.warning('请确保每项得分在 0-100 之间')
+        const error = this.legacyEditing ? '' : scoreValidationError(this.form.details)
+        if (error) {
+          this.$message.warning(error)
           return
         }
         this.submitLoading = true
         const payload = {
+          fundId: this.form.fundId,
           studentId: this.form.studentId,
           sponsorId: this.form.sponsorId,
           scoreDate: this.form.scoreDate,
           remark: this.form.remark,
-          details: this.form.details.map(d => ({ itemId: d.itemId, itemScore: d.itemScore }))
+          details: this.legacyEditing ? undefined : this.form.details.map(d => ({ itemId: d.itemId, itemScore: d.itemScore }))
         }
         const action = this.dialogType === 'create' ? addScore(payload) : updateScore(this.form.id, payload)
         action.then(() => {
@@ -340,7 +372,9 @@ export default {
       }).finally(() => { this.exportLoading = false })
     },
     weighted(row) {
-      const v = Number(row.itemScore || 0) * Number(row.weight || 0) / 100
+      if (row.weight == null) return '未留存'
+      if (row.itemScore === null || row.itemScore === undefined || row.itemScore === '') return '待填写'
+      const v = Number(row.itemScore) * Number(row.weight || 0) / 100
       return v.toFixed(2)
     },
     formatScore(val) {

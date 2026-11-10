@@ -29,7 +29,7 @@ public class SensitiveViewSession {
     private Long adminId;
 
     /**
-     * 对应的privacy_profile id
+     * 对应的privacy_access_apply申请单id
      */
     private Long targetProfileId;
 
@@ -40,7 +40,7 @@ public class SensitiveViewSession {
     private LocalDateTime startTime;
 
     /**
-     * 会话过期时间
+     * 空闲期限；活动上报可续期，最长不超过创建后2小时（可配置）
      */
     private LocalDateTime expireTime;
 

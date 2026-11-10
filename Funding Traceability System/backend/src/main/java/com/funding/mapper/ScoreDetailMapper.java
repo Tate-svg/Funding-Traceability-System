@@ -15,15 +15,13 @@ import java.util.List;
 public interface ScoreDetailMapper extends BaseMapper<ScoreDetail> {
 
     /**
-     * 查询某评分单的全部明细（联表 score_item 获取 itemName、weight）
-     * 若指标已删除，itemName 显示"已删除指标"，weight 取 0
+     * 只读取评分时的快照；旧记录不使用当前规则冒充历史规则。
      */
     @Select("SELECT sd.id, sd.score_id, sd.item_id, " +
-            "COALESCE(si.name, '已删除指标') AS item_name, " +
-            "COALESCE(si.weight, 0) AS weight, " +
+            "COALESCE(sd.item_name_snapshot, CONCAT('历史指标#', sd.item_id, '（名称未留存）')) AS item_name, " +
+            "sd.weight_snapshot AS weight, " +
             "sd.item_score " +
             "FROM score_detail sd " +
-            "LEFT JOIN score_item si ON sd.item_id = si.id " +
             "WHERE sd.score_id = #{scoreId} ORDER BY sd.id")
     List<ScoreDetailVO> selectByScoreIdWithItem(@Param("scoreId") Long scoreId);
 
@@ -31,12 +29,13 @@ public interface ScoreDetailMapper extends BaseMapper<ScoreDetail> {
      * 统计各指标的平均分（按资助人过滤）
      */
     @Select("<script>" +
-            "SELECT si.name AS item_name, IFNULL(AVG(sd.item_score),0) AS avg " +
+            "SELECT CONCAT(COALESCE(sd.item_name_snapshot, CONCAT('历史指标#',sd.item_id)), " +
+            "CASE WHEN s.rule_version IS NULL THEN '（规则未留存）' ELSE CONCAT('〔',LEFT(s.rule_version,8),'〕') END) AS item_name, IFNULL(AVG(sd.item_score),0) AS avg " +
             "FROM score_detail sd " +
-            "LEFT JOIN score_item si ON sd.item_id = si.id " +
+
             "LEFT JOIN score s ON sd.score_id = s.id " +
             "<where><if test='sponsorId != null'>s.sponsor_id = #{sponsorId}</if></where> " +
-            "GROUP BY si.id, si.name" +
+            "GROUP BY s.rule_version, sd.item_id, sd.item_name_snapshot" +
             "</script>")
     List<DashboardVO.ScoreAvg> selectScoreAverages(@Param("sponsorId") Long sponsorId);
 }

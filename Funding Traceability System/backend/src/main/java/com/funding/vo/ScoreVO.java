@@ -24,6 +24,14 @@ public class ScoreVO {
 
     private String sponsorName;
 
+    private Long fundId;
+
+    private String fundNo;
+
+    private String ruleVersion;
+
+    private LocalDateTime ruleCapturedAt;
+
     private LocalDate scoreDate;
 
     private BigDecimal totalScore;

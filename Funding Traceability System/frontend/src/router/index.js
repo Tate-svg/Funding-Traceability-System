@@ -35,7 +35,8 @@ export const roleHomeMap = {
   AUDIT_ADMIN: '/audit',
   DISBURSE_ADMIN: '/disburse',
   SUPERVISOR: '/review',
-  SPONSOR: '/dashboard'
+  SPONSOR: '/dashboard',
+  AUDITOR: '/audit-readonly'
 }
 
 const ALL_ROLES = ['AUDIT_ADMIN', 'DISBURSE_ADMIN', 'SUPERVISOR', 'SPONSOR']
@@ -47,6 +48,11 @@ export const asyncRoutes = [
     component: Layout,
     redirect: () => roleHomeMap[store.getters.role] || '/login',
     children: [
+      {
+        path: 'audit-readonly', name: 'ReadOnlyAudit',
+        component: () => import('@/views/auditReadonly/ReadOnlyAudit.vue'),
+        meta: { title: '只读审计', icon: 'el-icon-view', roles: ['AUDITOR'] }
+      },
       {
         path: 'dashboard',
         name: 'Dashboard',

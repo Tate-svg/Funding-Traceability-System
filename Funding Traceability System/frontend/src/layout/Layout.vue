@@ -112,8 +112,9 @@ export default {
       const map = {
         AUDIT_ADMIN: '审核管理员',
         DISBURSE_ADMIN: '拨付管理员',
-        SUPERVISOR: '监事/审计',
-        SPONSOR: '资助人'
+        SUPERVISOR: '监事',
+        SPONSOR: '资助人',
+        AUDITOR: '只读审计'
       }
       return map[this.role] || this.role || '未知'
     },
@@ -122,7 +123,8 @@ export default {
         AUDIT_ADMIN: 'danger',
         DISBURSE_ADMIN: 'warning',
         SUPERVISOR: 'primary',
-        SPONSOR: 'success'
+        SPONSOR: 'success',
+        AUDITOR: 'info'
       }
       return map[this.role] || 'info'
     }

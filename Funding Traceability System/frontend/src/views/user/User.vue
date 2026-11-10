@@ -76,7 +76,7 @@
       />
     </div>
 
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="520px" :close-on-click-modal="false">
+    <el-dialog append-to-body :title="dialogTitle" :visible.sync="dialogVisible" width="520px" :close-on-click-modal="false">
       <el-form ref="dataForm" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="form.username" :disabled="dialogType === 'update'" placeholder="请输入用户名" />
@@ -91,7 +91,8 @@
           <el-select v-model="form.role" placeholder="请选择角色" style="width:100%">
             <el-option label="审核管理员" value="AUDIT_ADMIN" />
             <el-option label="拨付管理员" value="DISBURSE_ADMIN" />
-            <el-option label="监事/审计" value="SUPERVISOR" />
+            <el-option label="监事" value="SUPERVISOR" />
+            <el-option label="只读审计" value="AUDITOR" />
             <el-option label="资助人" value="SPONSOR" />
           </el-select>
         </el-form-item>
@@ -106,7 +107,7 @@
     </el-dialog>
 
     <!-- 联系方式明文调取弹窗 -->
-    <el-dialog title="联系方式明文调取" :visible.sync="privacyVisible" width="560px" :close-on-click-modal="false">
+    <el-dialog append-to-body title="联系方式明文调取" :visible.sync="privacyVisible" width="560px" :close-on-click-modal="false">
       <el-descriptions :column="2" border size="small">
         <el-descriptions-item label="姓名">{{ privacyRow.realName }}</el-descriptions-item>
         <el-descriptions-item label="电话(脱敏)">{{ privacyRow.phone }}</el-descriptions-item>
@@ -213,8 +214,9 @@ export default {
       const map = {
         AUDIT_ADMIN: '审核管理员',
         DISBURSE_ADMIN: '拨付管理员',
-        SUPERVISOR: '监事/审计',
-        SPONSOR: '资助人'
+        SUPERVISOR: '监事',
+        SPONSOR: '资助人',
+        AUDITOR: '只读审计'
       }
       return map[role] || role || '-'
     },
@@ -223,7 +225,8 @@ export default {
         AUDIT_ADMIN: 'danger',
         DISBURSE_ADMIN: 'warning',
         SUPERVISOR: 'primary',
-        SPONSOR: 'success'
+        SPONSOR: 'success',
+        AUDITOR: 'info'
       }
       return map[role] || 'info'
     },

@@ -1,0 +1,286 @@
+{
+  "backend_junit": {
+    "tests": 97,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontend_logic": {
+    "tests": 8,
+    "failed": 0
+  },
+  "frontend_build": "passed; 2 asset size warnings",
+  "changed_frontend_eslint": "passed",
+  "mysql_api_round1": {
+    "passed": 21,
+    "failed": 0
+  },
+  "mysql_api_round2": {
+    "passed": 62,
+    "failed": 0,
+    "database": "isolated MySQL8",
+    "checks": [
+      {
+        "name": "旧评分不伪造历史规则或权重",
+        "passed": true
+      },
+      {
+        "name": "新评分必须关联资助单",
+        "passed": true
+      },
+      {
+        "name": "不存在的资助单被拒绝",
+        "passed": true
+      },
+      {
+        "name": "资助单须匹配学生",
+        "passed": true
+      },
+      {
+        "name": "资助单须匹配资助人",
+        "passed": true
+      },
+      {
+        "name": "新评分保存真实规则快照及资助单",
+        "passed": true
+      },
+      {
+        "name": "客户端假权重、假指标名和假总分不起作用",
+        "passed": true
+      },
+      {
+        "name": "改当前规则后历史详情和总分保持原解释",
+        "passed": true
+      },
+      {
+        "name": "规则修改后的新评分生成不同规则标识",
+        "passed": true
+      },
+      {
+        "name": "当前指标删除后历史评分仍按快照编辑",
+        "passed": true
+      },
+      {
+        "name": "编辑不改写原规则标识和留存时间",
+        "passed": true
+      },
+      {
+        "name": "不能将历史评分改到另一名学生",
+        "passed": true
+      },
+      {
+        "name": "快照摘要异常时拒绝重新计算",
+        "passed": true
+      },
+      {
+        "name": "旧评分可补资助单关联和备注",
+        "passed": true
+      },
+      {
+        "name": "补关联不修改旧总分和历史规则状态",
+        "passed": true
+      },
+      {
+        "name": "缺历史规则时不能修改旧分数",
+        "passed": true
+      },
+      {
+        "name": "评分可按资助单精确查询",
+        "passed": true
+      },
+      {
+        "name": "其他资助人无法通过单据筛选读取评分",
+        "passed": true
+      },
+      {
+        "name": "其他资助人直接请求评分详情也被拒绝",
+        "passed": true
+      },
+      {
+        "name": "已关联评分的资助单不能删除",
+        "passed": true
+      },
+      {
+        "name": "已关联评分的资助单不能改写申请关系",
+        "passed": true
+      },
+      {
+        "name": "只读账号可查阅 /audit-readonly/funds",
+        "passed": true
+      },
+      {
+        "name": "只读账号可查阅 /audit-readonly/funds/1",
+        "passed": true
+      },
+      {
+        "name": "只读账号可查阅 /audit-readonly/scores",
+        "passed": true
+      },
+      {
+        "name": "只读账号可查阅 /audit-readonly/scores/4",
+        "passed": true
+      },
+      {
+        "name": "只读账号可查阅 /audit-readonly/timestamps",
+        "passed": true
+      },
+      {
+        "name": "只读账号可查阅 /audit-readonly/logs",
+        "passed": true
+      },
+      {
+        "name": "只读账号可查阅 /audit-readonly/verify",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /funds",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 PUT /funds/1",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 DELETE /funds/1",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /scores",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 PUT /scores/4",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 DELETE /scores/4",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /score-items",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 PUT /score-items/1",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 DELETE /score-items/1",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /review-tasks/draw",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /review-tasks/1/finish",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /privacy/access/apply",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /privacy/access/1/approve",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /privacy/mask/createViewSession",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /privacy/mask/switchMask",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /users",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 PUT /users/1",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 DELETE /users/1",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /visits",
+        "passed": true
+      },
+      {
+        "name": "只读账号拒绝 POST /students",
+        "passed": true
+      },
+      {
+        "name": "只读查询接口不支持写方法",
+        "passed": true
+      },
+      {
+        "name": "拒绝写请求后业务表数量不变",
+        "passed": true
+      },
+      {
+        "name": "只读账号不能绕过专用接口 /privacy/profile/STU-a1b2c3d4e5f6",
+        "passed": true
+      },
+      {
+        "name": "只读账号不能绕过专用接口 /privacy/mask/getSensitiveDetail",
+        "passed": true
+      },
+      {
+        "name": "只读账号不能绕过专用接口 /students/1/attachments",
+        "passed": true
+      },
+      {
+        "name": "只读账号不能绕过专用接口 /visits",
+        "passed": true
+      },
+      {
+        "name": "只读账号不能绕过专用接口 /users/options",
+        "passed": true
+      },
+      {
+        "name": "只读账号不能绕过专用接口 /operation-logs",
+        "passed": true
+      },
+      {
+        "name": "只读账号不能绕过专用接口 /funds",
+        "passed": true
+      },
+      {
+        "name": "只读账号不能绕过专用接口 /scores",
+        "passed": true
+      },
+      {
+        "name": "角色改为只读后旧管理员JWT立即失去写权限",
+        "passed": true
+      },
+      {
+        "name": "旧JWT的后续请求按数据库当前角色授权",
+        "passed": true
+      },
+      {
+        "name": "删除账号后旧JWT失效",
+        "passed": true
+      },
+      {
+        "name": "原监事审批入口保持可用",
+        "passed": true
+      }
+    ]
+  },
+  "migration": {
+    "old_schema_migration": "passed twice (idempotent)",
+    "legacy_score_count": 3,
+    "legacy_score_total": "251.15",
+    "legacy_snapshots": "not fabricated",
+    "legacy_fund_bindings": "not inferred",
+    "fresh_schema": "passed"
+  },
+  "browser": "full regression not completed; automated dropdown interaction requires follow-up",
+  "windows_script": "not executed on Windows",
+  "performance": "not rerun",
+  "github_target": "sliu40729-boop/deserve",
+  "branch": "feat/score-snapshot-fund-readonly-audit"
+}

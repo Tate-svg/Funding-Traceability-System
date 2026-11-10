@@ -44,6 +44,9 @@ public class FundServiceImpl implements FundService {
     private TimestampService timestampService;
 
     @Autowired
+    private com.funding.mapper.ScoreMapper scoreMapper;
+
+    @Autowired
     private com.funding.common.MaskingGuard maskingGuard;
 
     /** 大额复核阈值（元） */
@@ -95,7 +98,9 @@ public class FundServiceImpl implements FundService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateFund(Fund fund) {
+        guardScoreLinks(fund.getId());
         // 二次脱敏校验
         maskingGuard.check("PUT /api/funds/" + fund.getId(), "用途", fund.getPurpose());
         maskingGuard.check("PUT /api/funds/" + fund.getId(), "备注", fund.getRemark());
@@ -119,13 +124,23 @@ public class FundServiceImpl implements FundService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteFund(Long id) {
+        guardScoreLinks(id);
         // 仅 SUBMITTED 可删除（条件 DELETE）
         int rows = fundMapper.delete(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Fund>()
                 .eq("id", id).eq("status", Fund.STATUS_SUBMITTED));
         if (rows == 0) {
             throw new BusinessException(400, "仅待审核状态的单据可删除");
         }
+    }
+
+    private void guardScoreLinks(Long id) {
+        fundMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Fund>()
+                .eq("id", id).last("FOR UPDATE"));
+        Long count = scoreMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.funding.entity.Score>()
+                .eq("fund_id", id));
+        if (count != null && count > 0) throw new BusinessException(400, "资助单已关联评分，不能修改申请资料或删除");
     }
 
     @Override

@@ -18,6 +18,9 @@ import java.io.PrintWriter;
 @Component
 public class JwtInterceptor implements HandlerInterceptor {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.funding.mapper.SysUserMapper userMapper;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String uri = request.getRequestURI();
@@ -36,8 +39,11 @@ public class JwtInterceptor implements HandlerInterceptor {
         try {
             Claims claims = JwtUtils.parse(token);
             Long userId = JwtUtils.extractUserId(claims);
-            String username = JwtUtils.extractUsername(claims);
-            String role = JwtUtils.extractRole(claims);
+            com.funding.entity.SysUser current = userMapper.selectById(userId);
+            if (current == null) { writeUnauthorized(response); return false; }
+            // 按数据库当前角色授权，降为只读或删除账号后旧JWT不能保留写权限。
+            String username = current.getUsername();
+            String role = current.getRole();
             UserContext.set(new UserInfo(userId, username, role));
             return true;
         } catch (Exception e) {

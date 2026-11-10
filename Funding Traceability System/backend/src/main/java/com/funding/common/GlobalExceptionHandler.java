@@ -28,4 +28,9 @@ public class GlobalExceptionHandler {
         log.error("服务器错误", e);
         return Result.error(500, "服务器错误: " + e.getMessage());
     }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public Result<Void> handleUnsupportedMethod(org.springframework.web.HttpRequestMethodNotSupportedException e) {
+        return Result.error(405, "请求方法不支持");
+    }
 }

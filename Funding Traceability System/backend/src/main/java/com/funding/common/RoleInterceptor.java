@@ -24,6 +24,13 @@ public class RoleInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        UserInfo current = UserContext.get();
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        if (current != null && "AUDITOR".equals(current.getRole())
+                && !ReadOnlyAuditPolicy.allows(request.getMethod(), path)) {
+            writeForbidden(response);
+            return false;
+        }
         if (!(handler instanceof HandlerMethod)) {
             return true;
         }

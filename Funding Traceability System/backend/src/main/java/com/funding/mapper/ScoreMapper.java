@@ -16,7 +16,8 @@ import java.util.List;
 public interface ScoreMapper extends BaseMapper<Score> {
 
     @Select("<script>" +
-            "SELECT sc.*, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+            "SELECT sc.*, COALESCE(f.voucher_no, CONCAT('FUND-', sc.fund_id)) AS fund_no, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+            "LEFT JOIN fund f ON sc.fund_id = f.id " +
             "LEFT JOIN student s ON sc.student_id = s.id " +
             "LEFT JOIN sys_user u ON sc.sponsor_id = u.id " +
             "<where>" +
@@ -26,19 +27,23 @@ public interface ScoreMapper extends BaseMapper<Score> {
             "<if test='sponsorId != null'>" +
             "AND sc.sponsor_id = #{sponsorId}" +
             "</if>" +
+            "<if test='fundId != null'>AND sc.fund_id = #{fundId}</if>" +
             "</where>" +
             "ORDER BY sc.id DESC" +
             "</script>")
     IPage<ScoreVO> selectPageWithNames(Page<ScoreVO> page,
                                        @Param("studentId") Long studentId,
-                                       @Param("sponsorId") Long sponsorId);
+                                       @Param("sponsorId") Long sponsorId,
+                                       @Param("fundId") Long fundId);
 
-    @Select("SELECT sc.*, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+    @Select("SELECT sc.*, COALESCE(f.voucher_no, CONCAT('FUND-', sc.fund_id)) AS fund_no, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+            "LEFT JOIN fund f ON sc.fund_id = f.id " +
             "LEFT JOIN student s ON sc.student_id = s.id " +
             "LEFT JOIN sys_user u ON sc.sponsor_id = u.id WHERE sc.id = #{id}")
     ScoreVO selectByIdWithNames(@Param("id") Long id);
 
-    @Select("SELECT sc.*, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+    @Select("SELECT sc.*, COALESCE(f.voucher_no, CONCAT('FUND-', sc.fund_id)) AS fund_no, s.mask_name AS student_name, u.real_name AS sponsor_name FROM score sc " +
+            "LEFT JOIN fund f ON sc.fund_id = f.id " +
             "LEFT JOIN student s ON sc.student_id = s.id " +
             "LEFT JOIN sys_user u ON sc.sponsor_id = u.id ORDER BY sc.id DESC")
     List<ScoreVO> selectAllWithNames();

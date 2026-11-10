@@ -22,4 +22,8 @@ public class ScoreDetail {
     private Long itemId;
 
     private BigDecimal itemScore;
+
+    private String itemNameSnapshot;
+
+    private BigDecimal weightSnapshot;
 }

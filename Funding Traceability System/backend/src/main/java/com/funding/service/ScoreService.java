@@ -10,7 +10,13 @@ import javax.servlet.http.HttpServletResponse;
  */
 public interface ScoreService {
 
-    IPage<ScoreVO> page(Integer page, Integer size, Long studentId);
+    default IPage<ScoreVO> page(Integer page, Integer size, Long studentId) {
+        return page(page, size, studentId, null);
+    }
+
+    IPage<ScoreVO> page(Integer page, Integer size, Long studentId, Long fundId);
+
+    java.util.List<com.funding.vo.OptionVO> fundOptions(Long studentId, Long sponsorId, String keyword);
 
     ScoreVO getById(Long id);
 

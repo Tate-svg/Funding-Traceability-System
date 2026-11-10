@@ -59,7 +59,7 @@ export function switchMask(isSecondMask) {
   })
 }
 
-// 创建敏感查看会话（限时查看，到期自动失效）
+// 创建敏感查看会话（默认15分钟无操作失效，最长2小时）
 export function createViewSession(targetId) {
   return request({
     url: '/privacy/mask/createViewSession',
@@ -84,4 +84,9 @@ export function closeViewSession(sessionKey) {
     method: 'post',
     params: { sessionKey }
   })
+}
+
+// 仅在详情弹窗内有用户交互时上报；定时器不主动续期。
+export function touchViewSession(sessionKey, targetId) {
+  return request({ url: '/privacy/mask/touchSession', method: 'post', params: { sessionKey, targetId } })
 }

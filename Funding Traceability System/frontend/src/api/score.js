@@ -1,5 +1,9 @@
 import request from '@/utils/request'
 
+export function scoreFundOptions(params) {
+  return request({ url: '/scores/fund-options', method: 'get', params })
+}
+
 // 分页查询评分单
 export function listScores(params) {
   return request({

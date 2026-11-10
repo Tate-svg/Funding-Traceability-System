@@ -23,6 +23,13 @@ public class Score {
 
     private Long sponsorId;
 
+    private Long fundId;
+
+    /** 服务端生成的规则摘要；null表示历史记录未留存规则。 */
+    private String ruleVersion;
+
+    private LocalDateTime ruleCapturedAt;
+
     private LocalDate scoreDate;
 
     private BigDecimal totalScore;

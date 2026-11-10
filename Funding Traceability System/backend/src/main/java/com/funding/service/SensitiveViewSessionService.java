@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.funding.entity.SensitiveViewSession;
+import com.funding.common.BusinessException;
 import com.funding.mapper.SensitiveViewSessionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,127 +12,143 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 敏感信息查看会话
- * 到期校验以数据库 expire_time 为准；Redis 仅作为可选的高速凭证（未部署 Redis 时自动退化为数据库校验）
+ * 敏感查看会话：默认15分钟无操作过期，最长2小时。
+ * 读取本身不续期；只有当前用户对当前申请单上报操作才可续期。
+ * 数据库为授权依据，Redis是可选缓存，缓存丢失不能覆盖数据库的会话状态。
  */
 @Service
 public class SensitiveViewSessionService extends ServiceImpl<SensitiveViewSessionMapper, SensitiveViewSession> {
-
     private static final String REDIS_PREFIX = "sensitive:view:";
 
-    /** Redis 非必需依赖：环境未部署 Redis 时不应阻塞敏感的查看/关闭流程 */
     @Autowired(required = false)
     private RedisTemplate<String, Object> redisTemplate;
 
     @Value("${privacy.sensitive-session-expire:15}")
-    private Integer expireMin;
+    private Integer expireMin = 15;
 
-    public Integer getExpireMin() {
-        return expireMin;
+    @Value("${privacy.sensitive-session-max:120}")
+    private Integer maxSessionMin = 120;
+
+    private Clock clock = Clock.systemDefaultZone();
+
+    public Integer getExpireMin() { return expireMin; }
+
+    private LocalDateTime now() {
+        return LocalDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS);
     }
 
-    /**
-     * 创建敏感查看会话（有效期由 privacy.sensitive-session-expire 配置，默认15分钟）
-     *
-     * @param adminId  管理员id
-     * @param targetId 调取申请单id
-     * @return sessionKey
-     */
     @Transactional
     public String createSession(Long adminId, Long targetId) {
-        String sessionId = UUID.randomUUID().toString();
-        LocalDateTime now = LocalDateTime.now();
-
+        if (adminId == null || targetId == null) {
+            throw new IllegalArgumentException("会话必须绑定用户和申请单");
+        }
+        LocalDateTime now = now();
         SensitiveViewSession session = new SensitiveViewSession();
-        session.setSessionId(sessionId);
+        session.setSessionId(UUID.randomUUID().toString());
         session.setAdminId(adminId);
         session.setTargetProfileId(targetId);
         session.setStartTime(now);
-        session.setExpireTime(now.plusMinutes(expireMin));
+        session.setExpireTime(now.plusMinutes(Math.min(expireMin, maxSessionMin)));
         session.setIsValid(1);
         this.save(session);
-
-        setRedisKey(sessionId);
-        return sessionId;
+        cache(session.getSessionId(), Duration.between(now, session.getExpireTime()).getSeconds());
+        return session.getSessionId();
     }
 
-    /**
-     * 校验会话是否有效：数据库有效期 + 有效标记，并结合 Redis 凭证（如可用）
-     */
-    public boolean checkSessionValid(String sessionId) {
-        if (sessionId == null || sessionId.isEmpty()) {
-            return false;
-        }
+    public boolean checkSessionValid(String sessionId, Long adminId, Long targetId) {
+        return remainingSeconds(sessionId, adminId, targetId) > 0;
+    }
+
+    public long remainingSeconds(String sessionId, Long adminId, Long targetId) {
+        SensitiveViewSession session = validSession(sessionId, adminId, targetId);
+        return session == null ? 0 : Duration.between(now(), deadline(session)).getSeconds();
+    }
+
+    public long absoluteSecondsRemaining(String sessionId, Long adminId, Long targetId) {
+        SensitiveViewSession session = validSession(sessionId, adminId, targetId);
+        return session == null ? 0
+                : Duration.between(now(), session.getStartTime().plusMinutes(maxSessionMin)).getSeconds();
+    }
+
+    /** 返回续期后的剩余秒数；无权、关闭或超时的会话不可复活。 */
+    @Transactional
+    public Long touchSession(String sessionId, Long adminId, Long targetId) {
+        SensitiveViewSession session = validSession(sessionId, adminId, targetId);
+        if (session == null) return null;
+        LocalDateTime now = now();
+        LocalDateTime next = now.plusMinutes(expireMin);
+        LocalDateTime max = session.getStartTime().plusMinutes(maxSessionMin);
+        if (next.isAfter(max)) next = max;
+        // 条件更新防止并发关闭/过期与续期之间的竞态。
+        LambdaUpdateWrapper<SensitiveViewSession> update = new LambdaUpdateWrapper<>();
+        update.eq(SensitiveViewSession::getSessionId, sessionId)
+                .eq(SensitiveViewSession::getAdminId, adminId)
+                .eq(SensitiveViewSession::getTargetProfileId, targetId)
+                .eq(SensitiveViewSession::getIsValid, 1)
+                .gt(SensitiveViewSession::getExpireTime, now)
+                .set(SensitiveViewSession::getExpireTime, next);
+        if (!this.update(update)) return null;
+        long seconds = Duration.between(now, next).getSeconds();
+        cache(sessionId, seconds);
+        return seconds;
+    }
+
+    /** 幂等关闭本人会话；不能使用他人的key关闭其会话。 */
+    @Transactional
+    public boolean closeSession(String sessionId, Long adminId) {
+        if (sessionId == null || sessionId.trim().isEmpty() || adminId == null) return false;
         SensitiveViewSession session = this.getOne(new LambdaQueryWrapper<SensitiveViewSession>()
-                .eq(SensitiveViewSession::getSessionId, sessionId)
-                .last("LIMIT 1"));
-        if (session == null || session.getIsValid() == null || session.getIsValid() != 1) {
-            return false;
-        }
-        LocalDateTime expireTime = session.getExpireTime();
-        if (expireTime != null && !expireTime.isAfter(LocalDateTime.now())) {
-            markInvalid(sessionId);
-            deleteRedisKey(sessionId);
-            return false;
-        }
-        // Redis 可用时以其凭证是否存续为准（手动关闭/到期均会删除）
-        Boolean hasKey = hasRedisKey(sessionId);
-        if (Boolean.FALSE.equals(hasKey)) {
-            markInvalid(sessionId);
-            return false;
-        }
+                .eq(SensitiveViewSession::getSessionId, sessionId).last("LIMIT 1"));
+        if (session == null || !adminId.equals(session.getAdminId())) return false;
+        invalidate(sessionId);
         return true;
     }
 
-    /**
-     * 手动关闭会话
-     */
-    @Transactional
-    public void closeSession(String sessionId) {
-        deleteRedisKey(sessionId);
-        markInvalid(sessionId);
-    }
-
-    private void markInvalid(String sessionId) {
-        LambdaUpdateWrapper<SensitiveViewSession> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(SensitiveViewSession::getSessionId, sessionId)
-                .set(SensitiveViewSession::getIsValid, 0);
-        this.update(wrapper);
-    }
-
-    private void setRedisKey(String sessionId) {
-        try {
-            if (redisTemplate != null) {
-                redisTemplate.opsForValue().set(REDIS_PREFIX + sessionId, "1", expireMin, TimeUnit.MINUTES);
-            }
-        } catch (Exception ignore) {
-            // Redis 不可用时忽略，到期判定由数据库承担
+    private SensitiveViewSession validSession(String sessionId, Long adminId, Long targetId) {
+        if (sessionId == null || sessionId.trim().isEmpty() || adminId == null || targetId == null) return null;
+        SensitiveViewSession session = this.getOne(new LambdaQueryWrapper<SensitiveViewSession>()
+                .eq(SensitiveViewSession::getSessionId, sessionId).last("LIMIT 1"));
+        // 先检查归属，别人的错误请求不应让合法用户的会话失效。
+        if (session == null) return null;
+        if (!adminId.equals(session.getAdminId()) || !targetId.equals(session.getTargetProfileId())) {
+            throw new BusinessException(403, "会话不属于当前用户或申请单");
         }
-    }
-
-    private Boolean hasRedisKey(String sessionId) {
-        try {
-            if (redisTemplate == null) {
-                return null;
-            }
-            return redisTemplate.hasKey(REDIS_PREFIX + sessionId);
-        } catch (Exception ignore) {
+        if (!Integer.valueOf(1).equals(session.getIsValid())) return null;
+        if (session.getExpireTime() == null || session.getStartTime() == null
+                || !deadline(session).isAfter(now())) {
+            invalidate(sessionId);
             return null;
         }
+        return session;
     }
 
-    private void deleteRedisKey(String sessionId) {
+    private LocalDateTime deadline(SensitiveViewSession session) {
+        LocalDateTime max = session.getStartTime().plusMinutes(maxSessionMin);
+        return session.getExpireTime().isBefore(max) ? session.getExpireTime() : max;
+    }
+
+    private void invalidate(String sessionId) {
+        this.update(new LambdaUpdateWrapper<SensitiveViewSession>()
+                .eq(SensitiveViewSession::getSessionId, sessionId)
+                .set(SensitiveViewSession::getIsValid, 0));
         try {
-            if (redisTemplate != null) {
-                redisTemplate.delete(REDIS_PREFIX + sessionId);
+            if (redisTemplate != null) redisTemplate.delete(REDIS_PREFIX + sessionId);
+        } catch (Exception ignored) { /* 数据库仍为失效依据 */ }
+    }
+
+    private void cache(String sessionId, long seconds) {
+        try {
+            if (redisTemplate != null && seconds > 0) {
+                redisTemplate.opsForValue().set(REDIS_PREFIX + sessionId, "1", seconds, TimeUnit.SECONDS);
             }
-        } catch (Exception ignore) {
-            // 忽略 Redis 异常
-        }
+        } catch (Exception ignored) { /* Redis未部署不影响数据库授权判断 */ }
     }
 }

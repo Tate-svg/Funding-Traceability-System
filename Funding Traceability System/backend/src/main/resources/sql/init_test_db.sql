@@ -119,16 +119,22 @@ CREATE TABLE score (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     student_id BIGINT NOT NULL,
     sponsor_id BIGINT NOT NULL,
+    fund_id BIGINT NULL COMMENT '关联资助单，历史未关联记录保持NULL',
+    rule_version VARCHAR(64) NULL COMMENT '规则摘要；NULL表示历史规则未留存',
+    rule_captured_at DATETIME NULL,
     score_date DATE,
     total_score DECIMAL(6,2),
     remark VARCHAR(255),
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_score_fund (fund_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE score_detail (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     score_id BIGINT NOT NULL,
     item_id BIGINT NOT NULL,
+    item_name_snapshot VARCHAR(50) NULL,
+    weight_snapshot DECIMAL(5,2) NULL,
     item_score DECIMAL(5,2)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -296,6 +302,7 @@ INSERT INTO role_permission (role, permission) VALUES
 ('SUPERVISOR', 'privacy:apply'),
 ('SUPERVISOR', 'privacy:approve:l2'),
 -- 资助人：仅查看
+('AUDITOR', 'audit:readonly'),
 ('SPONSOR', 'fund:view'),
 ('SPONSOR', 'privacy:apply');
 
